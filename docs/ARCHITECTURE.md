@@ -1,25 +1,40 @@
-# Decisões de arquitetura
+# Arquitetura 0.2
 
-O Atlas adiciona ferramentas e uma aba sem modificar arquivos do Hermes. A UI usa duas entradas: `main.tsx` com React próprio para o aplicativo local; `plugin.tsx` com React externo fornecido pelo SDK no dashboard. O bundle distribuído é IIFE, como exige o host.
+## Superfícies
 
-## Fronteira de confiança
+O mesmo App React atende o standalone (Vite), o dashboard (IIFE com React do host) e o Desktop/Webapp (ESM usando apenas imports oficiais do SDK). O Desktop usa `ctx.rest` autenticado; o dashboard usa seu cliente SDK. A API local tem restrição de Host, origem, JSON e CSP.
 
-A saída do modelo é dado não confiável. `Canvas` proíbe propriedades extras e limita blocos, strings, números e arrays. Não existem componentes de código, HTML, iframe, URL de imagem ou ação arbitrária. React apresenta strings como texto escapado. O modelo pode sugerir conteúdo, mas não altera a lista de tipos suportados.
+`plugin.yaml` e o registro Python expõem `atlas_render`, `atlas_list` e `atlas_get`. `dashboard/plugin_api.py` monta o mesmo router do standalone com imports relativos isolados. O wheel contém `atlas/static` e `atlas/plugin`; a compilação recusa publicar pacote sem esses assets.
 
-O servidor limita respostas do upstream a 2 MB e canvases persistidos a 256 KB. SQLite usa parâmetros e `BEGIN IMMEDIATE` para reservar revisões de forma atômica. O ID não é usado como caminho de arquivo. Dados permanecem após atualizações do plugin.
+## Execução durável
 
-O proxy aceita somente um upstream configurado pelo operador, exige TLS para hosts remotos e não segue redirecionamentos. A chave fica em variável de ambiente e não aparece em mensagens de erro. O host independente restringe Host e Origin e não habilita CORS; o dashboard utiliza a autenticação do Hermes. Isso não transforma o standalone em serviço multiusuário.
+1. O cliente cria um UUID de pedido e envia texto, anexos e canvas ativo.
+2. A API verifica capacidades oficiais, valida tamanhos e reserva a conversa/execução no SQLite em uma transação.
+3. Um observador envia `POST /v1/runs` com chave de idempotência estável. O histórico continua no Hermes; cada turno envia só o novo conteúdo e instruções compactas.
+4. SSE acumula deltas, sequência, progresso e controles; consultas de status confirmam o resultado. Snapshots são persistidos a cada ciclo de aproximadamente 500 ms.
+5. A tela consulta o snapshot, adaptando a frequência à visibilidade. Reabrir a tela recupera a execução persistida.
+6. Conclusão, mensagem de resposta e desbloqueio da conversa são transacionais. Artefatos possuem deduplicação por execução e revisão fixada na mensagem.
 
-## Persistência e interatividade
+Falha no POST não prova que o Hermes recusou o pedido: a mesma chave é reutilizada dentro da janela durável anunciada. Após 23 horas de admissão não confirmada o Atlas deixa o resultado como desconhecido, sem repetir a operação. Reiniciar o Atlas encerra os observadores locais, não o agente. Consultar a execução reativa o observador do mesmo ID.
 
-Definições de canvases são persistidas. Interações exploratórias são locais e efêmeras. Conversas são locais ao navegador. Não há sincronização entre usuários ou entre conversas nativas e o histórico do Atlas. O compartilhamento entre plugin e UI ocorre pelos canvases do mesmo perfil.
+## Perfis e propriedade
 
-## Evolução planejada
+O caminho do banco, endpoint e identidade de credencial compõem um hash de workspace. Requisições da UI levam esse hash por header ou query no Desktop; divergências são recusadas. Segredos são resolvidos pelo contexto de perfil nativo. A troca de gateway é protegida pelo epoch do SDK e por remontagem da UI.
 
-1. Adapter de streaming oficial com eventos de ferramentas, estado terminal explícito e cancelamento por run ID.
-2. Estado interativo persistido por revisão e usuário, com migração de protocolo.
-3. Adaptador opcional para OpenUI Lang com biblioteca de componentes limitada.
-4. Integração de aprovações do Hermes antes de disponibilizar componentes com efeitos externos.
-5. Matriz CI de versões do Hermes, teste real de gateway e benchmarks reproduzíveis de latência/memória.
+O armazenamento nativo de canvases é por diretório do perfil; conversas e workspace possuem ainda owner hash. Rotacionar credenciais muda esse owner, isolando o histórico conversacional anterior. O banco não é um serviço multiusuário.
 
-Esses itens são propostas; não estão implementados na versão 0.1.0.
+Sessões API Atlas não se fazem passar por sessões Desktop/CLI. O envio explícito ao chat nativo usa o RPC `prompt.submit`, verifica a sessão focada/perfil e mantém ID de submissão estável durante uma tentativa de reenvio.
+
+## Protocolo e estado
+
+O protocolo aceita apenas os tipos de bloco declarados em `models.py`. JSON é extraído com `JSONDecoder.raw_decode`, preservando cercas dentro de strings. Conteúdo inválido permanece texto com aviso. Resposta vazia produz erro; nenhum canvas demonstrativo substitui uma falha do modelo.
+
+O canvas contém definição, valores de calculadora, estado de checklists/tabelas/comparações/formulários e fontes. Todos os controles são React controlados. O rascunho é salvo com debounce e fila serial. Salvar uma revisão exige a revisão-base, evitando sobrescrita concorrente. Uma nova criação recebe ID único.
+
+Formulários geram texto no editor para revisão humana. Fórmulas são operações enumeradas, sem eval. Markdown não executa HTML; imagens remotas não são buscadas automaticamente. Links de fontes são explícitos. O renderer não aceita código gerado.
+
+## Custos e operação
+
+Pool HTTPX por event loop, cache curto de capabilities, limites de resposta/frame/payload e escrita agrupada evitam uma conexão ou transação por token. A UI recebe até 60 eventos recentes; não é um log de auditoria integral. As medidas locais e do provedor estão em VALIDATION.md e não são um benchmark entre modelos.
+
+O standalone é uma aplicação pessoal loopback. O host Hermes fornece autenticação e isolamento de perfis na instalação nativa. Não há serviço de autenticação multiusuário implementado pelo Atlas.

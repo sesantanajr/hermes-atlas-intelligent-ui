@@ -1,0 +1,424 @@
+.atlas-app {
+  --muted: #53634f;
+  color: var(--text);
+}
+.atlas-app .welcome h1 span {
+  color: #607356;
+}
+.atlas-app .brand small,
+.atlas-app .sidebar-label,
+.atlas-app .eyebrow,
+.atlas-app .canvas-eyebrow,
+.atlas-app .section-heading > span,
+.atlas-app .canvas-footer,
+.atlas-app .composer-wrap > p,
+.atlas-app .composer-wrap > p span,
+.atlas-app .topbar > div,
+.atlas-app .profile small,
+.atlas-app .local-card small,
+.atlas-app .recent-chats p {
+  color: var(--muted);
+  font-size: 12px;
+}
+.atlas-app .suggestions small,
+.atlas-app .example > small,
+.atlas-app .comparison-grid p,
+.atlas-app .comparison-grid span,
+.atlas-app .atlas-block td,
+.atlas-app .atlas-block th,
+.atlas-app .slider > span,
+.atlas-app .checks small,
+.atlas-app .canvas-content > p,
+.atlas-app .bar-row,
+.atlas-app .metric > p,
+.atlas-app .metric > span {
+  color: var(--muted);
+  font-size: 14px;
+}
+.atlas-app .icon-button {
+  min-width: 36px;
+  min-height: 36px;
+  color: var(--muted);
+}
+.atlas-app select,
+.atlas-app .atlas-form input,
+.atlas-app .approval-card input {
+  font: inherit;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text);
+  max-width: 100%;
+}
+.atlas-app input::placeholder,
+.atlas-app textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+.atlas-app .message-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.atlas-app .message-meta time,
+.atlas-app .message > div > small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.atlas-app .message-meta strong {
+  font-size: 14px;
+}
+.atlas-app .message > div {
+  flex: 1;
+}
+.atlas-app .markdown {
+  font-size: 15px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+.atlas-app .markdown p {
+  white-space: normal;
+  font-size: 15px;
+  color: var(--text);
+  margin: 10px 0;
+}
+.atlas-app .markdown ul,
+.atlas-app .markdown ol {
+  padding-left: 24px;
+  margin: 12px 0;
+}
+.atlas-app .markdown li {
+  padding: 3px 0;
+}
+.atlas-app .markdown h1,
+.atlas-app .markdown h2,
+.atlas-app .markdown h3 {
+  font-size: 1.2em;
+  margin: 18px 0 9px;
+  letter-spacing: normal;
+  color: var(--text);
+}
+.atlas-app .markdown strong {
+  font-size: inherit;
+  font-weight: 650;
+}
+.atlas-app .markdown pre {
+  white-space: pre;
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  max-width: 100%;
+}
+.atlas-app .markdown code {
+  font-size: 13px;
+  font-family: ui-monospace, Consolas, monospace;
+}
+.atlas-app .markdown table {
+  display: block;
+  overflow: auto;
+  border-collapse: collapse;
+  max-width: 100%;
+}
+.atlas-app .markdown td,
+.atlas-app .markdown th {
+  border: 1px solid var(--line);
+  padding: 8px 12px;
+}
+.atlas-app .markdown blockquote {
+  margin: 14px 0;
+  padding-left: 14px;
+  border-left: 3px solid var(--green);
+  color: var(--muted);
+}
+.atlas-app .tool-event {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.atlas-app .tool-event small {
+  display: block;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 120px;
+  overflow: auto;
+}
+.atlas-app details {
+  margin-top: 12px;
+  font-size: 13px;
+}
+.atlas-app summary {
+  cursor: pointer;
+}
+.atlas-app .approval-card {
+  border: 1px solid var(--green);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 16px;
+  background: var(--surface);
+}
+.atlas-app .approval-card button,
+.atlas-app .file-button,
+.atlas-app .native-send {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 8px 8px 8px 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+.atlas-app .file-button input,
+.atlas-app .hidden-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+.atlas-app .file-button:focus-within,
+.atlas-app label.icon-button:focus-within {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+}
+.atlas-app .attachment,
+.atlas-app .context-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 8px 10px 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.atlas-app .attachment {
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.atlas-app .composer-wrap > p {
+  font-size: 12px;
+}
+.atlas-app .composer textarea {
+  height: 62px;
+  min-height: 62px;
+  max-height: 240px;
+  resize: vertical;
+  font-size: 15px;
+}
+.atlas-app .composer > div > span {
+  font-size: 12px;
+  gap: 9px;
+}
+.atlas-app .bar-track {
+  position: relative;
+  overflow: visible;
+  background: var(--line);
+}
+.atlas-app .bar-track > div {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: #567649;
+}
+.atlas-app .bar-track > div.negative {
+  background: #a65347;
+}
+.atlas-app .bar-track .zero-line {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 1px;
+  background: var(--muted);
+  z-index: 1;
+}
+.atlas-app .atlas-form {
+  display: grid;
+  gap: 16px;
+}
+.atlas-app .atlas-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+}
+.atlas-app .atlas-form small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.atlas-app .canvas-sources {
+  margin-top: 20px;
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+.atlas-app .version-picker {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+  margin-bottom: 18px;
+}
+.atlas-app .canvas-tabs {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.atlas-app .canvas-tabs button {
+  font-size: 13px;
+}
+.atlas-app .saved-grid {
+  margin-top: 18px;
+}
+.atlas-app .message-warning {
+  border-left: 3px solid #a65347;
+  padding-left: 12px;
+  font-size: 13px !important;
+}
+.atlas-app[data-theme="dark"] {
+  --bg: #18221c;
+  --surface: #202d24;
+  --text: #e4ecdf;
+  --muted: #b4c4ae;
+  --line: #3c4e3f;
+  --green: #b3d68c;
+  --lime: #334c30;
+  color-scheme: dark;
+}
+.atlas-app[data-theme="dark"] .atlas-sidebar,
+.atlas-app[data-theme="dark"] .topbar,
+.atlas-app[data-theme="dark"] .canvas-pane {
+  background: #1c291f;
+}
+.atlas-app[data-theme="dark"] .new-chat,
+.atlas-app[data-theme="dark"] .suggestions button,
+.atlas-app[data-theme="dark"] .example,
+.atlas-app[data-theme="dark"] .composer,
+.atlas-app[data-theme="dark"] .atlas-block,
+.atlas-app[data-theme="dark"] .setting-card,
+.atlas-app[data-theme="dark"] .saved-grid > button {
+  background: var(--surface) !important;
+  border-color: var(--line) !important;
+}
+.atlas-app[data-theme="dark"] h1,
+.atlas-app[data-theme="dark"] h2,
+.atlas-app[data-theme="dark"] h3,
+.atlas-app[data-theme="dark"] .welcome h1 span,
+.atlas-app[data-theme="dark"] .topbar b,
+.atlas-app[data-theme="dark"] .metric > strong,
+.atlas-app[data-theme="dark"] .calc-result strong,
+.atlas-app[data-theme="dark"] .slider b {
+  color: var(--text);
+}
+.atlas-app[data-theme="dark"] .comparison-grid button,
+.atlas-app[data-theme="dark"] .calc-result,
+.atlas-app[data-theme="dark"] .table-search,
+.atlas-app[data-theme="dark"] .json-view,
+.atlas-app[data-theme="dark"] .local-card,
+.atlas-app[data-theme="dark"] .alert,
+.atlas-app[data-theme="dark"] .inline-action,
+.atlas-app[data-theme="dark"] .atlas-sidebar button.active,
+.atlas-app[data-theme="dark"] .empty {
+  background: #2b3d2b !important;
+  border-color: var(--line) !important;
+  color: var(--text);
+}
+.atlas-app[data-theme="dark"] .setting-card p,
+.atlas-app[data-theme="dark"] .welcome > p,
+.atlas-app[data-theme="dark"] .json-view pre,
+.atlas-app[data-theme="dark"] .prose,
+.atlas-app[data-theme="dark"] .library > p,
+.atlas-app[data-theme="dark"] .settings > p {
+  color: var(--muted);
+}
+.atlas-app[data-theme="dark"] .example-art {
+  background: #34462f;
+  color: #b1c998;
+}
+.atlas-app[data-theme="dark"] .connection {
+  color: var(--muted) !important;
+}
+.atlas-app[data-theme="dark"] .primary {
+  background: #b3d68c;
+  color: #18221c;
+}
+@media (min-width: 901px) {
+  .atlas-app .workspace {
+    height: calc(100dvh - 76px);
+    min-height: 0;
+  }
+  .atlas-app .conversation-pane {
+    overflow: auto;
+  }
+  .atlas-app .messages {
+    overflow: auto;
+  }
+  .atlas-app .canvas-pane {
+    height: 100%;
+    overflow: auto;
+  }
+  .atlas-app .composer-wrap {
+    position: static;
+  }
+  .atlas-app .canvas-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--surface);
+  }
+}
+@media (max-width: 650px) {
+  .atlas-app .topbar > div > b {
+    font-size: 12px;
+  }
+  .atlas-app .connection {
+    font-size: 11px !important;
+  }
+  .atlas-app .canvas-toolbar {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .atlas-app .brand small {
+    font-size: 11px;
+  }
+  .atlas-app .with-canvas .conversation-pane {
+    order: 2;
+  }
+  .atlas-app .with-canvas .canvas-pane {
+    order: 1;
+  }
+}
+
+.atlas-app .brand small {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  white-space: nowrap;
+}
+.atlas-app[data-theme="dark"] .atlas-sidebar nav button,
+.atlas-app[data-theme="dark"] .sidebar-bottom > button,
+.atlas-app[data-theme="dark"] .recent-chats button,
+.atlas-app[data-theme="dark"] .sidebar-bottom .icon-button {
+  color: var(--muted);
+}
+@media (min-width: 901px) {
+  .atlas-app .conversation-pane > .welcome,
+  .atlas-app .conversation-pane > .settings,
+  .atlas-app .conversation-pane > .library {
+    overflow: auto;
+    min-height: 0;
+    flex: 1;
+  }
+  .atlas-app .composer-wrap {
+    flex-shrink: 0;
+  }
+  .atlas-app .messages {
+    min-height: 0;
+  }
+}

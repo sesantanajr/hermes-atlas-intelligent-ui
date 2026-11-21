@@ -1,0 +1,26 @@
+{
+  "environment": {
+    "python": "3.14.7",
+    "os": "Windows",
+    "scope": "local synthetic microbenchmark, not a provider comparison"
+  },
+  "sqlite": {
+    "writes": 100,
+    "workers": 4,
+    "unique_revisions": 100,
+    "seconds": 0.592,
+    "write_median_ms": 4.653,
+    "write_p95_ms": 87.953,
+    "read_median_ms": 0.433
+  },
+  "protocol": {
+    "instruction_bytes": 1165,
+    "full_schema_bytes": 8970,
+    "history_resent": false
+  },
+  "bundles": {
+    "dist\\assets\\index-8dILYgCy.js": 437661,
+    "dashboard\\dist\\index.js": 208662,
+    "desktop\\plugin.js": 237590
+  }
+}

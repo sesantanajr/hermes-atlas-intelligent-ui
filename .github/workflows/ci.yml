@@ -17,6 +17,8 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - run: git diff --exit-code -- dashboard/dist
+      - run: git diff --exit-code -- dist dashboard/dist desktop
       - run: python -m pip install -e '.[test]'
       - run: python -m pytest -q
+      - run: python -m pip wheel --no-deps --wheel-dir work/wheels .
+      - run: python scripts/verify-wheel.py work/wheels

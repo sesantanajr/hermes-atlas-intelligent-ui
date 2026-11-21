@@ -1,5 +1,5 @@
 from typing import Annotated, Literal
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, HttpUrl
 
 Text = Annotated[str, Field(max_length=12000)]
 Label = Annotated[str, Field(min_length=1, max_length=160)]
@@ -95,7 +95,47 @@ class Calculator(Block):
         return self
 
 
-Component = Annotated[TextBlock | Metric | Chart | Table | Checklist | Comparison | Calculator, Field(discriminator="type")]
+class FormField(Strict):
+    id: Identifier
+    label: Label
+    kind: Literal["text", "number", "select"] = "text"
+    options: Annotated[list[Label], Field(max_length=30)] = []
+    required: bool = False
+
+    @model_validator(mode="after")
+    def valid_options(self):
+        if self.kind == "select" and not self.options:
+            raise ValueError("Select needs options")
+        return self
+
+
+class Form(Block):
+    type: Literal["form"]
+    fields: Annotated[list[FormField], Field(min_length=1, max_length=12)]
+    submit_label: Label = "Enviar ao Hermes"
+
+    @model_validator(mode="after")
+    def unique_fields(self):
+        if len({f.id for f in self.fields}) != len(self.fields):
+            raise ValueError("Form field ids must be unique")
+        return self
+
+
+class Interaction(Strict):
+    checked: Annotated[list[Annotated[int, Field(ge=0, le=39)]], Field(max_length=40)] = []
+    selected: Annotated[int | None, Field(ge=0, le=3)] = None
+    query: Annotated[str, Field(max_length=300)] = ""
+    sort_column: Annotated[int | None, Field(ge=0, le=11)] = None
+    sort_reverse: bool = False
+    fields: dict[Identifier, Annotated[str, Field(max_length=4000)]] = {}
+
+
+class Source(Strict):
+    title: Label
+    url: HttpUrl
+
+
+Component = Annotated[TextBlock | Metric | Chart | Table | Checklist | Comparison | Calculator | Form, Field(discriminator="type")]
 
 
 class Canvas(Strict):
@@ -104,9 +144,15 @@ class Canvas(Strict):
     title: Label
     description: Text = ""
     blocks: Annotated[list[Component], Field(min_length=1, max_length=32)]
+    state: dict[Identifier, Interaction] = {}
+    sources: Annotated[list[Source], Field(max_length=20)] = []
 
     @model_validator(mode="after")
     def unique_ids(self):
         if len({block.id for block in self.blocks}) != len(self.blocks):
             raise ValueError("Block ids must be unique")
+        if not set(self.state).issubset({b.id for b in self.blocks}):
+            raise ValueError("State must reference an existing block")
+        if any(len(s.fields) > 12 for s in self.state.values()):
+            raise ValueError("Too many field values")
         return self

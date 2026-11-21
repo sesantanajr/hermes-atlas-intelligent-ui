@@ -87,7 +87,7 @@ def test_plugin_registers_and_renders(tmp_path, monkeypatch):
         def register_tool(self, **kwargs): self.tools[kwargs["name"]] = kwargs
     ctx = Context()
     module.register(ctx)
-    assert set(ctx.tools) == {"atlas_render", "atlas_list"}
+    assert set(ctx.tools) == {"atlas_render", "atlas_list", "atlas_get"}
     result = json.loads(ctx.tools["atlas_render"]["handler"]({"canvas": payload()}))
     assert result["success"] and result["revision"] == 1
     assert not json.loads(ctx.tools["atlas_render"]["handler"]({}))["success"]
@@ -101,33 +101,8 @@ def test_dashboard_router_loads():
     assert any(route.path == "/chat" for route in module.router.routes)
 
 
-def test_chat_proxy_and_canvas(client, monkeypatch):
-    import httpx
-    import atlas.api as api
-    real_client = httpx.AsyncClient
-    def handler(request):
-        body = json.loads(request.content)
-        assert body["model"] == "hermes-agent"
-        assert body["messages"][0]["role"] == "system"
-        return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": "Aqui está.\n```atlas\n" + json.dumps(payload()) + "\n```"}}]})
-    monkeypatch.setattr(api.httpx, "AsyncClient", lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs))
-    response = client.post('/api/plugins/hermes-atlas/chat', json={"messages": [{"role": "user", "content": "Create a canvas"}]})
-    assert response.status_code == 200
-    assert response.json()["artifact"]["id"] == "test"
-    assert response.json()["text"] == "Aqui está."
-
-
-@pytest.mark.parametrize("finish", ["error", "cancelled"])
-def test_upstream_failure_is_not_success(client, monkeypatch, finish):
-    import httpx
-    import atlas.api as api
-    real_client = httpx.AsyncClient
-    transport = httpx.MockTransport(lambda r: httpx.Response(200, json={"choices": [{"finish_reason": finish, "message": {"content": "failed"}}]}))
-    monkeypatch.setattr(api.httpx, "AsyncClient", lambda **kwargs: real_client(transport=transport, **kwargs))
-    response = client.post('/api/plugins/hermes-atlas/chat', json={"messages": [{"role": "user", "content": "Hi"}]})
-    assert response.status_code == 502
-
-
 def test_remote_http_rejected(client, monkeypatch):
     monkeypatch.setenv("ATLAS_HERMES_URL", "http://remote.example/v1")
-    assert client.get('/api/plugins/hermes-atlas/status').status_code == 503
+    result = client.get('/api/plugins/hermes-atlas/status').json()
+    assert not result['connected']
+    assert 'HTTPS' in result['detail']

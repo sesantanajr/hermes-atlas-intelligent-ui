@@ -7,6 +7,8 @@ __pycache__/
 .env
 *.db
 *.db-*
-/dist/
+/atlas/static/
+/atlas/plugin/
+/build/
 work/
-# dashboard/dist is intentionally committed: Hermes loads prebuilt plugins.
+# dist, dashboard/dist and desktop are committed for installs without Node.

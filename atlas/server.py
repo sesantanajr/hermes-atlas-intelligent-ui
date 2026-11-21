@@ -1,12 +1,20 @@
 """Loopback-only standalone host. Dashboard deployment uses Hermes auth instead."""
 from pathlib import Path
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from .api import router
+from . import gateway, runs
 
-app = FastAPI(title="Hermes Atlas", docs_url=None, redoc_url=None)
+@asynccontextmanager
+async def lifespan(app):
+    yield
+    await runs.shutdown()
+    await gateway.close()
+
+app = FastAPI(title="Hermes Atlas", docs_url=None, redoc_url=None, lifespan=lifespan)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "[::1]"])
 
 
@@ -26,7 +34,9 @@ async def local_guard(request: Request, call_next):
     return response
 
 app.include_router(router, prefix="/api/plugins/hermes-atlas")
-dist = Path(__file__).resolve().parent.parent / "dist"
+dist = Path(__file__).resolve().parent / "static"
+if not dist.is_dir():
+    dist = Path(__file__).resolve().parent.parent / "dist"
 if dist.is_dir():
     app.mount("/", StaticFiles(directory=dist, html=True), name="ui")
 
