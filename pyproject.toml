@@ -1,6 +1,5 @@
-[build-system]
-requires = ["setuptools>=75"]
-build-backend = "setuptools.build_meta"
+# Hermes gives dependency-only workspace members a unique name per profile.
+# setup.py also supports the standard setuptools fallback for wheel builds.
 
 [project]
 name = "hermes-atlas-intelligent-ui"
