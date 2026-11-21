@@ -1,0 +1,12 @@
+/* Keep secondary copy legible at native browser zoom. */
+.atlas-app{font-size:16px}
+.atlas-app .eyebrow,.atlas-app .sidebar-label,.atlas-app .canvas-eyebrow,.atlas-app .section-heading>span{font-size:11px}
+.atlas-app .welcome>p,.atlas-app .prose,.atlas-app .message p,.atlas-app .settings>p,.atlas-app .library>p{font-size:16px;color:#62715a}
+.atlas-app .suggestions b,.atlas-app .example-caption,.atlas-app .atlas-block h3,.atlas-app .checks label,.atlas-app .comparison-grid strong,.atlas-app .setting-card p,.atlas-app .setting-card li,.atlas-app .composer textarea{font-size:14px}
+.atlas-app .suggestions small,.atlas-app .example>small,.atlas-app .section-heading p,.atlas-app .canvas-content>p,.atlas-app .comparison-grid p,.atlas-app .comparison-grid span,.atlas-app .metric>span,.atlas-app .metric>p,.atlas-app .bar-row,.atlas-app .slider small,.atlas-app .calc-result small,.atlas-app .checks small{font-size:12px;color:#6d7e60}
+.atlas-app .connection{font-size:12px!important}
+.atlas-app .topbar>div,.atlas-app .recent-chats button,.atlas-app .recent-chats p,.atlas-app .profile,.atlas-app .local-card,.atlas-app .canvas-tabs button,.atlas-app .composer>div>span{font-size:12px}
+.atlas-app .composer-wrap>p,.atlas-app .composer small,.atlas-app .canvas-footer{font-size:11px;color:#748368}
+.atlas-app .saved-grid p,.atlas-app .canvas-toolbar small{font-size:12px}
+.atlas-app .alert{font-size:14px}
+@media(max-width:800px){.atlas-app .atlas-sidebar{display:none}.atlas-app:not(.sidebar-hidden) .atlas-sidebar{display:flex;position:fixed;z-index:20;box-shadow:10px 0 30px #21362125;width:245px;top:76px;height:calc(100vh - 76px)}}

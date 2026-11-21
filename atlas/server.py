@@ -1,0 +1,40 @@
+"""Loopback-only standalone host. Dashboard deployment uses Hermes auth instead."""
+from pathlib import Path
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+from .api import router
+
+app = FastAPI(title="Hermes Atlas", docs_url=None, redoc_url=None)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "[::1]"])
+
+
+@app.middleware("http")
+async def local_guard(request: Request, call_next):
+    origin = request.headers.get("origin")
+    expected = str(request.base_url).rstrip("/")
+    if request.method not in {"GET", "HEAD"}:
+        if request.headers.get("sec-fetch-site") == "cross-site" or (origin and origin != expected):
+            return JSONResponse({"detail": "Origin rejected"}, status_code=403)
+        if "application/json" not in request.headers.get("content-type", ""):
+            return JSONResponse({"detail": "JSON required"}, status_code=415)
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'"
+    return response
+
+app.include_router(router, prefix="/api/plugins/hermes-atlas")
+dist = Path(__file__).resolve().parent.parent / "dist"
+if dist.is_dir():
+    app.mount("/", StaticFiles(directory=dist, html=True), name="ui")
+
+
+def main():
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=7331)
+
+
+if __name__ == "__main__":
+    main()
