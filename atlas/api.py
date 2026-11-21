@@ -39,7 +39,7 @@ def component(kind: str):
 
 @router.get('/status')
 async def status(store: DB, force: bool = False):
-    result = {'connected': False, 'mode': 'offline', 'version': '0.5.0', 'scope': store.scope, 'features': {}}
+    result = {'connected': False, 'mode': 'offline', 'version': '0.5.1', 'scope': store.scope, 'features': {}}
     try:
         caps = await gateway.capabilities(force=force)
         result.update(connected=caps['atlas_compatible'], mode='hermes', features=caps['features'], model=caps.get('model', 'hermes-agent'))
@@ -197,13 +197,21 @@ async def create_run(body: RunRequest, store: DB):
 
 
 @router.get('/runs/{id}')
-async def get_run(id: UUID, store: DB):
-    run = await asyncio.to_thread(store.doc, 'run', str(id))
-    if not run:
+async def get_run(id: UUID, store: DB, cursor: Annotated[str | None, Query(max_length=120)] = None):
+    known = cursor.partition('.')[2] if cursor and cursor.startswith(('active.', 'idle.')) else None
+    observed = await asyncio.to_thread(store.observe, str(id), known)
+    if observed is None:
         raise HTTPException(404, 'Execução não encontrada neste perfil.')
-    if run['status'] not in runs.TERMINAL and run['status'] != 'unknown':
+    token, run = observed
+    if run is None:
+        # Resume a worker after process restart even when the client knows the last checkpoint.
+        if cursor and cursor.startswith('active.'):
+            runs.ensure(store, str(id))
+        return {'id': str(id), 'unchanged': True, 'cursor': cursor}
+    active = run['status'] not in runs.TERMINAL and run['status'] != 'unknown'
+    if active:
         runs.ensure(store, run['id'])
-    return runs.public(run)
+    return {**runs.public(run), 'cursor': ('active.' if active else 'idle.') + token}
 
 
 class Control(Strict):

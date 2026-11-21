@@ -1,5 +1,5 @@
 name: hermes-atlas
-version: "0.5.0"
+version: "0.5.1"
 description: "Hermes Atlas Intelligent UI — validated interactive canvases for Hermes Agent"
 author: sesantanajr
 provides_tools:

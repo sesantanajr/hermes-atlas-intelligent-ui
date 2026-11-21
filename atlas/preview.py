@@ -3,6 +3,7 @@ import json
 import re
 
 from .models import Canvas
+from .delivery import display_text
 
 _FENCE = re.compile(r"(?m)^```atlas[ \t]*\r?\n")
 _SPACE = re.compile(r"[ \r\t\n]*")
@@ -55,8 +56,9 @@ def decorate_live(snapshot):
     text = snapshot.get("text") or ""
     match = _FENCE.search(text)
     if not match:
-        return snapshot
-    public = {**snapshot, "text": text[:match.start()].rstrip()}
+        visible = display_text(text, streaming=True)
+        return snapshot if visible == text else {**snapshot, 'text': visible}
+    public = {**snapshot, "text": display_text(text[:match.start()].rstrip())}
     try:
         canvas = _blocks(text[match.end():match.end() + _PREVIEW_LIMIT])
     except (ValueError, RecursionError):

@@ -135,6 +135,14 @@
   border-left: 3px solid var(--green);
   color: var(--muted);
 }
+.atlas-app .message-receipt {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--muted);
+  margin: 0.45rem 0;
+  font-size: 0.875rem;
+}
 .atlas-app .tool-event {
   display: flex;
   gap: 8px;

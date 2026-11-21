@@ -33,6 +33,11 @@ import { Canvas } from "./Canvas";
 
 import { LiveCanvasPreview } from "./LiveCanvasPreview";
 import { RunControl } from "./RunControl";
+import {
+  activityEvents,
+  assistantText,
+  conversationMessages,
+} from "./replyDelivery";
 import { useComposer } from "./useComposer";
 import { useDirectory } from "./useDirectory";
 import { useWorkspace, type WorkspaceSnapshot } from "./useWorkspace";
@@ -137,6 +142,10 @@ export function App({
     setFiles: setAttachments,
   } = composer;
   const [run, setRun] = useState<Run | null>(null);
+  const [pollFailure, setPollFailure] = useState<{
+    id: string;
+    detail: string;
+  } | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [loaded, setLoaded] = useState(false);
@@ -172,11 +181,29 @@ export function App({
   const mounted = useRef(true);
   const ready = useRef(false);
   const scope = useRef("");
-  const end = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const followBottom = useRef(true);
   const canvas = workspace.canvas;
   const busy = submitting || !!(run && !terminal.has(run.status));
+  const messages = useMemo(
+    () => conversationMessages(current?.messages ?? []),
+    [current?.messages],
+  );
+  const liveText = useMemo(() => {
+    if (!run || terminal.has(run.status)) return "";
+    const fence = /^```atlas[ \t]*\r?\n/m.exec(run.text);
+    return assistantText(
+      fence ? run.text.slice(0, fence.index) : run.text,
+      true,
+    );
+  }, [run?.text, run?.status]);
+  const events = useMemo(
+    () => activityEvents(run?.events ?? []),
+    [run?.events],
+  );
+  const connectionIssue =
+    (pollFailure && pollFailure.id === run?.id && pollFailure.detail) ||
+    run?.connection_error;
   const fail = (e: unknown) =>
     setError(e instanceof Error ? e.message : String(e));
   const refreshLists = async () => {
@@ -206,6 +233,7 @@ export function App({
       : null;
     if (!mounted.current || ticket !== navigation.current) return;
     composer.select(scope.current, id);
+    followBottom.current = true;
     setCurrent(c);
     setRun(active);
     setWorkspace((w) => ({ ...w, chat_id: id }));
@@ -221,9 +249,10 @@ export function App({
   useEffect(() => {
     mounted.current = true;
     let alive = true;
-    async function boot() {
+    let checking = true;
+    async function boot(knownStatus?: Status) {
       try {
-        const s = await api<Status>("/status");
+        const s = knownStatus ?? (await api<Status>("/status"));
         if (!alive) return;
         scope.current = s.scope;
         client.scope(s.scope);
@@ -246,9 +275,12 @@ export function App({
         if (alive) fail(e);
       }
     }
-    void boot();
+    void boot().finally(() => {
+      checking = false;
+    });
     const timer = setInterval(async () => {
-      if (document.hidden) return;
+      if (document.hidden || checking) return;
+      checking = true;
       try {
         const s = await api<Status>("/status");
         if (!alive) return;
@@ -267,7 +299,7 @@ export function App({
           }
           setPast([]);
           setFuture([]);
-          await boot();
+          await boot(s);
         } else setStatus(s);
       } catch (e) {
         if (alive) {
@@ -280,6 +312,8 @@ export function App({
           sync.disconnect();
           fail(e);
         }
+      } finally {
+        checking = false;
       }
     }, 5000);
     return () => {
@@ -293,37 +327,89 @@ export function App({
     if (!run || terminal.has(run.status)) return;
     let alive = true;
     let timer: ReturnType<typeof setTimeout>;
+    let cursor = run.cursor;
+    let failures = 0;
+    setPollFailure(null);
+    const recovered = () => {
+      if (failures) setPollFailure(null);
+      failures = 0;
+    };
+    const scopeAtStart = scope.current;
     const poll = async () => {
+      const ticket = navigation.current;
+      const stillCurrent = () =>
+        alive &&
+        ticket === navigation.current &&
+        scope.current === scopeAtStart;
+      let finished = false;
       try {
-        const r = await api<Run>(`/runs/${run.id}`);
-        if (!alive) return;
+        const path =
+          "/runs/" +
+          encodeURIComponent(run.id) +
+          (cursor ? "?cursor=" + encodeURIComponent(cursor) : "");
+        const r = await api<
+          Run | { id: string; unchanged: true; cursor: string }
+        >(path);
+        if (!stillCurrent()) return;
+        if (r.id !== run.id)
+          throw new Error("A execução recebida tem outra identificação.");
+        if ("unchanged" in r) {
+          recovered();
+          cursor = r.cursor;
+          return;
+        }
+        if (r.conversation_id !== run.conversation_id)
+          throw new Error("A execução pertence a outra conversa.");
         if (terminal.has(r.status)) {
           const conversation = await api<Conversation>(
             `/conversations/${r.conversation_id}`,
           );
-          if (!alive) return;
+          if (!stillCurrent()) return;
+          if (conversation.id !== r.conversation_id)
+            throw new Error("O histórico recebido pertence a outra conversa.");
+          recovered();
+          finished = true;
           setCurrent(conversation);
           setRun(r);
           showTerminal(r);
           await refreshLists();
           return;
         }
+        recovered();
+        cursor = r.cursor;
         setRun(r);
       } catch (e) {
-        if (alive) fail(e);
+        if (!stillCurrent()) return;
+        failures++;
+        const detail = e instanceof Error ? e.message : String(e);
+        setPollFailure((previous) =>
+          previous?.id === run.id && previous.detail === detail
+            ? previous
+            : { id: run.id, detail },
+        );
+      } finally {
+        if (alive && !finished) {
+          const delay = failures
+            ? Math.min(8000, 900 * 2 ** Math.min(failures - 1, 4))
+            : 450;
+          timer = setTimeout(
+            poll,
+            document.hidden ? Math.max(delay, 3000) : delay,
+          );
+        }
       }
-      if (alive) timer = setTimeout(poll, document.hidden ? 3000 : 450);
     };
     void poll();
     return () => {
       alive = false;
       clearTimeout(timer);
     };
-  }, [run?.id, client]);
+  }, [run?.id, run?.conversation_id, client]);
 
   useEffect(() => {
-    if (followBottom.current) end.current?.scrollIntoView({ block: "end" });
-  }, [current?.messages.length, run?.text]);
+    const panel = scroller.current;
+    if (panel && followBottom.current) panel.scrollTop = panel.scrollHeight;
+  }, [current?.id, messages.length, liveText, run?.preview?.blocks.length]);
   useEffect(() => {
     if (window.innerWidth <= 800) setSidebar(false);
   }, [view]);
@@ -673,7 +759,7 @@ export function App({
           <div className="profile">
             <span>HA</span>
             <div>
-              Atlas Intelligent UI<small>Versão 0.5.0</small>
+              Atlas Intelligent UI<small>Versão 0.5.1</small>
             </div>
           </div>
         </div>
@@ -993,7 +1079,10 @@ export function App({
                           className="icon-button"
                           aria-label="Exportar conversa"
                           onClick={() =>
-                            download("atlas-conversa.json", current)
+                            download("atlas-conversa.json", {
+                              ...current,
+                              messages,
+                            })
                           }
                         >
                           <Download size={17} />
@@ -1010,62 +1099,87 @@ export function App({
                     )}
                   </div>
                 </div>
-                {current?.messages.map((m) => (
-                  <article key={m.id} className={`message ${m.role}`}>
-                    <span className="avatar">
-                      {m.role === "user" ? "Você" : <Aperture size={18} />}
-                    </span>
-                    <div>
-                      <div className="message-meta">
-                        <strong>
-                          {m.role === "user" ? "Você" : "Hermes Atlas"}
-                        </strong>
-                        <time dateTime={m.created}>
-                          {new Date(m.created).toLocaleTimeString("pt-BR", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </time>
-                        <button
-                          className="icon-button"
-                          aria-label="Copiar mensagem"
-                          onClick={() => void copy(m.content)}
-                        >
-                          <Copy size={14} />
-                        </button>
-                        {m.role === "user" && (
+                {messages.map((m, index) =>
+                  m.delivery === "silent" &&
+                  !m.content &&
+                  !m.artifact &&
+                  !m.warning ? (
+                    <p
+                      className="message-receipt"
+                      role={
+                        run?.status === "completed" &&
+                        index === messages.length - 1
+                          ? "status"
+                          : undefined
+                      }
+                      key={m.id}
+                    >
+                      <Check size={15} aria-hidden="true" />O Hermes concluiu o
+                      pedido sem enviar uma resposta.
+                    </p>
+                  ) : (
+                    <article key={m.id} className={`message ${m.role}`}>
+                      <span className="avatar">
+                        {m.role === "user" ? "Você" : <Aperture size={18} />}
+                      </span>
+                      <div>
+                        <div className="message-meta">
+                          <strong>
+                            {m.role === "user" ? "Você" : "Hermes Atlas"}
+                          </strong>
+                          <time dateTime={m.created}>
+                            {new Date(m.created).toLocaleTimeString("pt-BR", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </time>
+                          {m.content.trim() && (
+                            <button
+                              className="icon-button"
+                              aria-label="Copiar mensagem"
+                              onClick={() => void copy(m.content)}
+                            >
+                              <Copy size={14} />
+                            </button>
+                          )}
+                          {m.role === "user" && (
+                            <button
+                              className="icon-button"
+                              aria-label="Usar mensagem novamente"
+                              onClick={() => setDraft(m.content)}
+                            >
+                              <Pencil size={14} />
+                            </button>
+                          )}
+                        </div>
+                        {!!m.content.trim() && <Markdown text={m.content} />}
+                        {m.warning && (
+                          <p className="message-warning">{m.warning}</p>
+                        )}
+                        {m.artifact && (
                           <button
-                            className="icon-button"
-                            aria-label="Usar mensagem novamente"
-                            onClick={() => setDraft(m.content)}
+                            className="inline-action"
+                            onClick={() =>
+                              void openSaved(
+                                m.artifact!.id,
+                                m.artifact!.revision,
+                              )
+                            }
                           >
-                            <Pencil size={14} />
+                            <LayoutGrid size={16} /> Abrir canvas · v
+                            {m.artifact.revision}
                           </button>
                         )}
+                        {m.usage?.total_tokens != null && (
+                          <small>
+                            {m.usage.total_tokens.toLocaleString("pt-BR")}{" "}
+                            tokens
+                          </small>
+                        )}
                       </div>
-                      <Markdown text={m.content} />
-                      {m.warning && (
-                        <p className="message-warning">{m.warning}</p>
-                      )}
-                      {m.artifact && (
-                        <button
-                          className="inline-action"
-                          onClick={() =>
-                            void openSaved(m.artifact!.id, m.artifact!.revision)
-                          }
-                        >
-                          <LayoutGrid size={16} /> Abrir canvas · v
-                          {m.artifact.revision}
-                        </button>
-                      )}
-                      {m.usage?.total_tokens != null && (
-                        <small>
-                          {m.usage.total_tokens.toLocaleString("pt-BR")} tokens
-                        </small>
-                      )}
-                    </div>
-                  </article>
-                ))}
+                    </article>
+                  ),
+                )}
                 {run && !terminal.has(run.status) && (
                   <article className="message assistant live">
                     <span className="avatar">
@@ -1076,32 +1190,27 @@ export function App({
                         {stateLabel[run.status] || run.status}
                         <i />
                       </div>
-                      {run.text && (
-                        <Markdown
-                          text={run.text.replace(
-                            /\n```atlas[\s\S]*$/,
-                            "\n\n*Construindo o canvas…*",
-                          )}
-                        />
-                      )}
+                      {!!liveText.trim() && <Markdown text={liveText} />}
                       <LiveCanvasPreview canvas={run.preview ?? undefined} />
-                      <details open={!!run.events.length}>
-                        <summary>
-                          Atividade do agente ({run.events.length})
-                        </summary>
-                        {run.events.slice(-12).map((e, i) => (
-                          <div className="tool-event" key={e.seq ?? i}>
-                            <Activity size={13} />
-                            <span>
-                              {e.tool || e.text || e.event || e.type}
-                              {e.preview && <small>{e.preview}</small>}
-                            </span>
-                          </div>
-                        ))}
-                      </details>
-                      {run.connection_error && (
+                      {!!events.length && (
+                        <details>
+                          <summary>
+                            Atividade do agente ({events.length})
+                          </summary>
+                          {events.slice(-12).map((e, i) => (
+                            <div className="tool-event" key={e.seq ?? i}>
+                              <Activity size={13} />
+                              <span>
+                                {e.tool || e.text || e.event || e.type}
+                                {e.preview && <small>{e.preview}</small>}
+                              </span>
+                            </div>
+                          ))}
+                        </details>
+                      )}
+                      {connectionIssue && (
                         <p role="status">
-                          {run.connection_error} Reconectando à mesma execução…
+                          {connectionIssue} Reconectando à mesma execução…
                         </p>
                       )}
                       {run.pending_controls?.map((p) => (
@@ -1138,7 +1247,6 @@ export function App({
                     </div>
                   </article>
                 )}
-                <div ref={end} />
               </div>
             )}
             {view === "library" && (

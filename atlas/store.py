@@ -3,9 +3,10 @@ import json
 import os
 import sqlite3
 from contextlib import closing
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from .models import Canvas
+from .delivery import present_conversation, present_reply
 from .workspace_identity import bind_workspace
 
 
@@ -21,6 +22,19 @@ def data_dir():
             root = Path(os.environ.get("HERMES_HOME", str(Path.home() / ".hermes"))) / "plugin-data" / "hermes-atlas"
     root.mkdir(parents=True, exist_ok=True)
     return root
+
+
+def _next_run_stamp(previous):
+    # Keep a run's cursor moving if the clock is adjusted or two writes share a tick.
+    now = datetime.now(timezone.utc)
+    if previous and previous >= now.isoformat():
+        try:
+            prior = datetime.fromisoformat(previous)
+            if prior.tzinfo and prior >= now:
+                now = prior + timedelta(microseconds=1)
+        except ValueError:
+            pass  # Older or imported databases may have non-ISO timestamps.
+    return now.isoformat()
 
 
 class Store:
@@ -79,6 +93,7 @@ class Store:
         db = sqlite3.connect(self.path, timeout=10)
         db.row_factory = sqlite3.Row
         db.create_function("atlas_casefold", 1, str.casefold, deterministic=True)
+        db.create_function("atlas_next_run_stamp", 1, _next_run_stamp)
         return db
 
     def save(self, canvas: Canvas, expected_revision=None, dedup_key=None):
@@ -128,7 +143,20 @@ class Store:
     def doc(self, kind, id):
         with closing(self.connect()) as db:
             row = db.execute("SELECT payload FROM documents WHERE kind=? AND id=? AND owner=?", (kind, id, self.scope)).fetchone()
-            return json.loads(row[0]) if row else None
+            record = json.loads(row[0]) if row else None
+            return present_conversation(record) if kind == 'conversation' else record
+
+    def observe(self, id, cursor=None):
+        """Read the change token and its snapshot atomically. An unchanged poll skips the JSON."""
+        with closing(self.connect()) as db:
+            row = db.execute("""
+                SELECT token, CASE WHEN token = ? THEN NULL ELSE payload END
+                FROM (SELECT rowid || ':' || updated AS token, payload
+                      FROM documents WHERE kind='run' AND owner=? AND id=?)
+            """, (cursor, self.scope, id)).fetchone()
+            if row is None:
+                return None
+            return row[0], json.loads(row[1]) if row[1] is not None else None
 
     @staticmethod
     def _workspace_token(value):
@@ -164,10 +192,10 @@ class Store:
         # A late checkpoint must never resurrect one of those records.
         with closing(self.connect()) as db, db:
             updated = db.execute("""
-                UPDATE documents SET payload=?, updated=?
+                UPDATE documents SET payload=?, updated=atlas_next_run_stamp(updated)
                 WHERE kind='run' AND owner=? AND id=?
                   AND json_extract(payload, '$.status') NOT IN ('completed','failed','cancelled','interrupted','unknown')
-            """, (json.dumps(run, ensure_ascii=False), datetime.now(timezone.utc).isoformat(), self.scope, run['id']))
+            """, (json.dumps(run, ensure_ascii=False), self.scope, run['id']))
             return updated.rowcount == 1
 
     def conversations(self, offset=0, limit=50, q=''):
@@ -187,7 +215,7 @@ class Store:
                 UPDATE documents SET payload=json_set(payload,'$.title',?), updated=?
                 WHERE kind='conversation' AND owner=? AND id=? RETURNING payload
             """, (title, datetime.now(timezone.utc).isoformat(), self.scope, id)).fetchone()
-            return json.loads(row[0]) if row else None
+            return present_conversation(json.loads(row[0])) if row else None
 
     @staticmethod
     def _mark_deleted(db, owner, kind, id):
@@ -226,7 +254,7 @@ class Store:
     def resume_remote_unknown(self, id):
         with closing(self.connect()) as db, db:
             db.execute("""
-                UPDATE documents SET payload=json_set(payload, '$.status', 'running')
+                UPDATE documents SET payload=json_set(payload, '$.status', 'running'), updated=atlas_next_run_stamp(updated)
                 WHERE owner=? AND kind='run' AND id=? AND json_extract(payload, '$.status')='unknown'
                   AND json_extract(payload, '$.remote_id') IS NOT NULL
             """, (self.scope, id))
@@ -264,6 +292,7 @@ class Store:
             return self.put('run', request_id, run, db)
 
     def finish(self, run):
+        run = present_reply(run, 'text')
         with closing(self.connect()) as db, db:
             db.execute("BEGIN IMMEDIATE")
             row = db.execute("SELECT payload FROM documents WHERE kind='conversation' AND id=? AND owner=?", (run['conversation_id'], self.scope)).fetchone()
@@ -272,7 +301,13 @@ class Store:
                 if conversation.get('active_run') != run['id']:
                     return
                 if not any(m['id'] == run['id'] + '-answer' for m in conversation['messages']):
-                    conversation['messages'].append({"id": run['id'] + '-answer', "role": "assistant", "content": run['text'], "created": datetime.now(timezone.utc).isoformat(), "artifact": {k: run['artifact'][k] for k in ('id', 'revision')} if run.get('artifact') else None, "status": run['status'], "warning": run.get('warning'), "usage": run.get('usage')})
+                    answer = {"id": run['id'] + '-answer', "role": "assistant", "content": run['text'],
+                              "created": datetime.now(timezone.utc).isoformat(),
+                              "artifact": {k: run['artifact'][k] for k in ('id', 'revision')} if run.get('artifact') else None,
+                              "status": run['status'], "warning": run.get('warning'), "usage": run.get('usage')}
+                    if run.get('delivery') == 'silent':
+                        answer['delivery'] = 'silent'
+                    conversation['messages'].append(answer)
                 conversation['active_run'] = None
                 self.put('conversation', conversation['id'], conversation, db)
                 self.put('run', run['id'], run, db)

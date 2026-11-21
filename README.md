@@ -4,7 +4,9 @@
 
 Interface conversacional e visual para o **Hermes Agent**, com canvases interativos, histórico persistente e execuções recuperáveis.
 
-**Versão 0.5.0.** Plugin comunitário para o Hermes Agent com **73 tipos de bloco em oito categorias**. Abra **Catálogo de blocos**, pesquise um componente e clique em **Experimentar**. Combine até 32 blocos em um canvas. Um roteiro, por exemplo, pode reunir mapa, intervalo de datas, checklist de bagagem e orçamento ajustável. [Guia da versão e comparação com ChatGPT e OpenUI](docs/0.5.md)
+**Versão 0.5.1.** O plugin preserva a resposta útil quando o Hermes termina com um marcador de silêncio, recupera a saída final pelo fluxo de eventos e reduz o tráfego durante a espera. [Correções e medidas da 0.5.1](docs/0.5.1.md)
+
+Abra **Catálogo de blocos** para experimentar 73 tipos em oito categorias. Combine até 32 blocos em um canvas. Um roteiro, por exemplo, pode reunir mapa, intervalo de datas, checklist de bagagem e orçamento ajustável. [Guia do catálogo](docs/0.5.md)
 
 ![Catálogo do Atlas com o painel de fevereiro, indicadores e empréstimos por seção](docs/catalog-0.5.jpg)
 
@@ -54,7 +56,7 @@ O chat Atlas usa sessões persistentes da Runs API. Na extensão Desktop, **Envi
 O wheel inclui o aplicativo compilado e todo o plugin, sem depender do checkout:
 
 ```sh
-pip install ./hermes_atlas_intelligent_ui-0.5.0-py3-none-any.whl
+pip install ./hermes_atlas_intelligent_ui-0.5.1-py3-none-any.whl
 hermes-atlas serve
 # Opcional: copiar o plugin para uma instalação Hermes nova
 hermes-atlas install-plugin --home /caminho/do/hermes

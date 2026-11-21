@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 from fastapi import HTTPException
 from . import gateway
+from .delivery import FAILURE_NOTICE, present_event, present_reply
 from .protocol import extract
 
 TERMINAL = {'completed', 'failed', 'cancelled', 'interrupted'}
@@ -12,8 +13,10 @@ _tasks = {}
 
 def public(run):
     from .preview import decorate_live
-    snapshot = {k: v for k, v in run.items() if k not in {'payload', 'request_hash', 'retry_window'}}
-    return snapshot if run['status'] in TERMINAL else decorate_live(snapshot)
+    snapshot = {k: v for k, v in run.items() if k not in {'payload', 'request_hash', 'retry_window', 'terminal_output'}}
+    if snapshot.get('events'):
+        snapshot['events'] = [item for event in snapshot['events'] if (item := present_event(event)) is not None]
+    return present_reply(snapshot, 'text') if run['status'] in TERMINAL else decorate_live(snapshot)
 
 
 def ensure(store, id):
@@ -55,8 +58,14 @@ async def follow(store, id):
                     delta = event.get('delta')
                     if isinstance(delta, str):
                         run['text'] = (run['text'] + delta)[-1_000_000:]
+                elif kind == 'run.completed' and isinstance(event.get('output'), str):
+                    run['terminal_output'] = event['output']
+                    stream_revision += 1
+                    return
                 elif kind == 'message.interim' and not event.get('already_streamed'):
-                    run['events'] = (run['events'] + [event])[-60:]
+                    visible = present_event(event)
+                    if visible is not None:
+                        run['events'] = (run['events'] + [visible])[-60:]
                 elif kind.startswith(('tool.', 'subagent.', 'approval.', 'clarify.')):
                     run['events'] = (run['events'] + [event])[-60:]
                 stream_revision += 1
@@ -98,11 +107,22 @@ async def follow(store, id):
                 run['connection_error'] = None
                 remote_status = status['status']
                 if remote_status in TERMINAL:
+                    # Both the terminal event and GET can carry the final result.
+                    # If GET has none, let an in-flight terminal event arrive before detaching.
+                    if (remote_status == 'completed' and status.get('output') is None
+                            and 'terminal_output' not in run and stream_task and not stream_task.done()):
+                        await asyncio.wait({stream_task}, timeout=0.5)
                     if stream_task:
                         stream_task.cancel()
                         await asyncio.gather(stream_task, return_exceptions=True)
                     final = dict(run, status=remote_status)
-                    final['text'] = status.get('output') or (run['text'] if remote_status != 'completed' else '')
+                    event_output = final.pop('terminal_output', None)
+                    output = status.get('output')
+                    if remote_status == 'completed' and output is None:
+                        output = event_output
+                    final['text'] = output if isinstance(output, str) else ''
+                    if remote_status != 'completed' and not final['text']:
+                        final['text'] = run['text']
                     if remote_status == 'completed':
                         try:
                             text, canvas, warning = extract(final['text'])
@@ -111,10 +131,17 @@ async def follow(store, id):
                                 canvas.id = context['id'] if context else 'canvas-' + uuid4().hex
                                 final['artifact'] = await asyncio.to_thread(store.save, canvas, context['revision'] if context else 0, id)
                             final.update(text=text, warning=warning)
+                            if not text and not canvas and not warning:
+                                final['delivery'] = 'silent'
                         except ValueError as exc:
                             final.update(status='failed', warning=str(exc))
-                    elif not final['text']:
-                        final['warning'] = {'cancelled': 'Execução interrompida.', 'interrupted': 'O gateway foi interrompido.'}.get(remote_status, 'O Hermes não concluiu a execução.')
+                            if output is None and run['text']:
+                                from .preview import decorate_live
+                                preview = decorate_live({'text': run['text']})['text']
+                                if preview.strip():
+                                    final.update(text=preview, warning='O Hermes confirmou a conclusão sem fornecer a resposta final. O texto exibido é uma prévia recuperada.')
+                    else:
+                        final['warning'] = final.get('warning') or FAILURE_NOTICE[remote_status]
                     await asyncio.to_thread(store.finish, final)
                     return
                 dirty = dirty or run['status'] != remote_status

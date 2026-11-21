@@ -110,6 +110,7 @@ export type Summary = {
 export type Message = {
   id: string;
   role: "user" | "assistant";
+  delivery?: "silent";
   content: string;
   artifact?: { id: string; revision: number };
   created: string;
@@ -126,6 +127,8 @@ export type Conversation = {
 export type ChatSummary = Omit<Conversation, "messages">;
 export type Run = {
   id: string;
+  cursor?: string;
+  delivery?: "silent";
   preview?: Canvas | null;
   conversation_id: string;
   remote_id?: string;

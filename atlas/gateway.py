@@ -1,5 +1,6 @@
 """Public Hermes Runs API adapter. Credentials stay on the server."""
 import asyncio
+import hashlib
 import json
 import os
 import time
@@ -11,6 +12,7 @@ from fastapi import HTTPException
 
 _clients = WeakKeyDictionary()
 _capabilities = {}
+_probes = WeakKeyDictionary()
 
 
 def setting(name, default=''):
@@ -53,7 +55,12 @@ def client():
 
 
 async def close():
-    c = _clients.pop(asyncio.get_running_loop(), None)
+    loop = asyncio.get_running_loop()
+    pending = tuple(_probes.pop(loop, {}).values())
+    for task in pending:
+        task.cancel()
+    await asyncio.gather(*pending, return_exceptions=True)
+    c = _clients.pop(loop, None)
     if c:
         await c.aclose()
 
@@ -85,10 +92,27 @@ async def request(method, path, body=None, key=None):
 
 async def capabilities(force=False):
     url, headers = upstream()
-    key = (url, headers.get('Authorization'))
+    key = (url, hashlib.sha256(headers.get('Authorization', '').encode()).digest())
     cached = _capabilities.get(key)
     if cached and not force and time.monotonic() - cached[0] < 30:
         return cached[1]
+    pending = _probes.setdefault(asyncio.get_running_loop(), {})
+    task = pending.get(key)
+    if task is None:
+        task = asyncio.create_task(_probe_capabilities(key))
+        pending[key] = task
+
+        def finished(done):
+            pending.pop(key, None)
+            if not done.cancelled():
+                done.exception()  # All HTTP callers may already have disconnected.
+
+        task.add_done_callback(finished)
+    # One disconnected client must not cancel the probe awaited by other tabs.
+    return await asyncio.shield(task)
+
+
+async def _probe_capabilities(key):
     try:
         async with asyncio.timeout(4):
             result = await request('GET', '/capabilities')
@@ -99,7 +123,11 @@ async def capabilities(force=False):
         raise HTTPException(502, 'O endereço respondeu, mas não apresentou o contrato de capacidades do Hermes.')
     idem = features.get('runs_idempotency', {})
     result['atlas_compatible'] = all(features.get(f) is True for f in ('run_submission','run_status','run_events_sse','run_stop')) and isinstance(idem, dict) and idem.get('durable') is True
-    _capabilities[key] = (time.monotonic(), result)
+    now = time.monotonic()
+    for expired, (created, _) in tuple(_capabilities.items()):
+        if now - created >= 30:
+            _capabilities.pop(expired, None)
+    _capabilities[key] = (now, result)
     return result
 
 
