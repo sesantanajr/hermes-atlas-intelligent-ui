@@ -4,12 +4,14 @@
 
 Interface conversacional e visual para o **Hermes Agent**, com canvases interativos, histórico persistente e execuções recuperáveis.
 
-**Versão 0.4.0.** Plugin comunitário e independente para o Hermes Agent. Explore dados em gráficos multissérie, inspecione diagramas por partes e transforme uma seleção em uma pergunta para o agente. Os 15 tipos de bloco podem coexistir no mesmo canvas. [Comparação com ChatGPT e OpenUI, novidades e validação](docs/0.4.md)
+**Versão 0.5.0.** Plugin comunitário para o Hermes Agent com **73 tipos de bloco em oito categorias**. Abra **Catálogo de blocos**, pesquise um componente e clique em **Experimentar**. Combine até 32 blocos em um canvas. Um roteiro, por exemplo, pode reunir mapa, intervalo de datas, checklist de bagagem e orçamento ajustável. [Guia da versão e comparação com ChatGPT e OpenUI](docs/0.5.md)
 
-![Diagrama de câmera com partes selecionáveis no Hermes Atlas](docs/studio-preview.jpg)
+![Catálogo do Atlas com o painel de fevereiro, indicadores e empréstimos por seção](docs/catalog-0.5.jpg)
 
 ## Recursos
 
+- O **Catálogo de blocos** funciona com exemplos locais. Filtre por categoria, explore os controles e use **Adicionar ao canvas** para incluir o componente. O agente consulta o mesmo catálogo pela ferramenta `atlas_components`.
+- Um mapa permite selecionar locais e aproximar a vista. Um questionário corrige respostas e explica o resultado. Um orçamento recalcula o saldo quando as quantidades mudam. Um documento editável conserva o texto na revisão.
 - **Por dentro da câmera**, em **Descobrir**, combina um diagrama com pontos interativos, abas navegáveis por teclado e cartões de estudo que guardam seu progresso.
 - **Caderno de campo** reúne um gráfico multissérie com tabela acessível, um roteiro por coordenadas, etapas e um formulário com data, pergunta aberta, escolha única e caixa de seleção.
 
@@ -22,7 +24,7 @@ Interface conversacional e visual para o **Hermes Agent**, com canvases interati
 - Até quatro anexos de texto/Markdown/CSV/JSON/log por mensagem, até 200 KB cada e 450 KB no pedido total.
 - Formulários preparam uma mensagem revisável. Aprovações e esclarecimentos do agente usam os controles reais do Hermes.
 - Temas claro, escuro e do sistema, canvas ampliável e alternância entre conversa e canvas em telas estreitas.
-- Ferramentas nativas `atlas_render`, `atlas_list`, `atlas_get`; dashboard IIFE e Desktop ESM com React fornecido pelo host.
+- Ferramentas nativas `atlas_components`, `atlas_render`, `atlas_list` e `atlas_get`. O dashboard usa IIFE e o Desktop usa ESM com o React do host.
 - Credenciais apenas no backend; armazenamento por perfil; verificação de capacidades antes de admitir execuções.
 
 ## Instalar no Hermes
@@ -37,7 +39,7 @@ No Desktop/Webapp, abra **Capacidades → Plugins → Verificar novamente** e ha
 
 No dashboard clássico, abra a aba **Atlas**. Se a versão do host não recarregar plugins automaticamente, reinicie esse host. Habilite o toolset `atlas` caso sua configuração use uma lista explícita de ferramentas.
 
-Peça ao agente: “Use atlas_render para criar uma comparação interativa”. Abra **Atlas → Minha biblioteca**. Para revisar um canvas, o agente lê `atlas_get` e envia sua revisão como `expected_revision`; alterações antigas não sobrescrevem as novas.
+Peça ao agente “Consulte a definição de `budget_planner` com atlas_components e use atlas_render para montar um orçamento de viagem em reais com três despesas de exemplo”. Abra **Atlas → Minha biblioteca** para ajustar as quantidades. Para alterar uma revisão, o agente consulta `atlas_get` e informa a revisão lida em `expected_revision`.
 
 ## Conexão com o agente
 
@@ -52,7 +54,7 @@ O chat Atlas usa sessões persistentes da Runs API. Na extensão Desktop, **Envi
 O wheel inclui o aplicativo compilado e todo o plugin, sem depender do checkout:
 
 ```sh
-pip install ./hermes_atlas_intelligent_ui-0.4.0-py3-none-any.whl
+pip install ./hermes_atlas_intelligent_ui-0.5.0-py3-none-any.whl
 hermes-atlas serve
 # Opcional: copiar o plugin para uma instalação Hermes nova
 hermes-atlas install-plugin --home /caminho/do/hermes
@@ -101,4 +103,4 @@ Esta versão não implementa toda a superfície do Hermes nem paridade com ChatG
 
 O backend consome eventos SSE. A tela consulta o estado a cada aproximadamente 450 ms enquanto visível e a cada 3 s quando oculta, inclusive pelo transporte JSON do host. A prévia exibe blocos já validados. Ao concluir, o Atlas valida o documento inteiro e habilita a edição. A galeria com dados de exemplo também funciona offline.
 
-Compatibilidade real verificada em Hermes **0.23.2**, não em todas as versões. Os controles de aprovação, clarificação e resultado desconhecido têm testes de contrato; não provocamos operações perigosas para testar aprovações reais. Não há alegação de ausência de todos os bugs, auditoria externa ou superioridade medida sobre outros produtos.
+O histórico da versão 0.4 registra o teste em Hermes **0.23.2**. A matriz de compatibilidade depende da versão do host, do perfil e das capacidades ativas no gateway. [Validação histórica da 0.4](docs/0.4.md)

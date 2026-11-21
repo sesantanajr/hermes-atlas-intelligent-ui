@@ -87,7 +87,7 @@ def test_plugin_registers_and_renders(tmp_path, monkeypatch):
         def register_tool(self, **kwargs): self.tools[kwargs["name"]] = kwargs
     ctx = Context()
     module.register(ctx)
-    assert set(ctx.tools) == {"atlas_render", "atlas_list", "atlas_get"}
+    assert set(ctx.tools) == {"atlas_render", "atlas_list", "atlas_get", "atlas_components"}
     result = json.loads(ctx.tools["atlas_render"]["handler"]({"canvas": payload()}))
     assert result["success"] and result["revision"] == 1
     assert not json.loads(ctx.tools["atlas_render"]["handler"]({}))["success"]

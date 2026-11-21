@@ -1,0 +1,192 @@
+import type { AnalyticsBlock, Amount } from "./analyticsData";
+
+const values = (...pairs: [string, number][]): Amount[] =>
+  pairs.map(([label, value]) => ({ label, value }));
+const canais = values(
+  ["Busca", 45],
+  ["Direto", 30],
+  ["Parcerias", 17],
+  ["Eventos", 8],
+);
+export const analyticsSamples: AnalyticsBlock[] = [
+  {
+    type: "pie",
+    id: "canais",
+    title: "Como os leitores chegam",
+    unit: "mil visitas",
+    items: canais,
+  },
+  {
+    type: "donut",
+    id: "energia",
+    title: "Matriz de energia",
+    unit: "MWh",
+    items: values(["Solar", 120], ["Eólica", 85], ["Biomassa", 35]),
+  },
+  {
+    type: "scatter",
+    id: "trajetos",
+    title: "Distância e tempo por trajeto",
+    x_label: "Distância (km)",
+    y_label: "Tempo (min)",
+    points: [
+      { label: "Centro", x: 4, y: 16 },
+      { label: "Museu", x: 7, y: 19 },
+      { label: "Campus", x: 10, y: 38 },
+      { label: "Parque", x: 8, y: 21 },
+    ],
+  },
+  {
+    type: "bubble",
+    id: "projetos",
+    title: "Impacto e esforço por projeto",
+    x_label: "Esforço (dias)",
+    y_label: "Impacto (pontos)",
+    points: [
+      { label: "Catálogo · 40 pessoas", x: 8, y: 68, size: 40 },
+      { label: "Busca · 90 pessoas", x: 15, y: 84, size: 90 },
+      { label: "Mapa · 20 pessoas", x: 12, y: 42, size: 20 },
+    ],
+  },
+  {
+    type: "radar",
+    id: "oficina",
+    title: "Competências após a oficina",
+    axes: [
+      { label: "Escrita", value: 8, max: 10 },
+      { label: "Pesquisa", value: 3, max: 5 },
+      { label: "Análise", value: 16, max: 20 },
+      { label: "Revisão", value: 4, max: 5 },
+      { label: "Síntese", value: 6, max: 10 },
+    ],
+  },
+  {
+    type: "heatmap",
+    id: "ocupacao",
+    title: "Variação da ocupação por turno",
+    rows: ["Segunda", "Terça", "Quarta"],
+    columns: ["Manhã", "Tarde", "Noite"],
+    unit: "p.p.",
+    values: [
+      [-3, 4, 8],
+      [0, null, 6],
+      [-1, 2, 3],
+    ],
+  },
+  {
+    type: "histogram",
+    id: "espera",
+    title: "Distribuição do tempo de espera",
+    unit: "min",
+    bins: 5,
+    samples: [2, 2, 2.5, 3, 3, 4, 4, 4.8, 5, 6, null, 9],
+  },
+  {
+    type: "waterfall",
+    id: "caixa",
+    title: "Da abertura ao fechamento do caixa",
+    unit: "R$",
+    start: 500,
+    items: values(
+      ["Entradas", 300],
+      ["Materiais", -160],
+      ["Transporte", -55],
+      ["Reembolso", 25],
+    ),
+  },
+  {
+    type: "funnel",
+    id: "inscricoes",
+    title: "Do primeiro acesso à participação",
+    unit: "pessoas",
+    items: values(
+      ["Visitantes", 1250],
+      ["Inscrições", 800],
+      ["Confirmações", 520],
+      ["Presenças", 430],
+    ),
+  },
+  {
+    type: "gauge",
+    id: "temperatura",
+    title: "Temperatura da câmara",
+    min: -20,
+    max: 20,
+    value: -6,
+    unit: "°C",
+  },
+  {
+    type: "progress",
+    id: "acervo",
+    title: "Digitalização do acervo",
+    completed: 372,
+    total: 600,
+    unit: "obras",
+  },
+  {
+    type: "sparkline",
+    id: "saldo",
+    title: "Saldo de pedidos na semana",
+    unit: "pedidos",
+    points: [
+      { label: "Seg", value: -3 },
+      { label: "Ter", value: 2 },
+      { label: "Qua", value: null },
+      { label: "Qui", value: -1 },
+      { label: "Sex", value: 7 },
+      { label: "Sáb", value: 9 },
+    ],
+  },
+  {
+    type: "ranking",
+    id: "rotas",
+    title: "Rotas por ganho de pontualidade",
+    unit: "p.p.",
+    items: values(
+      ["Linha amarela", 2],
+      ["Linha verde", -1],
+      ["Linha azul", 6],
+      ["Linha violeta", 2],
+    ),
+  },
+  {
+    type: "treemap",
+    id: "area",
+    title: "Distribuição da área do jardim",
+    unit: "m²",
+    items: values(
+      ["Pomar", 160],
+      ["Horta", 80],
+      ["Viveiro", 35],
+      ["Estufa", 25],
+      ["Compostagem", 12],
+    ),
+  },
+  {
+    type: "dashboard",
+    id: "biblioteca",
+    title: "Painel da biblioteca",
+    unit: "empréstimos",
+    breakdown_label: "Empréstimos por seção",
+    periods: [
+      {
+        id: "jan",
+        label: "Janeiro",
+        metrics: [
+          { label: "Leitores", value: 210 },
+          { label: "Empréstimos", value: 360 },
+        ],
+        breakdown: values(["Literatura", 240], ["Ciências", 120]),
+      },
+      {
+        id: "fev",
+        label: "Fevereiro",
+        metrics: [
+          { label: "Leitores", value: 245 },
+          { label: "Empréstimos", value: 410 },
+        ],
+        breakdown: values(["Literatura", 250], ["Ciências", 160]),
+      },
+    ],
+  },
+];

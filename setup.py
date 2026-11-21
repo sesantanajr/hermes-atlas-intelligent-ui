@@ -22,6 +22,7 @@ def prepare_assets():
     for name in ['dashboard', 'desktop']:
         shutil.copytree(root/name, plugin/name, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
     (plugin/'atlas').mkdir()
+    shutil.copy2(root/'atlas/catalog.json', plugin/'atlas/catalog.json')
     for source in (root/'atlas').glob('*.py'):
         shutil.copy2(source, plugin/'atlas'/source.name)
 

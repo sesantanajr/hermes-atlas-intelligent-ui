@@ -1,0 +1,181 @@
+.atlas-control {
+  display: grid;
+  gap: 0.75rem;
+  color: var(--text);
+  min-width: 0;
+}
+.atlas-control :is(input, textarea, select, button) {
+  font: inherit;
+}
+.atlas-control input:not([type="checkbox"], [type="radio"], [type="range"]),
+.atlas-control :is(textarea, select) {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: inherit;
+  background: var(--surface);
+}
+.atlas-control textarea {
+  resize: vertical;
+}
+.atlas-control :is(input, textarea, select, button):focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+.atlas-control :is(input, progress) {
+  accent-color: var(--green);
+}
+.atlas-control :is(small, legend),
+.atlas-control-counter {
+  color: var(--muted);
+}
+.atlas-control small {
+  display: block;
+}
+.atlas-control-counter {
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
+}
+.atlas-control button {
+  justify-self: start;
+  min-height: 2.25rem;
+  border-radius: 8px;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--line);
+  color: var(--text);
+  background: var(--surface);
+  cursor: pointer;
+}
+.atlas-control button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.atlas-control .atlas-control-draft {
+  color: var(--green);
+}
+.atlas-control fieldset {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+.atlas-control legend {
+  margin-bottom: 0.35rem;
+  font-size: 0.85em;
+  padding: 0;
+}
+.atlas-control p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.atlas-control-options {
+  display: grid;
+  gap: 0.35rem;
+}
+.atlas-control-options label,
+.atlas-control-segments label,
+.atlas-control-toggle,
+.atlas-control-stars label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.25rem;
+  cursor: pointer;
+}
+.atlas-control-options label,
+.atlas-control-segments label {
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+.atlas-control-options label:has(input:checked),
+.atlas-control-segments label:has(input:checked) {
+  border-color: var(--green);
+}
+.atlas-control :is(input[type="checkbox"], input[type="radio"]) {
+  width: 1em;
+  height: 1em;
+  flex: none;
+  margin: 0;
+}
+.atlas-control-field {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.atlas-control-dates {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+}
+.atlas-control-buttons,
+.atlas-control-progress {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+.atlas-control-segments label {
+  margin: 0 0.3rem 0.3rem 0;
+}
+.atlas-control-stars label {
+  position: relative;
+  font-size: 1.7rem;
+  color: var(--muted);
+  min-width: 1.2em;
+  justify-content: center;
+}
+.atlas-control .atlas-control-stars input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.atlas-control-stars label:has(input:focus-visible) {
+  outline: 2px solid var(--green);
+  border-radius: 4px;
+}
+.atlas-control-stars [data-filled="true"] {
+  color: var(--green);
+}
+.atlas-control-slider,
+.atlas-control-timer {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.atlas-control-slider input {
+  width: 100%;
+  margin: 0;
+}
+.atlas-control-slider > div {
+  display: flex;
+  justify-content: space-between;
+}
+.atlas-control-slider output,
+.atlas-control-timer [role="timer"] {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.atlas-control-timer [role="timer"] {
+  font-size: clamp(1.8rem, 6vw, 3rem);
+  letter-spacing: 0.03em;
+}
+.atlas-control-timer [role="status"] {
+  font-size: 0.85em;
+  color: var(--muted);
+}
+.atlas-control-result {
+  padding: 0.65rem 0.85rem;
+  border-inline-start: 3px solid var(--green);
+  background: var(--surface);
+}
+.atlas-control progress {
+  flex: 1 1 8rem;
+  min-width: 0;
+  max-width: 20rem;
+}

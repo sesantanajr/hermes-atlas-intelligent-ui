@@ -5,6 +5,10 @@ from .series import SeriesChart
 from .explore import Tabs, Timeline
 from .spatial import Diagram, Route
 from .study import Flashcards
+from .controls import ControlBlocks, Control
+from .analytics import AnalyticsBlocks, validate_analytics_values
+from .editorial import EditorialBlocks, validate_editorial_state
+from .experience import ExperienceBlocks, validate_experience_state
 
 
 class TextBlock(Block):
@@ -149,6 +153,7 @@ class Form(Block):
 
 
 class Interaction(Strict):
+    values: Annotated[dict[Identifier, Annotated[str, Field(max_length=4000)]], Field(max_length=64)] = {}
     checked: Annotated[list[Annotated[int, Field(ge=0, le=39)]], Field(max_length=40)] = []
     selected: Annotated[int | None, Field(ge=0, le=3)] = None
     query: Annotated[str, Field(max_length=300)] = ""
@@ -164,7 +169,8 @@ class Interaction(Strict):
 
 
 Component = Annotated[TextBlock | Metric | Chart | Table | Checklist | Comparison | Calculator | Form |
-                      Collection | SeriesChart | Tabs | Timeline | Route | Diagram | Flashcards, Field(discriminator="type")]
+                      Collection | SeriesChart | Tabs | Timeline | Route | Diagram | Flashcards |
+                      ControlBlocks | AnalyticsBlocks | EditorialBlocks | ExperienceBlocks, Field(discriminator="type")]
 
 
 class Canvas(Strict):
@@ -188,6 +194,16 @@ class Canvas(Strict):
             interaction = self.state.get(block.id)
             if not interaction:
                 continue
+            if isinstance(block, Control):
+                block.validate_values(interaction.values)
+            elif isinstance(block, AnalyticsBlocks):
+                validate_analytics_values(block, interaction.values)
+            elif isinstance(block, EditorialBlocks):
+                validate_editorial_state(block, interaction.values)
+            elif isinstance(block, ExperienceBlocks):
+                validate_experience_state(block, interaction.values)
+            elif interaction.values:
+                raise ValueError("Unexpected values for this block")
             if interaction.active_item is not None and (
                 not isinstance(block, (Tabs, Timeline, Route, Diagram, Flashcards))
                 or interaction.active_item not in {item.id for item in block.items}

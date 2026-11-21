@@ -30,6 +30,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { Canvas } from "./Canvas";
+
 import { LiveCanvasPreview } from "./LiveCanvasPreview";
 import { RunControl } from "./RunControl";
 import { useComposer } from "./useComposer";
@@ -53,6 +54,9 @@ import "./style.css";
 import "./readability.css";
 import "./experience.css";
 
+const BlockCatalog = React.lazy(() =>
+  import("./BlockCatalog").then((module) => ({ default: module.BlockCatalog })),
+);
 const terminal = new Set(["completed", "failed", "cancelled", "interrupted"]);
 const stateLabel: Record<string, string> = {
   submitting: "Enviando ao Hermes",
@@ -109,9 +113,9 @@ export function App({
 } = {}) {
   const client = useMemo(() => createClient(transport), [transport]);
   const api = client.request;
-  const [view, setView] = useState<"home" | "chat" | "library" | "settings">(
-    "home",
-  );
+  const [view, setView] = useState<
+    "home" | "chat" | "library" | "catalog" | "settings"
+  >("home");
   const [sidebar, setSidebar] = useState(() => window.innerWidth > 800);
   useEffect(() => {
     const overlay = window.matchMedia("(max-width: 650px)");
@@ -595,6 +599,15 @@ export function App({
             <Compass size={18} /> Descobrir
           </button>
           <button
+            className={view === "catalog" ? "active" : ""}
+            onClick={() => {
+              setCanvasOnly(false);
+              setView("catalog");
+            }}
+          >
+            <Layers size={18} /> Catálogo de blocos
+          </button>
+          <button
             className={view === "library" ? "active" : ""}
             onClick={() => {
               setCanvasOnly(false);
@@ -660,7 +673,7 @@ export function App({
           <div className="profile">
             <span>HA</span>
             <div>
-              Atlas Intelligent UI<small>Versão 0.4.0</small>
+              Atlas Intelligent UI<small>Versão 0.5.0</small>
             </div>
           </div>
         </div>
@@ -682,13 +695,15 @@ export function App({
             <span>Workspace</span>
             <ChevronRight size={14} />
             <b>
-              {view === "library"
-                ? "Biblioteca"
-                : view === "settings"
-                  ? "Configurações"
-                  : view === "chat"
-                    ? "Conversa"
-                    : "Descobrir"}
+              {view === "catalog"
+                ? "Catálogo de blocos"
+                : view === "library"
+                  ? "Biblioteca"
+                  : view === "settings"
+                    ? "Configurações"
+                    : view === "chat"
+                      ? "Conversa"
+                      : "Descobrir"}
             </b>
           </div>
           <button
@@ -764,11 +779,13 @@ export function App({
               aria-pressed={!canvasOnly}
               onClick={() => setCanvasOnly(false)}
             >
-              {view === "library"
-                ? "Biblioteca"
-                : view === "settings"
-                  ? "Configurações"
-                  : "Conversa"}
+              {view === "catalog"
+                ? "Catálogo de blocos"
+                : view === "library"
+                  ? "Biblioteca"
+                  : view === "settings"
+                    ? "Configurações"
+                    : "Conversa"}
             </button>
             <button
               aria-pressed={canvasOnly}
@@ -782,6 +799,54 @@ export function App({
           className={`workspace ${canvas ? "with-canvas" : ""} ${compact ? "compact" : ""} ${canvasOnly ? "canvas-only" : ""}`}
         >
           <div className="conversation-pane">
+            {view === "catalog" && (
+              <React.Suspense
+                fallback={<p role="status">Carregando catálogo…</p>}
+              >
+                <BlockCatalog
+                  disabled={busy || (canvas?.blocks.length ?? 0) >= 32}
+                  onAdd={(sample, interaction) => {
+                    const block = {
+                      ...structuredClone(sample),
+                      id: "b-" + crypto.randomUUID(),
+                    };
+                    const state = interaction
+                      ? {
+                          ...canvas?.state,
+                          [block.id]: structuredClone(interaction),
+                        }
+                      : canvas?.state;
+                    if (canvas) {
+                      setCanvas({
+                        ...canvas,
+                        state,
+                        blocks: [...canvas.blocks, block],
+                      });
+                    } else {
+                      setWorkspace((w) => ({
+                        ...w,
+                        revision: 0,
+                        canvas: {
+                          schema_version: "1.0",
+                          id: "canvas-" + crypto.randomUUID(),
+                          title: "Meu canvas",
+                          description:
+                            "Exemplos do catálogo Atlas com dados ilustrativos.",
+                          state,
+                          blocks: [block],
+                        },
+                      }));
+                      setVersions([]);
+                      setPast([]);
+                      setFuture([]);
+                    }
+                    setCanvasOnly(compact);
+                    setTab("preview");
+                    setNotice("Bloco adicionado ao canvas: " + block.title);
+                  }}
+                />
+              </React.Suspense>
+            )}
             {view === "home" && (
               <div className="welcome">
                 <h1>O que vamos explorar?</h1>
@@ -821,7 +886,7 @@ export function App({
                   </div>
                 </div>
                 <div className="example-grid">
-                  {gallery.map(({example: e, index: i, caption}) => (
+                  {gallery.map(({ example: e, index: i, caption }) => (
                     <button
                       className={`example example-${i}`}
                       key={e.id}
@@ -845,11 +910,30 @@ export function App({
                             />
                           </svg>
                         ) : e.id === "demo-camera" ? (
-                          <img className="studio-camera-thumb" src={cameraPhoto} alt="" loading="lazy"/>
+                          <img
+                            className="studio-camera-thumb"
+                            src={cameraPhoto}
+                            alt=""
+                            loading="lazy"
+                          />
                         ) : e.id === "demo-walk" ? (
-                          <svg viewBox="0 0 260 110" className="studio-series-thumb">
-                            <path d="M10 88 L85 60 L164 69 L248 23" fill="none" stroke="currentColor" strokeWidth="4" />
-                            <path d="M10 80 L85 72 L164 37 L248 30" fill="none" stroke="currentColor" strokeDasharray="6 5" strokeWidth="2" />
+                          <svg
+                            viewBox="0 0 260 110"
+                            className="studio-series-thumb"
+                          >
+                            <path
+                              d="M10 88 L85 60 L164 69 L248 23"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            />
+                            <path
+                              d="M10 80 L85 72 L164 37 L248 30"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeDasharray="6 5"
+                              strokeWidth="2"
+                            />
                           </svg>
                         ) : i === 3 ? (
                           <div className="mini-collection">

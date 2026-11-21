@@ -20,5 +20,5 @@ for (const name of ["plugin.yaml", "__init__.py", "dashboard", "desktop"])
       !source.includes("__pycache__") && !source.endsWith(".pyc"),
   });
 for (const name of await readdir("atlas"))
-  if (name.endsWith(".py"))
+  if (name.endsWith(".py") || name === "catalog.json")
     await cp(`atlas/${name}`, `atlas/plugin/atlas/${name}`);

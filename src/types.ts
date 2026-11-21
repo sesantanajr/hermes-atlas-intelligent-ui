@@ -2,6 +2,10 @@ import type { SeriesBlock, SeriesState } from "./seriesTypes";
 import type { ExploreBlock, ExploreInteraction } from "./exploreTypes";
 import type { SpatialBlock } from "./spatial";
 import type { FlashcardsBlock, StudyInteraction } from "./study";
+import type { EditorialBlock } from "./editorial";
+import type { AnalyticsBlock } from "./analytics";
+import type { ControlBlock } from "./controls";
+import type { ExperienceBlock } from "./experienceBlocks";
 export type Input = {
   label: string;
   value: number;
@@ -23,6 +27,10 @@ export type CollectionItem = {
 export type Block = Base &
   (
     | SeriesBlock
+    | EditorialBlock
+    | AnalyticsBlock
+    | ControlBlock
+    | ExperienceBlock
     | ExploreBlock
     | SpatialBlock
     | FlashcardsBlock
@@ -68,6 +76,7 @@ export type Block = Base &
 export type Interaction = SeriesState &
   ExploreInteraction &
   StudyInteraction & {
+    values?: { [key: string]: string };
     checked?: number[];
     selected?: number | null;
     query?: string;

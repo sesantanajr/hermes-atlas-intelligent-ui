@@ -8,6 +8,11 @@ import { SpatialView } from "./spatial";
 import { CanvasForm } from "./CanvasForm";
 import { CanvasLink } from "./CanvasLink";
 import { StudyView } from "./study";
+import { isEditorialBlock, EditorialView } from "./editorial";
+import { isAnalyticsBlock, AnalyticsView } from "./analytics";
+import { isControlBlock, ControlView } from "./controls";
+import { isExperienceBlock } from "./experienceBlocks";
+import { ExperienceView } from "./experienceView";
 
 export function calculate(operation: string, values: number[]): number | null {
   let result: number;
@@ -64,7 +69,39 @@ function Component({ block, state, change, onAction }: Props) {
     );
   return (
     <section className={`atlas-block ${block.type}`}>
-      <h3>{block.title}</h3>
+      {block.type !== "heading" && <h3>{block.title}</h3>}
+      {isEditorialBlock(block) && (
+        <EditorialView
+          block={block}
+          state={state}
+          change={set}
+          onAction={onAction}
+        />
+      )}
+      {isAnalyticsBlock(block) && (
+        <AnalyticsView
+          block={block}
+          state={state}
+          change={set}
+          onAction={onAction}
+        />
+      )}
+      {isControlBlock(block) && (
+        <ControlView
+          block={block}
+          state={state}
+          change={set}
+          onAction={onAction}
+        />
+      )}
+      {isExperienceBlock(block) && (
+        <ExperienceView
+          block={block}
+          state={state}
+          change={set}
+          onAction={onAction}
+        />
+      )}
       {block.type === "flashcards" && (
         <StudyView
           block={block}

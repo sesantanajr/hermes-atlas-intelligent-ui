@@ -1,4 +1,4 @@
-include __init__.py plugin.yaml setup.py
+include __init__.py plugin.yaml setup.py atlas/catalog.json
 recursive-include dist *
 recursive-include desktop *
 recursive-include dashboard *

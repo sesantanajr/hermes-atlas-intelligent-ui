@@ -1,0 +1,1792 @@
+[
+  {
+    "type": "text",
+    "label": "Texto",
+    "category": "Texto e formatação",
+    "example": {
+      "id": "explain",
+      "type": "text",
+      "title": "A matemática por trás",
+      "text": "Valor final = valor inicial × (1 + taxa anual / 100) ^ anos. Ajuste os controles e observe como cada variável afeta o resultado. Esta ferramenta explica a fórmula; não prevê retornos."
+    }
+  },
+  {
+    "type": "heading",
+    "label": "Título de seção",
+    "category": "Texto e formatação",
+    "example": {
+      "type": "heading",
+      "id": "cabecalho",
+      "title": "Caderno de campo",
+      "level": 2,
+      "subtitle": "Uma oficina de observação da paisagem urbana."
+    }
+  },
+  {
+    "type": "callout",
+    "label": "Aviso em destaque",
+    "category": "Texto e formatação",
+    "example": {
+      "type": "callout",
+      "id": "aviso",
+      "title": "Antes da saída",
+      "tone": "warning",
+      "body": "Leve uma cópia do roteiro. O percurso passa por trechos com pouco sinal."
+    }
+  },
+  {
+    "type": "quote",
+    "label": "Citação",
+    "category": "Texto e formatação",
+    "example": {
+      "type": "quote",
+      "id": "citacao",
+      "title": "Uma pergunta de partida",
+      "quote": "Que detalhe desta praça passaria despercebido se você estivesse com pressa?",
+      "attribution": "Roteiro ilustrativo da oficina"
+    }
+  },
+  {
+    "type": "markdown",
+    "label": "Texto Markdown",
+    "category": "Texto e formatação",
+    "example": {
+      "type": "markdown",
+      "id": "notas",
+      "title": "Orientações para as notas",
+      "body": "Registre **onde** e **quando** você observou.\n\n- Descreva a paisagem em uma frase.\n- Anote quais detalhes ainda precisam de confirmação."
+    }
+  },
+  {
+    "type": "equation",
+    "label": "Fórmula matemática",
+    "category": "Texto e formatação",
+    "example": {
+      "type": "equation",
+      "id": "densidade",
+      "title": "Densidade observada",
+      "expression": [
+        {
+          "kind": "text",
+          "text": "d = "
+        },
+        {
+          "kind": "fraction",
+          "numerator": "n",
+          "denominator": "A"
+        }
+      ],
+      "description": "A densidade d é o número de árvores n dividido pela área observada A."
+    }
+  },
+  {
+    "type": "badges",
+    "label": "Etiquetas",
+    "category": "Texto e formatação",
+    "example": {
+      "type": "badges",
+      "id": "marcadores",
+      "title": "Condições da visita",
+      "items": [
+        {
+          "label": "Percurso a pé",
+          "tone": "neutral"
+        },
+        {
+          "label": "Coleta aberta",
+          "tone": "success"
+        },
+        {
+          "label": "Solo úmido",
+          "tone": "warning"
+        }
+      ]
+    }
+  },
+  {
+    "type": "facts",
+    "label": "Ficha de informações",
+    "category": "Texto e formatação",
+    "example": {
+      "type": "facts",
+      "id": "ficha",
+      "title": "Dados da amostra",
+      "entries": [
+        {
+          "label": "Ambiente",
+          "value": "Praça urbana"
+        },
+        {
+          "label": "Área ilustrativa",
+          "value": "400 m²"
+        },
+        {
+          "label": "Duração prevista",
+          "value": "25 minutos"
+        }
+      ]
+    }
+  },
+  {
+    "type": "article",
+    "label": "Artigo",
+    "category": "Texto e formatação",
+    "example": {
+      "type": "article",
+      "id": "leitura",
+      "title": "Ler a paisagem",
+      "byline": "Oficina de campo",
+      "lead": "A mesma praça pode contar histórias diferentes ao longo do dia.",
+      "sections": [
+        {
+          "id": "sombra",
+          "title": "Sombra",
+          "body": "Observe como as sombras das árvores se deslocam entre as visitas."
+        },
+        {
+          "id": "pessoas",
+          "title": "Circulação",
+          "body": "Registre por quais caminhos as pessoas atravessam a praça."
+        }
+      ]
+    }
+  },
+  {
+    "type": "tabs",
+    "label": "Abas",
+    "category": "Layout e organização",
+    "example": {
+      "type": "tabs",
+      "id": "techniques",
+      "title": "Técnicas de campo",
+      "items": [
+        {
+          "id": "light",
+          "title": "Luz",
+          "body": "Escolha um objeto próximo a uma janela. Observe como a sombra muda quando você gira o objeto.",
+          "points": [
+            "Compare luz frontal e lateral.",
+            "Mantenha a distância até o objeto."
+          ]
+        },
+        {
+          "id": "focus",
+          "title": "Foco",
+          "body": "Enquadre dois objetos a distâncias diferentes. Alterne o ponto de foco e compare o resultado."
+        },
+        {
+          "id": "frame",
+          "title": "Enquadramento",
+          "body": "Fotografe o mesmo objeto em plano aberto e em detalhe. Observe o que fica dentro das bordas."
+        }
+      ]
+    }
+  },
+  {
+    "type": "accordion",
+    "label": "Acordeão",
+    "category": "Layout e organização",
+    "example": {
+      "type": "accordion",
+      "id": "duvidas",
+      "title": "Dúvidas da oficina",
+      "items": [
+        {
+          "id": "chuva",
+          "title": "E se chover?",
+          "body": "Faça o registro a partir de um local coberto e anote essa mudança de posição."
+        },
+        {
+          "id": "repetir",
+          "title": "Quando repetir a visita?",
+          "body": "Escolha outro horário e mantenha o mesmo ponto de observação."
+        }
+      ]
+    }
+  },
+  {
+    "type": "cards",
+    "label": "Grade de cartões",
+    "category": "Layout e organização",
+    "example": {
+      "type": "cards",
+      "id": "roteiros",
+      "title": "Escolha uma investigação",
+      "items": [
+        {
+          "id": "aves",
+          "title": "Aves urbanas",
+          "body": "Descreva um canto e a direção de onde ele veio.",
+          "prompt": "Monte um roteiro curto de escuta de aves para a praça."
+        },
+        {
+          "id": "plantas",
+          "title": "Árvores da praça",
+          "body": "Compare os contornos de três copas.",
+          "prompt": "Ajude a montar uma ficha para comparar três copas de árvores."
+        }
+      ]
+    }
+  },
+  {
+    "type": "columns",
+    "label": "Colunas",
+    "category": "Layout e organização",
+    "example": {
+      "type": "columns",
+      "id": "comparacao",
+      "title": "Duas perspectivas",
+      "columns": [
+        {
+          "id": "manha",
+          "title": "Manhã",
+          "body": "As primeiras anotações dão atenção ao canto das aves e ao caminho da luz."
+        },
+        {
+          "id": "tarde",
+          "title": "Tarde",
+          "body": "O segundo registro destaca mudanças na sombra e na ocupação dos bancos."
+        }
+      ]
+    }
+  },
+  {
+    "type": "carousel",
+    "label": "Carrossel",
+    "category": "Layout e organização",
+    "example": {
+      "type": "carousel",
+      "id": "paradas",
+      "title": "Paradas do percurso",
+      "slides": [
+        {
+          "id": "entrada",
+          "title": "Entrada da praça",
+          "body": "Use o portão como referência para orientar seu croqui."
+        },
+        {
+          "id": "centro",
+          "title": "Clareira central",
+          "body": "Compare o chão exposto ao sol com a área sob as copas."
+        },
+        {
+          "id": "lago",
+          "title": "Margem do lago",
+          "body": "Registre os sons mais próximos e os mais distantes."
+        }
+      ]
+    }
+  },
+  {
+    "type": "steps_list",
+    "label": "Passo a passo",
+    "category": "Layout e organização",
+    "example": {
+      "type": "steps_list",
+      "id": "protocolo",
+      "title": "Registrar uma observação",
+      "steps": [
+        {
+          "id": "localizar",
+          "title": "Marcar o local",
+          "body": "Escolha um ponto de referência visível no croqui."
+        },
+        {
+          "id": "descrever",
+          "title": "Descrever o que mudou",
+          "body": "Compare a cena com a anotação anterior."
+        },
+        {
+          "id": "revisar",
+          "title": "Revisar as unidades",
+          "body": "Confira se áreas e distâncias têm unidade indicada."
+        }
+      ]
+    }
+  },
+  {
+    "type": "table",
+    "label": "Tabela pesquisável",
+    "category": "Layout e organização",
+    "example": {
+      "id": "table",
+      "type": "table",
+      "title": "Critérios para conversar com sua equipe",
+      "columns": [
+        "Critério",
+        "Experimento",
+        "Plataforma"
+      ],
+      "rows": [
+        [
+          "Tempo inicial",
+          "Dias",
+          "Semanas"
+        ],
+        [
+          "Incerteza aceita",
+          "Alta",
+          "Menor"
+        ],
+        [
+          "Foco",
+          "Aprendizado",
+          "Consistência"
+        ]
+      ]
+    }
+  },
+  {
+    "type": "form",
+    "label": "Formulário composto",
+    "category": "Formulários",
+    "example": {
+      "type": "form",
+      "id": "report",
+      "title": "Registro da saída",
+      "submit_label": "Preparar relato",
+      "fields": [
+        {
+          "id": "day",
+          "kind": "date",
+          "label": "Data da saída"
+        },
+        {
+          "id": "light",
+          "kind": "radio",
+          "label": "Luz predominante",
+          "options": [
+            "Direta",
+            "Difusa",
+            "Mista"
+          ]
+        },
+        {
+          "id": "notes",
+          "kind": "textarea",
+          "label": "Observações de campo"
+        },
+        {
+          "id": "review",
+          "kind": "checkbox",
+          "label": "Quero revisar as fotos com o Hermes"
+        }
+      ]
+    }
+  },
+  {
+    "type": "short_answer",
+    "label": "Resposta curta",
+    "category": "Formulários",
+    "example": {
+      "type": "short_answer",
+      "id": "stop",
+      "title": "Qual é a próxima parada?",
+      "placeholder": "Nome do lugar"
+    }
+  },
+  {
+    "type": "long_answer",
+    "label": "Resposta longa",
+    "category": "Formulários",
+    "example": {
+      "type": "long_answer",
+      "id": "observations",
+      "title": "Anotações de campo",
+      "placeholder": "Registre o que encontramos no percurso…"
+    }
+  },
+  {
+    "type": "number_input",
+    "label": "Campo numérico",
+    "category": "Formulários",
+    "example": {
+      "type": "number_input",
+      "id": "distance",
+      "title": "Distância planejada",
+      "min": 0,
+      "max": 500,
+      "unit": "km"
+    }
+  },
+  {
+    "type": "date_picker",
+    "label": "Seletor de data",
+    "category": "Formulários",
+    "example": {
+      "type": "date_picker",
+      "id": "departure",
+      "title": "Data da partida"
+    }
+  },
+  {
+    "type": "date_range",
+    "label": "Intervalo de datas",
+    "category": "Formulários",
+    "example": {
+      "type": "date_range",
+      "id": "stay",
+      "title": "Período da estadia"
+    }
+  },
+  {
+    "type": "single_choice",
+    "label": "Escolha única",
+    "category": "Formulários",
+    "example": {
+      "type": "single_choice",
+      "id": "transport",
+      "title": "Como vamos chegar?",
+      "options": [
+        {
+          "id": "train",
+          "label": "Trem",
+          "detail": "Chegada à estação central"
+        },
+        {
+          "id": "bus",
+          "label": "Ônibus",
+          "detail": "Chegada ao terminal rodoviário"
+        }
+      ]
+    }
+  },
+  {
+    "type": "multi_choice",
+    "label": "Seleção múltipla",
+    "category": "Formulários",
+    "example": {
+      "type": "multi_choice",
+      "id": "interests",
+      "title": "O que você quer explorar?",
+      "options": [
+        {
+          "id": "food",
+          "label": "Gastronomia"
+        },
+        {
+          "id": "history",
+          "label": "História"
+        },
+        {
+          "id": "nature",
+          "label": "Natureza"
+        }
+      ]
+    }
+  },
+  {
+    "type": "checklist",
+    "label": "Lista de tarefas",
+    "category": "Controles interativos",
+    "example": {
+      "id": "steps",
+      "type": "checklist",
+      "title": "Pequenos passos. Progresso real.",
+      "items": [
+        "Definir o problema e quem o enfrenta",
+        "Conversar com três pessoas",
+        "Desenhar a primeira experiência",
+        "Testar antes de expandir"
+      ]
+    }
+  },
+  {
+    "type": "flashcards",
+    "label": "Cartões de estudo",
+    "category": "Controles interativos",
+    "example": {
+      "type": "flashcards",
+      "id": "practice",
+      "title": "Revise as partes da câmera",
+      "items": [
+        {
+          "id": "f1",
+          "question": "Qual conjunto projeta a luz da cena sobre o filme?",
+          "answer": "A objetiva."
+        },
+        {
+          "id": "f2",
+          "question": "Que parte você usa para compor o enquadramento?",
+          "answer": "O visor."
+        },
+        {
+          "id": "f3",
+          "question": "O que acontece ao pressionar o disparador?",
+          "answer": "O obturador é acionado para a exposição."
+        }
+      ]
+    }
+  },
+  {
+    "type": "toggle",
+    "label": "Interruptor",
+    "category": "Controles interativos",
+    "example": {
+      "type": "toggle",
+      "id": "accessible",
+      "title": "Priorizar percursos acessíveis",
+      "initial": true
+    }
+  },
+  {
+    "type": "slider",
+    "label": "Controle deslizante",
+    "category": "Controles interativos",
+    "example": {
+      "type": "slider",
+      "id": "pace",
+      "title": "Tempo diário de caminhada",
+      "min": 15,
+      "max": 120,
+      "step": 15,
+      "initial": 45,
+      "unit": "min"
+    }
+  },
+  {
+    "type": "rating",
+    "label": "Avaliação por estrelas",
+    "category": "Controles interativos",
+    "example": {
+      "type": "rating",
+      "id": "experience",
+      "title": "Como foi o percurso?",
+      "stars": 5
+    }
+  },
+  {
+    "type": "segmented",
+    "label": "Controle segmentado",
+    "category": "Controles interativos",
+    "example": {
+      "type": "segmented",
+      "id": "route",
+      "title": "Ritmo da viagem",
+      "options": [
+        {
+          "id": "calm",
+          "label": "Tranquilo",
+          "detail": "Uma atividade principal por dia."
+        },
+        {
+          "id": "active",
+          "label": "Intenso",
+          "detail": "Combine várias paradas por dia."
+        }
+      ]
+    }
+  },
+  {
+    "type": "checklist_group",
+    "label": "Tarefas por grupo",
+    "category": "Controles interativos",
+    "example": {
+      "type": "checklist_group",
+      "id": "packing",
+      "title": "Preparação da mochila",
+      "groups": [
+        {
+          "id": "documents",
+          "label": "Documentos",
+          "tasks": [
+            {
+              "id": "ticket",
+              "label": "Bilhete"
+            },
+            {
+              "id": "identity",
+              "label": "Identidade"
+            }
+          ]
+        },
+        {
+          "id": "gear",
+          "label": "Equipamento",
+          "tasks": [
+            {
+              "id": "bottle",
+              "label": "Garrafa de água"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "poll",
+    "label": "Enquete",
+    "category": "Controles interativos",
+    "example": {
+      "type": "poll",
+      "id": "afternoon",
+      "title": "Qual passeio você prefere?",
+      "options": [
+        {
+          "id": "market",
+          "label": "Mercado municipal"
+        },
+        {
+          "id": "park",
+          "label": "Parque da cidade"
+        }
+      ]
+    }
+  },
+  {
+    "type": "quiz",
+    "label": "Questionário",
+    "category": "Controles interativos",
+    "example": {
+      "type": "quiz",
+      "id": "navigation",
+      "title": "Teste de orientação",
+      "question": "Qual instrumento aponta para o norte magnético?",
+      "options": [
+        {
+          "id": "map",
+          "label": "Mapa"
+        },
+        {
+          "id": "compass",
+          "label": "Bússola"
+        }
+      ],
+      "answer_id": "compass",
+      "explanation": "A agulha imantada da bússola se alinha ao campo magnético local."
+    }
+  },
+  {
+    "type": "timer",
+    "label": "Temporizador",
+    "category": "Controles interativos",
+    "example": {
+      "type": "timer",
+      "id": "break",
+      "title": "Pausa para hidratação",
+      "seconds": 300
+    }
+  },
+  {
+    "type": "metric",
+    "label": "Indicador",
+    "category": "Visualização de dados",
+    "example": {
+      "id": "m2",
+      "type": "metric",
+      "title": "Foco da semana",
+      "value": "Descobrir",
+      "detail": "Comece pelo problema que importa"
+    }
+  },
+  {
+    "type": "chart",
+    "label": "Gráfico de barras",
+    "category": "Visualização de dados",
+    "example": {
+      "id": "chart",
+      "type": "chart",
+      "title": "Distribuição do esforço",
+      "unit": "h",
+      "points": [
+        {
+          "label": "Descoberta",
+          "value": 16
+        },
+        {
+          "label": "Design",
+          "value": 24
+        },
+        {
+          "label": "Construção",
+          "value": 40
+        },
+        {
+          "label": "Validação",
+          "value": 20
+        }
+      ]
+    }
+  },
+  {
+    "type": "series",
+    "label": "Série temporal",
+    "category": "Visualização de dados",
+    "example": {
+      "type": "series",
+      "id": "frames",
+      "title": "Fotos por saída",
+      "kind": "line",
+      "x_axis": "date",
+      "unit": "fotos",
+      "labels": [
+        "2026-05-02",
+        "2026-05-09",
+        "2026-05-23",
+        "2026-06-06"
+      ],
+      "datasets": [
+        {
+          "id": "planned",
+          "label": "Planejadas",
+          "values": [
+            8,
+            12,
+            14,
+            16
+          ]
+        },
+        {
+          "id": "taken",
+          "label": "Registradas",
+          "values": [
+            6,
+            14,
+            null,
+            12
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "donut",
+    "label": "Gráfico de rosca",
+    "category": "Visualização de dados",
+    "example": {
+      "type": "donut",
+      "id": "energia",
+      "title": "Matriz de energia",
+      "unit": "MWh",
+      "items": [
+        {
+          "label": "Solar",
+          "value": 120
+        },
+        {
+          "label": "Eólica",
+          "value": 85
+        },
+        {
+          "label": "Biomassa",
+          "value": 35
+        }
+      ]
+    }
+  },
+  {
+    "type": "pie",
+    "label": "Gráfico de pizza",
+    "category": "Visualização de dados",
+    "example": {
+      "type": "pie",
+      "id": "canais",
+      "title": "Como os leitores chegam",
+      "unit": "mil visitas",
+      "items": [
+        {
+          "label": "Busca",
+          "value": 45
+        },
+        {
+          "label": "Direto",
+          "value": 30
+        },
+        {
+          "label": "Parcerias",
+          "value": 17
+        },
+        {
+          "label": "Eventos",
+          "value": 8
+        }
+      ]
+    }
+  },
+  {
+    "type": "scatter",
+    "label": "Gráfico de dispersão",
+    "category": "Visualização de dados",
+    "example": {
+      "type": "scatter",
+      "id": "trajetos",
+      "title": "Distância e tempo por trajeto",
+      "x_label": "Distância (km)",
+      "y_label": "Tempo (min)",
+      "points": [
+        {
+          "label": "Centro",
+          "x": 4,
+          "y": 16
+        },
+        {
+          "label": "Museu",
+          "x": 7,
+          "y": 19
+        },
+        {
+          "label": "Campus",
+          "x": 10,
+          "y": 38
+        },
+        {
+          "label": "Parque",
+          "x": 8,
+          "y": 21
+        }
+      ]
+    }
+  },
+  {
+    "type": "bubble",
+    "label": "Gráfico de bolhas",
+    "category": "Visualização de dados",
+    "example": {
+      "type": "bubble",
+      "id": "projetos",
+      "title": "Impacto e esforço por projeto",
+      "x_label": "Esforço (dias)",
+      "y_label": "Impacto (pontos)",
+      "points": [
+        {
+          "label": "Catálogo · 40 pessoas",
+          "x": 8,
+          "y": 68,
+          "size": 40
+        },
+        {
+          "label": "Busca · 90 pessoas",
+          "x": 15,
+          "y": 84,
+          "size": 90
+        },
+        {
+          "label": "Mapa · 20 pessoas",
+          "x": 12,
+          "y": 42,
+          "size": 20
+        }
+      ]
+    }
+  },
+  {
+    "type": "radar",
+    "label": "Gráfico radar",
+    "category": "Visualização de dados",
+    "example": {
+      "type": "radar",
+      "id": "oficina",
+      "title": "Competências após a oficina",
+      "axes": [
+        {
+          "label": "Escrita",
+          "value": 8,
+          "max": 10
+        },
+        {
+          "label": "Pesquisa",
+          "value": 3,
+          "max": 5
+        },
+        {
+          "label": "Análise",
+          "value": 16,
+          "max": 20
+        },
+        {
+          "label": "Revisão",
+          "value": 4,
+          "max": 5
+        },
+        {
+          "label": "Síntese",
+          "value": 6,
+          "max": 10
+        }
+      ]
+    }
+  },
+  {
+    "type": "heatmap",
+    "label": "Mapa de calor",
+    "category": "Visualização de dados",
+    "example": {
+      "type": "heatmap",
+      "id": "ocupacao",
+      "title": "Variação da ocupação por turno",
+      "rows": [
+        "Segunda",
+        "Terça",
+        "Quarta"
+      ],
+      "columns": [
+        "Manhã",
+        "Tarde",
+        "Noite"
+      ],
+      "unit": "p.p.",
+      "values": [
+        [
+          -3,
+          4,
+          8
+        ],
+        [
+          0,
+          null,
+          6
+        ],
+        [
+          -1,
+          2,
+          3
+        ]
+      ]
+    }
+  },
+  {
+    "type": "histogram",
+    "label": "Histograma",
+    "category": "Visualização de dados",
+    "example": {
+      "type": "histogram",
+      "id": "espera",
+      "title": "Distribuição do tempo de espera",
+      "unit": "min",
+      "bins": 5,
+      "samples": [
+        2,
+        2,
+        2.5,
+        3,
+        3,
+        4,
+        4,
+        4.8,
+        5,
+        6,
+        null,
+        9
+      ]
+    }
+  },
+  {
+    "type": "waterfall",
+    "label": "Gráfico de cascata",
+    "category": "Visualização de dados",
+    "example": {
+      "type": "waterfall",
+      "id": "caixa",
+      "title": "Da abertura ao fechamento do caixa",
+      "unit": "R$",
+      "start": 500,
+      "items": [
+        {
+          "label": "Entradas",
+          "value": 300
+        },
+        {
+          "label": "Materiais",
+          "value": -160
+        },
+        {
+          "label": "Transporte",
+          "value": -55
+        },
+        {
+          "label": "Reembolso",
+          "value": 25
+        }
+      ]
+    }
+  },
+  {
+    "type": "funnel",
+    "label": "Funil",
+    "category": "Visualização de dados",
+    "example": {
+      "type": "funnel",
+      "id": "inscricoes",
+      "title": "Do primeiro acesso à participação",
+      "unit": "pessoas",
+      "items": [
+        {
+          "label": "Visitantes",
+          "value": 1250
+        },
+        {
+          "label": "Inscrições",
+          "value": 800
+        },
+        {
+          "label": "Confirmações",
+          "value": 520
+        },
+        {
+          "label": "Presenças",
+          "value": 430
+        }
+      ]
+    }
+  },
+  {
+    "type": "gauge",
+    "label": "Medidor",
+    "category": "Visualização de dados",
+    "example": {
+      "type": "gauge",
+      "id": "temperatura",
+      "title": "Temperatura da câmara",
+      "min": -20,
+      "max": 20,
+      "value": -6,
+      "unit": "°C"
+    }
+  },
+  {
+    "type": "progress",
+    "label": "Progresso de meta",
+    "category": "Visualização de dados",
+    "example": {
+      "type": "progress",
+      "id": "acervo",
+      "title": "Digitalização do acervo",
+      "completed": 372,
+      "total": 600,
+      "unit": "obras"
+    }
+  },
+  {
+    "type": "sparkline",
+    "label": "Minigráfico de tendência",
+    "category": "Visualização de dados",
+    "example": {
+      "type": "sparkline",
+      "id": "saldo",
+      "title": "Saldo de pedidos na semana",
+      "unit": "pedidos",
+      "points": [
+        {
+          "label": "Seg",
+          "value": -3
+        },
+        {
+          "label": "Ter",
+          "value": 2
+        },
+        {
+          "label": "Qua",
+          "value": null
+        },
+        {
+          "label": "Qui",
+          "value": -1
+        },
+        {
+          "label": "Sex",
+          "value": 7
+        },
+        {
+          "label": "Sáb",
+          "value": 9
+        }
+      ]
+    }
+  },
+  {
+    "type": "ranking",
+    "label": "Classificação",
+    "category": "Visualização de dados",
+    "example": {
+      "type": "ranking",
+      "id": "rotas",
+      "title": "Rotas por ganho de pontualidade",
+      "unit": "p.p.",
+      "items": [
+        {
+          "label": "Linha amarela",
+          "value": 2
+        },
+        {
+          "label": "Linha verde",
+          "value": -1
+        },
+        {
+          "label": "Linha azul",
+          "value": 6
+        },
+        {
+          "label": "Linha violeta",
+          "value": 2
+        }
+      ]
+    }
+  },
+  {
+    "type": "treemap",
+    "label": "Mapa de áreas",
+    "category": "Visualização de dados",
+    "example": {
+      "type": "treemap",
+      "id": "area",
+      "title": "Distribuição da área do jardim",
+      "unit": "m²",
+      "items": [
+        {
+          "label": "Pomar",
+          "value": 160
+        },
+        {
+          "label": "Horta",
+          "value": 80
+        },
+        {
+          "label": "Viveiro",
+          "value": 35
+        },
+        {
+          "label": "Estufa",
+          "value": 25
+        },
+        {
+          "label": "Compostagem",
+          "value": 12
+        }
+      ]
+    }
+  },
+  {
+    "type": "dashboard",
+    "label": "Painel de indicadores",
+    "category": "Visualização de dados",
+    "example": {
+      "type": "dashboard",
+      "id": "biblioteca",
+      "title": "Painel da biblioteca",
+      "unit": "empréstimos",
+      "breakdown_label": "Empréstimos por seção",
+      "periods": [
+        {
+          "id": "jan",
+          "label": "Janeiro",
+          "metrics": [
+            {
+              "label": "Leitores",
+              "value": 210
+            },
+            {
+              "label": "Empréstimos",
+              "value": 360
+            }
+          ],
+          "breakdown": [
+            {
+              "label": "Literatura",
+              "value": 240
+            },
+            {
+              "label": "Ciências",
+              "value": 120
+            }
+          ]
+        },
+        {
+          "id": "fev",
+          "label": "Fevereiro",
+          "metrics": [
+            {
+              "label": "Leitores",
+              "value": 245
+            },
+            {
+              "label": "Empréstimos",
+              "value": 410
+            }
+          ],
+          "breakdown": [
+            {
+              "label": "Literatura",
+              "value": 250
+            },
+            {
+              "label": "Ciências",
+              "value": 160
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "image",
+    "label": "Imagem com legenda",
+    "category": "Mídia e conteúdo visual",
+    "example": {
+      "type": "image",
+      "id": "photo",
+      "title": "Luz de estúdio",
+      "photo": {
+        "src": "atlas:camera",
+        "alt": "Câmera fotográfica em detalhe",
+        "caption": "Estudo de luz e textura."
+      }
+    }
+  },
+  {
+    "type": "gallery",
+    "label": "Galeria de imagens",
+    "category": "Mídia e conteúdo visual",
+    "example": {
+      "type": "gallery",
+      "id": "photos",
+      "title": "Estudos de composição",
+      "photos": [
+        {
+          "src": "atlas:camera",
+          "alt": "Câmera fotográfica em detalhe",
+          "caption": "Estudo de luz e textura."
+        },
+        {
+          "src": "atlas:cinema",
+          "alt": "Composição cinematográfica",
+          "caption": "Cor e contraste na composição."
+        }
+      ]
+    }
+  },
+  {
+    "type": "video",
+    "label": "Player de vídeo",
+    "category": "Mídia e conteúdo visual",
+    "example": {
+      "type": "video",
+      "id": "video",
+      "title": "Estudo de enquadramento",
+      "src": "atlas:focus",
+      "transcript": "Clipe silencioso de dois segundos mostrando uma câmera de estúdio."
+    }
+  },
+  {
+    "type": "audio",
+    "label": "Player de áudio",
+    "category": "Mídia e conteúdo visual",
+    "example": {
+      "type": "audio",
+      "id": "audio",
+      "title": "Ouvido de estúdio",
+      "src": "atlas:tone",
+      "transcript": "Um tom de 440 Hz toca por dois segundos e desaparece aos poucos."
+    }
+  },
+  {
+    "type": "diagram",
+    "label": "Diagrama anotado",
+    "category": "Mídia e conteúdo visual",
+    "example": {
+      "type": "diagram",
+      "id": "anatomy",
+      "title": "Anatomia de uma câmera de filme",
+      "illustration": "camera",
+      "alt": "Vista frontal de uma câmera de filme prateada, com objetiva central e visor à direita da imagem.",
+      "items": [
+        {
+          "id": "lens",
+          "title": "Objetiva",
+          "x": 51,
+          "y": 61,
+          "body": "A objetiva reúne as lentes que projetam a luz da cena sobre o filme. O anel ao redor dela permite ajustar o foco neste exemplo."
+        },
+        {
+          "id": "finder",
+          "title": "Visor",
+          "x": 75,
+          "y": 24,
+          "body": "Aproxime o olho do visor para enquadrar. Nesta câmera, a janela fica deslocada em relação à objetiva."
+        },
+        {
+          "id": "shutter",
+          "title": "Disparador",
+          "x": 24,
+          "y": 6,
+          "body": "O botão aciona o obturador. Ao fotografar à mão, pressione com suavidade para evitar deslocar o enquadramento."
+        }
+      ]
+    }
+  },
+  {
+    "type": "map",
+    "label": "Mapa geográfico",
+    "category": "Informações conectadas",
+    "example": {
+      "type": "map",
+      "id": "map",
+      "title": "Um idioma, três cidades",
+      "pins": [
+        {
+          "id": "rio",
+          "label": "Rio de Janeiro",
+          "lat": -22.907,
+          "lon": -43.173,
+          "detail": "Brasil"
+        },
+        {
+          "id": "lisboa",
+          "label": "Lisboa",
+          "lat": 38.72,
+          "lon": -9.14,
+          "detail": "Portugal"
+        },
+        {
+          "id": "praia",
+          "label": "Praia",
+          "lat": 14.92,
+          "lon": -23.51,
+          "detail": "Cabo Verde"
+        }
+      ]
+    }
+  },
+  {
+    "type": "places",
+    "label": "Diretório de locais",
+    "category": "Informações conectadas",
+    "example": {
+      "type": "places",
+      "id": "directory",
+      "title": "Ateliês imaginários",
+      "places": [
+        {
+          "id": "rio",
+          "label": "Rio de Janeiro",
+          "lat": -22.907,
+          "lon": -43.173,
+          "detail": "Brasil",
+          "address": "Praça do Estúdio, 1",
+          "category": "Fotografia"
+        },
+        {
+          "id": "lisboa",
+          "label": "Lisboa",
+          "lat": 38.72,
+          "lon": -9.14,
+          "detail": "Portugal",
+          "address": "Praça do Estúdio, 2",
+          "category": "Tipografia"
+        },
+        {
+          "id": "praia",
+          "label": "Praia",
+          "lat": 14.92,
+          "lon": -23.51,
+          "detail": "Cabo Verde",
+          "address": "Praça do Estúdio, 3",
+          "category": "Cerâmica"
+        }
+      ]
+    }
+  },
+  {
+    "type": "route",
+    "label": "Roteiro geográfico",
+    "category": "Informações conectadas",
+    "example": {
+      "type": "route",
+      "id": "walk",
+      "title": "Percurso de estudo",
+      "items": [
+        {
+          "id": "a",
+          "title": "Luz da manhã",
+          "body": "Primeiro exercício. Busque luz lateral e observe o contraste.",
+          "lat": -23.548,
+          "lon": -46.638
+        },
+        {
+          "id": "b",
+          "title": "Linhas da rua",
+          "body": "Segundo exercício. Use duas linhas convergentes na composição.",
+          "lat": -23.545,
+          "lon": -46.636
+        },
+        {
+          "id": "c",
+          "title": "Reflexos",
+          "body": "Último exercício. Compare ângulos sobre uma superfície refletora.",
+          "lat": -23.544,
+          "lon": -46.633
+        }
+      ]
+    }
+  },
+  {
+    "type": "product",
+    "label": "Produto com variantes",
+    "category": "Informações conectadas",
+    "example": {
+      "type": "product",
+      "id": "product",
+      "title": "Caderno de campo",
+      "description": "Produto e preços ilustrativos.",
+      "currency": "BRL",
+      "variants": [
+        {
+          "id": "a5",
+          "label": "Formato A5",
+          "price_cents": 2900
+        },
+        {
+          "id": "a4",
+          "label": "Formato A4",
+          "price_cents": 3900,
+          "available": false
+        }
+      ]
+    }
+  },
+  {
+    "type": "collection",
+    "label": "Coleção comparável",
+    "category": "Informações conectadas",
+    "example": {
+      "type": "collection",
+      "id": "screening",
+      "title": "Programação do cineclube",
+      "items": [
+        {
+          "id": "mare",
+          "illustration": "coast",
+          "title": "Maré de Papel",
+          "description": "Cartas chegam a uma vila costeira com trinta anos de atraso.",
+          "score": 86,
+          "metadata": {
+            "Gênero": "Drama",
+            "Duração": "92 min",
+            "Ritmo": "Contemplativo"
+          }
+        },
+        {
+          "id": "orbita",
+          "illustration": "orbit",
+          "title": "Última Órbita",
+          "description": "Uma engenheira procura a origem de um eco no lado escuro de uma lua.",
+          "score": 94,
+          "metadata": {
+            "Gênero": "Ficção científica",
+            "Duração": "114 min",
+            "Ritmo": "Intenso"
+          }
+        },
+        {
+          "id": "mapa",
+          "illustration": "rain",
+          "title": "O Mapa da Chuva",
+          "description": "Dois cartógrafos atravessam uma cidade que muda a cada temporal.",
+          "score": 90,
+          "metadata": {
+            "Gênero": "Aventura",
+            "Duração": "103 min",
+            "Ritmo": "Moderado"
+          }
+        },
+        {
+          "id": "mesa",
+          "illustration": "dining",
+          "title": "Mesa para Três",
+          "description": "Um pequeno restaurante vira o ponto de encontro de três desconhecidos.",
+          "score": 82,
+          "metadata": {
+            "Gênero": "Comédia",
+            "Duração": "84 min",
+            "Ritmo": "Leve"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "entity",
+    "label": "Perfil de entidade",
+    "category": "Informações conectadas",
+    "example": {
+      "type": "entity",
+      "id": "entidade",
+      "title": "Ficha de referência",
+      "name": "Ipê-amarelo",
+      "category": "Planta · nome popular",
+      "summary": "Nome usado para diferentes árvores de flores amarelas. Uma observação de campo deve registrar quais características sustentam a identificação.",
+      "attributes": [
+        {
+          "label": "Observação sugerida",
+          "value": "Forma das folhas e das flores"
+        }
+      ],
+      "url": "https://floradobrasil.jbrj.gov.br/"
+    }
+  },
+  {
+    "type": "bibliography",
+    "label": "Bibliografia",
+    "category": "Informações conectadas",
+    "example": {
+      "type": "bibliography",
+      "id": "referencias",
+      "title": "Fontes para documentar o trabalho",
+      "entries": [
+        {
+          "title": "Referência de elementos HTML",
+          "author": "MDN Web Docs",
+          "locator": "Consulte os elementos semânticos de texto.",
+          "url": "https://developer.mozilla.org/pt-BR/docs/Web/HTML/Reference/Elements"
+        },
+        {
+          "title": "Especificação CommonMark",
+          "author": "Projeto CommonMark",
+          "locator": "Consulte a sintaxe de listas e citações.",
+          "url": "https://spec.commonmark.org/"
+        }
+      ]
+    }
+  },
+  {
+    "type": "glossary",
+    "label": "Glossário",
+    "category": "Informações conectadas",
+    "example": {
+      "type": "glossary",
+      "id": "termos",
+      "title": "Vocabulário de campo",
+      "entries": [
+        {
+          "term": "Transecto",
+          "definition": "Linha de observação ao longo da qual se registram mudanças na paisagem."
+        },
+        {
+          "term": "Amostragem",
+          "definition": "Seleção das observações que vão compor um levantamento."
+        },
+        {
+          "term": "Dossel",
+          "definition": "Camada formada pelas copas das árvores."
+        }
+      ]
+    }
+  },
+  {
+    "type": "timeline",
+    "label": "Linha do tempo",
+    "category": "Informações conectadas",
+    "example": {
+      "type": "timeline",
+      "id": "schedule",
+      "title": "Etapas da saída",
+      "items": [
+        {
+          "id": "prepare",
+          "title": "Preparar",
+          "when": "08h00",
+          "status": "done",
+          "body": "Separar câmera, filme e caderno."
+        },
+        {
+          "id": "walk",
+          "title": "Fotografar",
+          "when": "09h00",
+          "status": "current",
+          "body": "Percorrer as três paradas e anotar uma escolha de enquadramento em cada uma."
+        },
+        {
+          "id": "review",
+          "title": "Revisar",
+          "when": "11h00",
+          "status": "upcoming",
+          "body": "Comparar os registros com o plano e escolher uma foto para discutir."
+        }
+      ]
+    }
+  },
+  {
+    "type": "comparison",
+    "label": "Comparativo",
+    "category": "Informações conectadas",
+    "example": {
+      "id": "compare",
+      "type": "comparison",
+      "title": "Como você quer começar?",
+      "options": [
+        {
+          "name": "Experimento enxuto",
+          "description": "Aprender cedo, com uma primeira entrega pequena.",
+          "features": [
+            "Uma hipótese por vez",
+            "Menor investimento inicial",
+            "Feedback em poucos dias"
+          ]
+        },
+        {
+          "name": "Plataforma completa",
+          "description": "Construir uma base para várias equipes.",
+          "features": [
+            "Escopo definido em conjunto",
+            "Mais planejamento inicial",
+            "Integrações desde o início"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "document",
+    "label": "Documento editável",
+    "category": "Aplicações e documentos",
+    "example": {
+      "type": "document",
+      "id": "relato",
+      "title": "Relato de campo",
+      "body": "Local da visita\nPraça do bairro.\n\nObservações\nDescreva a primeira mudança que chamou sua atenção."
+    }
+  },
+  {
+    "type": "code",
+    "label": "Código-fonte",
+    "category": "Aplicações e documentos",
+    "example": {
+      "type": "code",
+      "id": "trecho",
+      "title": "Ler uma anotação",
+      "language": "Python",
+      "code": "registro = {\"local\": \"Praça\", \"arvores\": 3}\nprint(registro[\"local\"])"
+    }
+  },
+  {
+    "type": "calculator",
+    "label": "Calculadora",
+    "category": "Aplicações e documentos",
+    "example": {
+      "id": "calculator",
+      "type": "calculator",
+      "title": "Laboratório de juros compostos",
+      "operation": "compound",
+      "unit": "R$",
+      "inputs": [
+        {
+          "label": "Valor inicial",
+          "value": 10000,
+          "min": 0,
+          "max": 100000,
+          "step": 500
+        },
+        {
+          "label": "Taxa anual (%)",
+          "value": 8,
+          "min": 0,
+          "max": 20,
+          "step": 0.5
+        },
+        {
+          "label": "Tempo (anos)",
+          "value": 10,
+          "min": 1,
+          "max": 40,
+          "step": 1
+        }
+      ]
+    }
+  },
+  {
+    "type": "kanban",
+    "label": "Quadro Kanban",
+    "category": "Aplicações e documentos",
+    "example": {
+      "type": "kanban",
+      "id": "board",
+      "title": "Produção da exposição",
+      "columns": [
+        {
+          "id": "todo",
+          "label": "A fazer"
+        },
+        {
+          "id": "doing",
+          "label": "Em produção"
+        },
+        {
+          "id": "done",
+          "label": "Concluído"
+        }
+      ],
+      "tasks": [
+        {
+          "id": "select",
+          "label": "Selecionar fotografias",
+          "column": "todo"
+        },
+        {
+          "id": "print",
+          "label": "Provar a impressão",
+          "column": "doing"
+        }
+      ]
+    }
+  },
+  {
+    "type": "decision_tree",
+    "label": "Árvore de decisão",
+    "category": "Aplicações e documentos",
+    "example": {
+      "type": "decision_tree",
+      "id": "tree",
+      "title": "Qual oficina escolher?",
+      "start": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Você prefere imagem ou som?",
+          "choices": [
+            {
+              "label": "Imagem",
+              "target": "photo"
+            },
+            {
+              "label": "Som",
+              "target": "sound"
+            }
+          ]
+        },
+        {
+          "id": "photo",
+          "label": "Experimente a oficina de fotografia."
+        },
+        {
+          "id": "sound",
+          "label": "Experimente a oficina de paisagem sonora."
+        }
+      ]
+    }
+  },
+  {
+    "type": "budget_planner",
+    "label": "Planejador de orçamento",
+    "category": "Aplicações e documentos",
+    "example": {
+      "type": "budget_planner",
+      "id": "budget",
+      "title": "Orçamento da exposição",
+      "currency": "BRL",
+      "limit_cents": 72000,
+      "items": [
+        {
+          "id": "prints",
+          "label": "Impressões",
+          "price_cents": 4500,
+          "quantity": 4
+        },
+        {
+          "id": "frames",
+          "label": "Molduras",
+          "price_cents": 6200,
+          "quantity": 4
+        }
+      ]
+    }
+  }
+]

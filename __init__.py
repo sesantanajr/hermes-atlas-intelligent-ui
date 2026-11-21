@@ -21,12 +21,31 @@ def register(ctx):
         except (ValueError, KeyError) as exc:
             return json.dumps({"success": False, "error": str(exc)[:1500]})
 
-    canvas_schema = Canvas.model_json_schema()
-    definitions = canvas_schema.pop("$defs", {})
+    from .atlas import catalog
+
+    def discover(params, **kwargs):
+        try:
+            kind, query, category = (params.get(k, '') for k in ('type','q','category'))
+            if any(not isinstance(s, str) for s in (kind,query,category)) or len(kind)>64 or len(query)>160 or len(category)>80:
+                raise ValueError('Invalid catalog parameters')
+            result = catalog.detail(kind) if kind else catalog.search(query, category)
+            return json.dumps(result, ensure_ascii=False)
+        except (KeyError, ValueError) as exc:
+            return json.dumps({'success':False,'error':str(exc)})
+
+    ctx.register_tool(name='atlas_components',toolset='atlas',schema={
+        'name':'atlas_components','description':'Discover supported UI blocks by type, Portuguese label or category. Pass type for the full JSON schema and a working example before rendering.',
+        'parameters':{'type':'object','properties':{'type':{'type':'string','maxLength':64},'q':{'type':'string','maxLength':160},'category':{'type':'string','maxLength':80}}}},handler=discover)
+    canvas_schema = {'type':'object','properties':{
+        'id':{'type':'string'},'title':{'type':'string'},'description':{'type':'string'},
+        'schema_version':{'type':'string','enum':['1.0']},'state':{'type':'object'},
+        'sources':{'type':'array','items':{'type':'object','properties':{'title':{'type':'string'},'url':{'type':'string'}},'required':['title','url']}},
+        'blocks':{'type':'array','minItems':1,'maxItems':32,'items':{'type':'object','description':'Use atlas_components(type) for required fields.','properties':{'type':{'type':'string'},'id':{'type':'string'},'title':{'type':'string'}},'required':['type','id','title'],'additionalProperties':True}}},
+        'required':['id','title','blocks']}
     ctx.register_tool(name="atlas_render", toolset="atlas", schema={
         "name": "atlas_render",
         "description": "Create an interactive Atlas canvas, including safe forms and persistent state. Label examples and cite factual data. A new canvas receives a unique ID. To update, first atlas_get and send its ID with expected_revision equal to the revision you read; stale writes are refused.",
-        "parameters": {"type": "object", "$defs": definitions, "properties": {
+        "parameters": {"type": "object", "properties": {
             "canvas": canvas_schema, "expected_revision": {"type":"integer", "minimum":0, "default":0}}, "required": ["canvas"]}}, handler=render)
     def list_canvases(params, **kwargs):
         offset = params.get('offset', 0)
