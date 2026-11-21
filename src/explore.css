@@ -1,0 +1,151 @@
+.atlas-app .atlas-block:is(.tabs, .timeline) {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.atlas-app .explore-view {
+  display: grid;
+  min-width: 0;
+  gap: 0.85rem;
+}
+.atlas-app .explore-rail {
+  display: flex;
+  gap: 0.35rem;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 0.2rem;
+  scrollbar-width: thin;
+}
+.atlas-app .explore-tab,
+.atlas-app .explore-followup {
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.atlas-app .explore-tab {
+  display: inline-flex;
+  align-items: center;
+  text-align: start;
+  gap: 0.6rem;
+  flex: 0 0 auto;
+  min-height: 2.75rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid transparent;
+  background: transparent;
+}
+.atlas-app .explore-tabs .explore-tab {
+  max-width: min(80%, 19rem);
+}
+.atlas-app .explore-tab[aria-selected="true"] {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: inset 0 -2px var(--green);
+}
+.atlas-app .explore-tab-label {
+  display: grid;
+  gap: 0.15rem;
+  overflow-wrap: anywhere;
+}
+.atlas-app .explore-tab-label small {
+  color: var(--muted);
+}
+.atlas-app .explore-panel {
+  min-width: 0;
+  padding: 0.95rem 1rem;
+  border-inline-start: 2px solid var(--green);
+  border-radius: 0.2rem;
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+.atlas-app .explore-panel p {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+.atlas-app .explore-panel h4 {
+  margin: 0 0 0.5rem;
+}
+.atlas-app .explore-panel ul {
+  margin: 0.7rem 0 0;
+  padding-inline-start: 1.2rem;
+}
+.atlas-app .explore-panel li + li {
+  margin-top: 0.3rem;
+}
+.atlas-app .explore-followup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--line);
+  background: transparent;
+}
+.atlas-app .explore-view :is(button, [role="tabpanel"]):focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
+}
+.atlas-app .explore-timeline .explore-rail {
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+  max-height: 18rem;
+}
+.atlas-app .explore-timeline .explore-tab {
+  position: relative;
+  width: 100%;
+}
+.atlas-app .explore-timeline .explore-tab::before,
+.atlas-app .explore-timeline .explore-tab::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: calc(0.75rem + 0.45rem);
+  border-inline-start: 1px solid var(--line);
+  height: 50%;
+  pointer-events: none;
+}
+.atlas-app .explore-timeline .explore-tab::before {
+  top: -1px;
+}
+.atlas-app .explore-timeline .explore-tab::after {
+  bottom: -1px;
+}
+.atlas-app .explore-timeline .explore-tab:first-child::before,
+.atlas-app .explore-timeline .explore-tab:last-child::after {
+  display: none;
+}
+.atlas-app .explore-timeline .explore-tab[aria-selected="true"] {
+  box-shadow: inset 2px 0 var(--green);
+}
+.atlas-app .explore-marker {
+  position: relative;
+  z-index: 1;
+  background: var(--surface);
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 1.5px solid var(--muted);
+  border-radius: 50%;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+}
+.atlas-app .explore-marker[data-status="current"] {
+  border: 3px double var(--green);
+}
+.atlas-app .explore-marker[data-status="done"] {
+  background: var(--green);
+  border-color: var(--green);
+  color: var(--surface);
+}
+.atlas-app .atlas-block.timeline {
+  container-type: inline-size;
+}
+@container (min-width: 32rem) {
+  .atlas-app .explore-timeline {
+    grid-template-columns: minmax(12rem, 0.85fr) minmax(0, 1.3fr);
+    align-items: start;
+  }
+}

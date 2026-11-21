@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import type { Block, CollectionItem, Interaction } from "./types";
 import "./collection.css";
+import { CanvasLink } from "./CanvasLink";
 
 type CollectionBlock = Extract<Block, { type: "collection" }>;
 type Props = {
@@ -80,7 +81,7 @@ function Cover({ item }: { item: CollectionItem }) {
 function ItemSource({ item }: { item: CollectionItem }) {
   const url = externalUrl(item.source?.url);
   return url && item.source ? (
-    <a
+    <CanvasLink
       className="collection-source"
       href={url.href}
       target="_blank"
@@ -88,7 +89,7 @@ function ItemSource({ item }: { item: CollectionItem }) {
     >
       {item.source.title}
       <ArrowUpRight size={13} aria-hidden="true" />
-    </a>
+    </CanvasLink>
   ) : null;
 }
 

@@ -1,19 +1,10 @@
 from typing import Annotated, Literal
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator, HttpUrl
-
-Text = Annotated[str, Field(max_length=12000)]
-Label = Annotated[str, Field(min_length=1, max_length=160)]
-Identifier = Annotated[str, Field(pattern=r"^[a-zA-Z0-9_-]{1,64}$")]
-Number = Annotated[float, Field(allow_inf_nan=False, ge=-1e12, le=1e12)]
-
-
-class Strict(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-
-class Block(Strict):
-    id: Identifier
-    title: Label
+from pydantic import Field, field_validator, model_validator, HttpUrl
+from .block_base import Strict, Block, Text, Label, Identifier, Number
+from .series import SeriesChart
+from .explore import Tabs, Timeline
+from .spatial import Diagram, Route
+from .study import Flashcards
 
 
 class TextBlock(Block):
@@ -132,14 +123,16 @@ class Calculator(Block):
 class FormField(Strict):
     id: Identifier
     label: Label
-    kind: Literal["text", "number", "select"] = "text"
+    kind: Literal["text", "number", "select", "date", "textarea", "checkbox", "radio"] = "text"
     options: Annotated[list[Label], Field(max_length=30)] = []
     required: bool = False
 
     @model_validator(mode="after")
     def valid_options(self):
-        if self.kind == "select" and not self.options:
-            raise ValueError("Select needs options")
+        if self.kind in {"select", "radio"} and not self.options:
+            raise ValueError("Choice fields need options")
+        if self.kind == "radio" and len(set(self.options)) != len(self.options):
+            raise ValueError("Choice fields need distinct options")
         return self
 
 
@@ -164,9 +157,14 @@ class Interaction(Strict):
     fields: dict[Identifier, Annotated[str, Field(max_length=4000)]] = {}
     selected_ids: Annotated[list[Identifier], Field(max_length=4)] = []
     collection_sort: Literal["original", "score", "title"] = "original"
+    active_item: Identifier | None = None
+    hidden_series: Annotated[list[Identifier], Field(max_length=6)] = []
+    known_ids: Annotated[list[Identifier], Field(max_length=40)] = []
+    series_view: Literal["plot", "table"] = "plot"
 
 
-Component = Annotated[TextBlock | Metric | Chart | Table | Checklist | Comparison | Calculator | Form | Collection, Field(discriminator="type")]
+Component = Annotated[TextBlock | Metric | Chart | Table | Checklist | Comparison | Calculator | Form |
+                      Collection | SeriesChart | Tabs | Timeline | Route | Diagram | Flashcards, Field(discriminator="type")]
 
 
 class Canvas(Strict):
@@ -190,6 +188,20 @@ class Canvas(Strict):
             interaction = self.state.get(block.id)
             if not interaction:
                 continue
+            if interaction.active_item is not None and (
+                not isinstance(block, (Tabs, Timeline, Route, Diagram, Flashcards))
+                or interaction.active_item not in {item.id for item in block.items}
+            ):
+                raise ValueError("Active item must belong to its block")
+            if interaction.known_ids:
+                known = set(interaction.known_ids)
+                if (not isinstance(block, Flashcards) or len(known) != len(interaction.known_ids)
+                        or not known.issubset({item.id for item in block.items})):
+                    raise ValueError("Known cards must reference distinct cards of this deck")
+            if interaction.hidden_series:
+                if not isinstance(block, SeriesChart):
+                    raise ValueError("Hidden series must belong to a chart")
+                block.validate_hidden(interaction.hidden_series)
             if interaction.selected_ids:
                 selected = set(interaction.selected_ids)
                 if (not isinstance(block, Collection)

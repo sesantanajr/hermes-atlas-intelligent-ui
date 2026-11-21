@@ -4,11 +4,14 @@
 
 Interface conversacional e visual para o **Hermes Agent**, com canvases interativos, histórico persistente e execuções recuperáveis.
 
-**Versão 0.3.0.** Plugin comunitário e independente para o Hermes Agent. Compare opções no próprio chat, leve a seleção ao agente e reabra o canvas com seus controles preservados. [O que mudou e como foi validado](docs/0.3.md)
+**Versão 0.4.0.** Plugin comunitário e independente para o Hermes Agent. Explore dados em gráficos multissérie, inspecione diagramas por partes e transforme uma seleção em uma pergunta para o agente. Os 15 tipos de bloco podem coexistir no mesmo canvas. [Comparação com ChatGPT e OpenUI, novidades e validação](docs/0.4.md)
 
-![Coleção interativa no Atlas com dois filmes fictícios selecionados](docs/collection-preview.jpg)
+![Diagrama de câmera com partes selecionáveis no Hermes Atlas](docs/studio-preview.jpg)
 
 ## Recursos
+
+- **Por dentro da câmera**, em **Descobrir**, combina um diagrama com pontos interativos, abas navegáveis por teclado e cartões de estudo que guardam seu progresso.
+- **Caderno de campo** reúne um gráfico multissérie com tabela acessível, um roteiro por coordenadas, etapas e um formulário com data, pergunta aberta, escolha única e caixa de seleção.
 
 - Chat com Markdown, resposta progressiva, progresso de ferramentas, cancelamento remoto e recuperação da mesma execução após reconectar.
 - Histórico no servidor, busca, paginação, renomeação, exclusão da cópia Atlas e exportação JSON. Reutilização de mensagens pelo editor.
@@ -49,7 +52,7 @@ O chat Atlas usa sessões persistentes da Runs API. Na extensão Desktop, **Envi
 O wheel inclui o aplicativo compilado e todo o plugin, sem depender do checkout:
 
 ```sh
-pip install ./hermes_atlas_intelligent_ui-0.3.0-py3-none-any.whl
+pip install ./hermes_atlas_intelligent_ui-0.4.0-py3-none-any.whl
 hermes-atlas serve
 # Opcional: copiar o plugin para uma instalação Hermes nova
 hermes-atlas install-plugin --home /caminho/do/hermes

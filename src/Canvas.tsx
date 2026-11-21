@@ -2,6 +2,12 @@ import React from "react";
 import { Check, Search, SlidersHorizontal } from "lucide-react";
 import { Block, Canvas as CanvasData, Interaction } from "./types";
 import { CollectionView } from "./collection";
+import { SeriesView } from "./series";
+import { ExploreView } from "./explore";
+import { SpatialView } from "./spatial";
+import { CanvasForm } from "./CanvasForm";
+import { CanvasLink } from "./CanvasLink";
+import { StudyView } from "./study";
 
 export function calculate(operation: string, values: number[]): number | null {
   let result: number;
@@ -59,8 +65,45 @@ function Component({ block, state, change, onAction }: Props) {
   return (
     <section className={`atlas-block ${block.type}`}>
       <h3>{block.title}</h3>
+      {block.type === "flashcards" && (
+        <StudyView
+          block={block}
+          state={state}
+          change={set}
+          onAction={onAction}
+        />
+      )}
+      {block.type === "series" && (
+        <SeriesView
+          block={block}
+          state={state}
+          change={set}
+          onAction={onAction}
+        />
+      )}
+      {(block.type === "timeline" || block.type === "tabs") && (
+        <ExploreView
+          block={block}
+          state={state}
+          change={set}
+          onAction={onAction}
+        />
+      )}
+      {(block.type === "diagram" || block.type === "route") && (
+        <SpatialView
+          block={block}
+          active={state.active_item}
+          select={(id) => set({ active_item: id })}
+          onAction={onAction}
+        />
+      )}
       {block.type === "collection" && (
-        <CollectionView block={block} state={state} change={set} onAction={onAction} />
+        <CollectionView
+          block={block}
+          state={state}
+          change={set}
+          onAction={onAction}
+        />
       )}
       {block.type === "text" && <p className="prose">{block.text}</p>}
       {block.type === "chart" && (
@@ -194,7 +237,8 @@ function Component({ block, state, change, onAction }: Props) {
                     ),
                   )
                   .sort((a, b) =>
-                    state.sort_column != null && state.sort_column < block.columns.length
+                    state.sort_column != null &&
+                    state.sort_column < block.columns.length
                       ? (state.sort_reverse ? -1 : 1) *
                         a[state.sort_column].localeCompare(
                           b[state.sort_column],
@@ -271,52 +315,12 @@ function Component({ block, state, change, onAction }: Props) {
         </div>
       )}
       {block.type === "form" && (
-        <form
-          className="atlas-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            onAction?.(
-              `Formulário “${block.title}”:\n${block.fields.map((f) => `${f.label}: ${state.fields?.[f.id] || ""}`).join("\n")}`,
-            );
-          }}
-        >
-          {block.fields.map((f) => (
-            <label key={f.id}>
-              {f.label}
-              {f.kind === "select" ? (
-                <select
-                  required={f.required}
-                  value={state.fields?.[f.id] || ""}
-                  onChange={(e) =>
-                    set({ fields: { ...state.fields, [f.id]: e.target.value } })
-                  }
-                >
-                  <option value="">Selecione</option>
-                  {f.options?.map((o) => (
-                    <option key={o}>{o}</option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type={f.kind}
-                  required={f.required}
-                  maxLength={4000}
-                  value={state.fields?.[f.id] || ""}
-                  onChange={(e) =>
-                    set({ fields: { ...state.fields, [f.id]: e.target.value } })
-                  }
-                />
-              )}
-            </label>
-          ))}
-          <button className="primary" type="submit">
-            {block.submit_label || "Enviar ao Hermes"}
-          </button>
-          <small>
-            Os valores serão colocados na mensagem para você revisar antes de
-            enviar.
-          </small>
-        </form>
+        <CanvasForm
+          block={block}
+          values={state.fields || {}}
+          change={(fields) => set({ fields })}
+          onAction={onAction}
+        />
       )}
     </section>
   );
@@ -355,14 +359,14 @@ export function Canvas({
         <section className="canvas-sources">
           <h3>Fontes</h3>
           {canvas.sources.map((s, i) => (
-            <a
+            <CanvasLink
               key={i}
               href={/^https?:\/\//i.test(s.url) ? s.url : undefined}
               target="_blank"
               rel="noreferrer"
             >
               {i + 1}. {s.title}
-            </a>
+            </CanvasLink>
           ))}
         </section>
       )}

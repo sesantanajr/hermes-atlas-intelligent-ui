@@ -1,4 +1,5 @@
 import { Canvas } from "./types";
+import {studioExamples} from "./studioExamples";
 export const examples: Canvas[] = [
   {
     schema_version: "1.0",
@@ -188,4 +189,12 @@ export const examples: Canvas[] = [
       },
     ],
   },
+  ...studioExamples,
 ];
+
+const captions: { [id: string]: string } = {
+  "demo-focus": "Planejamento visual", "demo-savings": "Simulação ao vivo",
+  "demo-compare": "Comparação interativa", "demo-screening": "Catálogo com seleção",
+};
+export const gallery = [...studioExamples, ...examples.filter(e => !studioExamples.includes(e))]
+  .map(example => ({example, caption: captions[example.id] || example.title, index: examples.indexOf(example)}));

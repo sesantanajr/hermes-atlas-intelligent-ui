@@ -1,3 +1,7 @@
+import type { SeriesBlock, SeriesState } from "./seriesTypes";
+import type { ExploreBlock, ExploreInteraction } from "./exploreTypes";
+import type { SpatialBlock } from "./spatial";
+import type { FlashcardsBlock, StudyInteraction } from "./study";
 export type Input = {
   label: string;
   value: number;
@@ -18,6 +22,10 @@ export type CollectionItem = {
 };
 export type Block = Base &
   (
+    | SeriesBlock
+    | ExploreBlock
+    | SpatialBlock
+    | FlashcardsBlock
     | { type: "text"; text: string }
     | { type: "metric"; value: string; detail?: string }
     | {
@@ -43,23 +51,32 @@ export type Block = Base &
         fields: {
           id: string;
           label: string;
-          kind: "text" | "number" | "select";
+          kind:
+            | "text"
+            | "number"
+            | "select"
+            | "textarea"
+            | "radio"
+            | "checkbox"
+            | "date";
           options?: string[];
           required?: boolean;
         }[];
         submit_label?: string;
       }
   );
-export type Interaction = {
-  checked?: number[];
-  selected?: number | null;
-  query?: string;
-  sort_column?: number | null;
-  sort_reverse?: boolean;
-  fields?: { [key: string]: string };
-  selected_ids?: string[];
-  collection_sort?: "original" | "score" | "title";
-};
+export type Interaction = SeriesState &
+  ExploreInteraction &
+  StudyInteraction & {
+    checked?: number[];
+    selected?: number | null;
+    query?: string;
+    sort_column?: number | null;
+    sort_reverse?: boolean;
+    fields?: { [key: string]: string };
+    selected_ids?: string[];
+    collection_sort?: "original" | "score" | "title";
+  };
 export type Canvas = {
   schema_version: "1.0";
   id: string;

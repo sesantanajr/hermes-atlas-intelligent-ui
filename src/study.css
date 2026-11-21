@@ -1,0 +1,86 @@
+.atlas-app .atlas-block.flashcards {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.atlas-app .study-deck {
+  display: grid;
+  gap: 0.8rem;
+}
+.atlas-app .study-meta,
+.atlas-app .study-navigation,
+.atlas-app .study-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+.atlas-app .study-meta {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.atlas-app .study-meta progress {
+  width: 5rem;
+  max-width: 100%;
+  height: 0.45rem;
+  accent-color: var(--green);
+}
+.atlas-app .study-meta label {
+  margin-inline-start: auto;
+}
+.atlas-app .study-navigation {
+  justify-content: space-between;
+  font-size: 0.83rem;
+  color: var(--muted);
+}
+.atlas-app .study-navigation > div {
+  display: flex;
+  gap: 0.3rem;
+}
+.atlas-app .study-deck button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.55rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--line);
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.atlas-app .study-deck button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+.atlas-app .study-deck :is(button, input):focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+.atlas-app .study-face {
+  padding: clamp(0.85rem, 3%, 1.4rem);
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+.atlas-app .study-face h4 {
+  margin: 0 0 1.1rem;
+  font-size: 1.2rem;
+  line-height: 1.45;
+}
+.atlas-app .study-deck .study-reveal {
+  border-color: var(--green);
+}
+.atlas-app .study-answer {
+  margin: 1rem 0;
+  padding-block-start: 0.9rem;
+  border-top: 1px solid var(--line);
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+.atlas-app .study-complete p {
+  margin: 0.2rem 0 0.75rem;
+}

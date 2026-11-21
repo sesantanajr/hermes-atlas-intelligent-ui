@@ -35,7 +35,8 @@ import { RunControl } from "./RunControl";
 import { useComposer } from "./useComposer";
 import { useDirectory } from "./useDirectory";
 import { useWorkspace, type WorkspaceSnapshot } from "./useWorkspace";
-import { examples } from "./examples";
+import { examples, gallery } from "./examples";
+import cameraPhoto from "./camera.webp";
 import { createClient, download } from "./client";
 import {
   Canvas as CanvasData,
@@ -112,6 +113,14 @@ export function App({
     "home",
   );
   const [sidebar, setSidebar] = useState(() => window.innerWidth > 800);
+  useEffect(() => {
+    const overlay = window.matchMedia("(max-width: 650px)");
+    const closeOnNarrowScreen = (event: MediaQueryListEvent) => {
+      if (event.matches) setSidebar(false);
+    };
+    overlay.addEventListener?.("change", closeOnNarrowScreen);
+    return () => overlay.removeEventListener?.("change", closeOnNarrowScreen);
+  }, []);
   const [status, setStatus] = useState<Status | null>(null);
   const [current, setCurrent] = useState<Conversation | null>(null);
   const sync = useWorkspace(api);
@@ -335,6 +344,7 @@ export function App({
     setWorkspace((w) => ({ ...w, canvas: next }));
   };
   const openExample = (i: number) => {
+    setNotice("");
     setCanvasOnly(compact);
     setWorkspace((w) => ({
       ...w,
@@ -650,7 +660,7 @@ export function App({
           <div className="profile">
             <span>HA</span>
             <div>
-              Atlas Intelligent UI<small>Versão 0.3.0</small>
+              Atlas Intelligent UI<small>Versão 0.4.0</small>
             </div>
           </div>
         </div>
@@ -778,8 +788,8 @@ export function App({
                 <div className="suggestions">
                   {[
                     "Crie uma calculadora para dividir uma conta.",
-                    "Compare duas opções de projeto em um canvas.",
-                    "Crie um formulário para planejar minha semana.",
+                    "Crie um gráfico para comparar duas séries de dados fictícios, com uma medição ausente.",
+                    "Crie cartões de estudo e uma linha do tempo sobre a história da fotografia.",
                     "Crie um catálogo de livros fictícios para eu escolher e comparar.",
                   ].map((s, i) => (
                     <button
@@ -795,8 +805,8 @@ export function App({
                         {
                           [
                             "Calcular",
-                            "Comparar",
-                            "Planejar",
+                            "Explorar dados",
+                            "Estudar",
                             "Escolher itens",
                           ][i]
                         }
@@ -811,7 +821,7 @@ export function App({
                   </div>
                 </div>
                 <div className="example-grid">
-                  {examples.map((e, i) => (
+                  {gallery.map(({example: e, index: i, caption}) => (
                     <button
                       className={`example example-${i}`}
                       key={e.id}
@@ -833,6 +843,13 @@ export function App({
                               stroke="currentColor"
                               strokeWidth="3"
                             />
+                          </svg>
+                        ) : e.id === "demo-camera" ? (
+                          <img className="studio-camera-thumb" src={cameraPhoto} alt="" loading="lazy"/>
+                        ) : e.id === "demo-walk" ? (
+                          <svg viewBox="0 0 260 110" className="studio-series-thumb">
+                            <path d="M10 88 L85 60 L164 69 L248 23" fill="none" stroke="currentColor" strokeWidth="4" />
+                            <path d="M10 80 L85 72 L164 37 L248 30" fill="none" stroke="currentColor" strokeDasharray="6 5" strokeWidth="2" />
                           </svg>
                         ) : i === 3 ? (
                           <div className="mini-collection">
@@ -856,16 +873,7 @@ export function App({
                         )}
                       </div>
                       <div className="example-caption">
-                        <span>
-                          {
-                            [
-                              "Planejamento visual",
-                              "Simulação ao vivo",
-                              "Comparação interativa",
-                              "Catálogo com seleção",
-                            ][i]
-                          }
-                        </span>
+                        <span>{caption}</span>
                         <ChevronRight size={17} />
                       </div>
                       <small>Abrir e interagir</small>

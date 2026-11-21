@@ -25,7 +25,7 @@ DB = Annotated[Store, Depends(scoped_store)]
 
 @router.get('/status')
 async def status(store: DB, force: bool = False):
-    result = {'connected': False, 'mode': 'offline', 'version': '0.3.0', 'scope': store.scope, 'features': {}}
+    result = {'connected': False, 'mode': 'offline', 'version': '0.4.0', 'scope': store.scope, 'features': {}}
     try:
         caps = await gateway.capabilities(force=force)
         result.update(connected=caps['atlas_compatible'], mode='hermes', features=caps['features'], model=caps.get('model', 'hermes-agent'))

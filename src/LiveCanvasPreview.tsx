@@ -1,5 +1,6 @@
 import React from "react";
 import { Canvas } from "./Canvas";
+import { PreviewContext } from "./CanvasLink";
 import type { Canvas as CanvasData } from "./types";
 import "./live-preview.css";
 
@@ -12,7 +13,9 @@ export function LiveCanvasPreview({ canvas }: { canvas?: CanvasData | null }) {
         <span>Gerando canvas…</span>
       </div>
       <fieldset disabled aria-label="Prévia dos blocos recebidos">
-        <Canvas canvas={canvas} />
+        <PreviewContext.Provider value={true}>
+          <Canvas canvas={canvas} />
+        </PreviewContext.Provider>
       </fieldset>
     </section>
   );
