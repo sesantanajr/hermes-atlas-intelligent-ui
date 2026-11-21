@@ -54,7 +54,9 @@ describe("persistent interactions", () => {
       ],
       state: { form: { fields: { name: "Atlas" } } },
     };
-    render(<Canvas canvas={data} onAction={action} />);
+    const { rerender } = render(<Canvas canvas={data} />);
+    expect(screen.queryByRole("button", { name: "Enviar ao Hermes" })).toBeNull();
+    rerender(<Canvas canvas={data} onAction={action} />);
     fireEvent.click(screen.getByRole("button", { name: "Enviar ao Hermes" }));
     expect(action).toHaveBeenCalledWith("Formulário “Plan”:\nName: Atlas");
   });

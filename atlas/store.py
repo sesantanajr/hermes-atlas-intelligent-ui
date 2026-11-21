@@ -8,6 +8,7 @@ from pathlib import Path
 from .models import Canvas
 from .delivery import present_conversation, present_reply
 from .workspace_identity import bind_workspace
+from .activity import summarize
 
 
 def data_dir():
@@ -144,7 +145,24 @@ class Store:
         with closing(self.connect()) as db:
             row = db.execute("SELECT payload FROM documents WHERE kind=? AND id=? AND owner=?", (kind, id, self.scope)).fetchone()
             record = json.loads(row[0]) if row else None
-            return present_conversation(record) if kind == 'conversation' else record
+            return self._conversation(db, record) if kind == 'conversation' else record
+
+    def _conversation(self, db, record):
+        if record:
+            legacy = {m['id'][:-7]: m for m in record.get('messages', [])
+                      if m.get('role') == 'assistant' and m.get('id', '').endswith('-answer') and 'activity' not in m}
+            if legacy:
+                rows = db.execute("""
+                    SELECT id, json_extract(payload,'$.events'), json_extract(payload,'$.events_truncated')
+                    FROM documents WHERE owner=? AND kind='run' AND id IN (SELECT value FROM json_each(?))
+                """, (self.scope, json.dumps(list(legacy))))
+                for run_id, events_json, truncated in rows:
+                    if events_json:
+                        events = json.loads(events_json)
+                        activity = summarize(events, limited=truncated or len(events)>=60, terminal=True)
+                        if activity:
+                            legacy[run_id]['activity'] = activity
+        return present_conversation(record)
 
     def observe(self, id, cursor=None):
         """Read the change token and its snapshot atomically. An unchanged poll skips the JSON."""
@@ -215,7 +233,7 @@ class Store:
                 UPDATE documents SET payload=json_set(payload,'$.title',?), updated=?
                 WHERE kind='conversation' AND owner=? AND id=? RETURNING payload
             """, (title, datetime.now(timezone.utc).isoformat(), self.scope, id)).fetchone()
-            return present_conversation(json.loads(row[0])) if row else None
+            return self._conversation(db, json.loads(row[0])) if row else None
 
     @staticmethod
     def _mark_deleted(db, owner, kind, id):
@@ -307,6 +325,8 @@ class Store:
                               "status": run['status'], "warning": run.get('warning'), "usage": run.get('usage')}
                     if run.get('delivery') == 'silent':
                         answer['delivery'] = 'silent'
+                    events = run.get('events', [])
+                    answer['activity'] = summarize(events, limited=run.get('events_truncated',len(events)>=60), terminal=True)
                     conversation['messages'].append(answer)
                 conversation['active_run'] = None
                 self.put('conversation', conversation['id'], conversation, db)

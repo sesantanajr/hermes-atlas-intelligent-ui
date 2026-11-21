@@ -39,7 +39,7 @@ def component(kind: str):
 
 @router.get('/status')
 async def status(store: DB, force: bool = False):
-    result = {'connected': False, 'mode': 'offline', 'version': '0.5.1', 'scope': store.scope, 'features': {}}
+    result = {'connected': False, 'mode': 'offline', 'version': '0.6.0', 'scope': store.scope, 'features': {}}
     try:
         caps = await gateway.capabilities(force=force)
         result.update(connected=caps['atlas_compatible'], mode='hermes', features=caps['features'], model=caps.get('model', 'hermes-agent'))

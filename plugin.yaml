@@ -1,8 +1,9 @@
 name: hermes-atlas
-version: "0.5.1"
+version: "0.6.0"
 description: "Hermes Atlas Intelligent UI — validated interactive canvases for Hermes Agent"
 author: sesantanajr
 provides_tools:
+  - atlas_resources
   - atlas_components
   - atlas_render
   - atlas_list

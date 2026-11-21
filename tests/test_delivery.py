@@ -46,7 +46,7 @@ def test_interim_history_and_artifacts_use_their_own_presentation():
     assert [item['seq'] for item in projected] == [1, 2]
     assert projected[0]['text'] == 'Etapa pronta.'
     assert events[1]['text'].endswith('[SILENT]')
-    assert projected[1]['preview'] == '[SILENT]'
+    assert projected[1] == {'type':'tool.completed','seq':2}
     block = {'type': 'text', 'id': 'one', 'title': 'Exemplo', 'text': '[SILENT]'}
     canvas = json.dumps({'id': 'x', 'title': 'Sinal', 'blocks': [block]})
     text, artifact, warning = extract('```atlas\n' + canvas + '\n```\n[SILENT]')

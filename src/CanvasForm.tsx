@@ -120,13 +120,17 @@ export function CanvasForm({
           </label>
         );
       })}
-      <button className="primary" type="submit">
-        {block.submit_label || "Enviar ao Hermes"}
-      </button>
-      <small>
-        Os valores serão colocados na mensagem para você revisar antes de
-        enviar.
-      </small>
+      {onAction && (
+        <>
+          <button className="primary" type="submit">
+            {block.submit_label || "Enviar ao Hermes"}
+          </button>
+          <small>
+            Os valores serão colocados na mensagem para você revisar antes de
+            enviar.
+          </small>
+        </>
+      )}
     </form>
   );
 }

@@ -68,7 +68,13 @@ export function conversationMessages(messages: Message[]) {
     const warning =
       row.warning ||
       (!content.trim() ? endStatus[row.status ?? ""] : undefined);
-    if (row.artifact || content.trim() || warning) {
+    if (
+      row.artifact ||
+      content.trim() ||
+      warning ||
+      row.activity?.steps.length ||
+      row.activity?.limited
+    ) {
       result.push({ ...row, content, warning });
       receipt = undefined;
       waitingForReply = false;

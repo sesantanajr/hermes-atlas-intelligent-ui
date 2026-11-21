@@ -23,7 +23,7 @@ with tempfile.TemporaryDirectory(prefix='atlas-wheel-') as directory:
     for name in ['plugin.yaml', '__init__.py', 'atlas/api.py', 'atlas/preview.py', 'atlas/workspace_identity.py',
                  'atlas/block_base.py', 'atlas/explore.py', 'atlas/series.py', 'atlas/spatial.py', 'atlas/study.py',
                  'atlas/analytics.py', 'atlas/catalog.py', 'atlas/catalog.json', 'atlas/controls.py',
-                 'atlas/editorial.py', 'atlas/experience.py',
+                 'atlas/editorial.py', 'atlas/experience.py', 'atlas/activity.py', 'atlas/resources.py',
                  'desktop/plugin.js', 'dashboard/plugin_api.py', 'dashboard/dist/index.js']:
         assert (plugin/name).is_file(), name
     code = r'''
@@ -37,6 +37,11 @@ with TestClient(app, base_url='http://127.0.0.1') as client:
     assert response.status_code == 200 and '<html' in response.text
     import re
     from atlas.models import Canvas
+    from atlas.resources import snapshot
+    from atlas.activity import summarize
+    assert snapshot()['observed_at']
+    receipt = summarize([{'type': 'tool.completed', 'tool': 'terminal', 'exit_code': 124}], terminal=True)
+    assert receipt['steps'][0]['reason'] == 'timeout'
     base = '/api/plugins/hermes-atlas/components'
     entries = client.get(base).json()
     assert len({entry['type'] for entry in entries}) == 73

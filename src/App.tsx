@@ -33,6 +33,7 @@ import { Canvas } from "./Canvas";
 
 import { LiveCanvasPreview } from "./LiveCanvasPreview";
 import { RunControl } from "./RunControl";
+import { EventUpdates, RunActivityDetails } from "./RunActivity";
 import {
   activityEvents,
   assistantText,
@@ -759,7 +760,7 @@ export function App({
           <div className="profile">
             <span>HA</span>
             <div>
-              Atlas Intelligent UI<small>Versão 0.5.1</small>
+              Atlas Intelligent UI<small>Versão 0.6.0</small>
             </div>
           </div>
         </div>
@@ -1100,10 +1101,20 @@ export function App({
                   </div>
                 </div>
                 {messages.map((m, index) =>
-                  m.delivery === "silent" &&
-                  !m.content &&
+                  m.role === "assistant" &&
+                  (m.activity?.steps.length || m.activity?.limited) &&
+                  !m.content.trim() &&
                   !m.artifact &&
                   !m.warning ? (
+                    <RunActivityDetails
+                      key={m.id}
+                      activity={m.activity}
+                      status={m.status}
+                    />
+                  ) : m.delivery === "silent" &&
+                    !m.content &&
+                    !m.artifact &&
+                    !m.warning ? (
                     <p
                       className="message-receipt"
                       role={
@@ -1152,6 +1163,13 @@ export function App({
                             </button>
                           )}
                         </div>
+                        {m.role === "assistant" && (
+                          <RunActivityDetails
+                            activity={m.activity}
+                            status={m.status}
+                            delivered={!!(m.content.trim() || m.artifact)}
+                          />
+                        )}
                         {!!m.content.trim() && <Markdown text={m.content} />}
                         {m.warning && (
                           <p className="message-warning">{m.warning}</p>
@@ -1190,24 +1208,16 @@ export function App({
                         {stateLabel[run.status] || run.status}
                         <i />
                       </div>
+                      <RunActivityDetails
+                        activity={run.activity}
+                        status={run.status}
+                      />
                       {!!liveText.trim() && <Markdown text={liveText} />}
                       <LiveCanvasPreview canvas={run.preview ?? undefined} />
-                      {!!events.length && (
-                        <details>
-                          <summary>
-                            Atividade do agente ({events.length})
-                          </summary>
-                          {events.slice(-12).map((e, i) => (
-                            <div className="tool-event" key={e.seq ?? i}>
-                              <Activity size={13} />
-                              <span>
-                                {e.tool || e.text || e.event || e.type}
-                                {e.preview && <small>{e.preview}</small>}
-                              </span>
-                            </div>
-                          ))}
-                        </details>
-                      )}
+                      <EventUpdates
+                        events={events}
+                        normalized={!!run.activity}
+                      />
                       {connectionIssue && (
                         <p role="status">
                           {connectionIssue} Reconectando à mesma execução…

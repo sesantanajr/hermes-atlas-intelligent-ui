@@ -22,6 +22,13 @@ def register(ctx):
             return json.dumps({"success": False, "error": str(exc)[:1500]})
 
     from .atlas import catalog
+    from .atlas.resources import snapshot
+
+    ctx.register_tool(name='atlas_resources', toolset='atlas', schema={
+        'name':'atlas_resources',
+        'description':'Measure current disk space, available RAM, swap and load averages of the system running Hermes. Use this read-only snapshot for VPS capacity questions. It samples OS counters without scanning directories.',
+        'parameters':{'type':'object','properties':{},'additionalProperties':False}},
+        handler=lambda params, **kwargs: json.dumps(snapshot()))
 
     def discover(params, **kwargs):
         try:

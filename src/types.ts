@@ -107,10 +107,19 @@ export type Summary = {
   title: string;
   updated: string;
 };
+export type ActivityStep = {
+  kind: "tool" | "subagent";
+  name: string;
+  status: "running" | "succeeded" | "failed" | "unknown";
+  duration?: number;
+  reason?: "timeout" | "denied" | "cancelled" | "nonzero_exit";
+};
+export type RunActivity = { steps: ActivityStep[]; limited: boolean };
 export type Message = {
   id: string;
   role: "user" | "assistant";
   delivery?: "silent";
+  activity?: RunActivity;
   content: string;
   artifact?: { id: string; revision: number };
   created: string;
@@ -129,6 +138,7 @@ export type Run = {
   id: string;
   cursor?: string;
   delivery?: "silent";
+  activity?: RunActivity;
   preview?: Canvas | null;
   conversation_id: string;
   remote_id?: string;
@@ -138,6 +148,7 @@ export type Run = {
     event?: string;
     type?: string;
     tool?: string;
+    error?: boolean;
     text?: string;
     preview?: string;
     seq?: number;

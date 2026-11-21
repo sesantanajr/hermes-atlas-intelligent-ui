@@ -5,17 +5,31 @@ from uuid import uuid4
 from fastapi import HTTPException
 from . import gateway
 from .delivery import FAILURE_NOTICE, present_event, present_reply
+from .activity import step_event, summarize
 from .protocol import extract
 
 TERMINAL = {'completed', 'failed', 'cancelled', 'interrupted'}
 _tasks = {}
 
 
+def _visible_event(event):
+    kind = event.get('type') or event.get('event')
+    if not isinstance(kind, str):
+        return None
+    if kind.startswith(('tool.', 'subagent.')):
+        return step_event(event)
+    return present_event(event)
+
+
 def public(run):
     from .preview import decorate_live
-    snapshot = {k: v for k, v in run.items() if k not in {'payload', 'request_hash', 'retry_window', 'terminal_output'}}
+    snapshot = {k: v for k, v in run.items() if k not in {'payload', 'request_hash', 'retry_window', 'terminal_output', 'events_truncated'}}
     if snapshot.get('events'):
-        snapshot['events'] = [item for event in snapshot['events'] if (item := present_event(event)) is not None]
+        events = snapshot['events']
+        snapshot['events'] = [item for event in events if (item := _visible_event(event)) is not None]
+        activity = summarize(events, limited=run.get('events_truncated', len(events) >= 60), terminal=run['status'] in TERMINAL)
+        if activity:
+            snapshot['activity'] = activity
     return present_reply(snapshot, 'text') if run['status'] in TERMINAL else decorate_live(snapshot)
 
 
@@ -41,11 +55,17 @@ async def follow(store, id):
         return
     stream_task = None
     stream_revision = 0
+    terminal_seen = False
+    def append_event(event):
+        current = run['events']
+        if len(current) >= 60:
+            run['events_truncated'] = True
+        run['events'] = current[-59:] + [event]
     async def persist():
         # Serialize a coherent snapshot; the SSE reader runs concurrently.
         return await asyncio.to_thread(store.checkpoint, run.copy())
     async def consume():
-        nonlocal stream_revision
+        nonlocal stream_revision, terminal_seen
         try:
             async for event in gateway.events(run['remote_id'], run.get('last_seq', -1)):
                 seq = event.get('seq')
@@ -54,20 +74,26 @@ async def follow(store, id):
                         continue
                     run['last_seq'] = seq
                 kind = event.get('type') or event.get('event', '')
+                if not isinstance(kind, str):
+                    continue
                 if kind == 'message.delta':
                     delta = event.get('delta')
                     if isinstance(delta, str):
                         run['text'] = (run['text'] + delta)[-1_000_000:]
-                elif kind == 'run.completed' and isinstance(event.get('output'), str):
-                    run['terminal_output'] = event['output']
+                elif kind in ('run.completed','run.failed','run.cancelled','run.interrupted'):
+                    if kind == 'run.completed' and isinstance(event.get('output'), str):
+                        run['terminal_output'] = event['output']
+                    terminal_seen = True
                     stream_revision += 1
                     return
                 elif kind == 'message.interim' and not event.get('already_streamed'):
                     visible = present_event(event)
                     if visible is not None:
-                        run['events'] = (run['events'] + [visible])[-60:]
+                        append_event(visible)
                 elif kind.startswith(('tool.', 'subagent.', 'approval.', 'clarify.')):
-                    run['events'] = (run['events'] + [event])[-60:]
+                    visible = _visible_event(event)
+                    if visible is not None:
+                        append_event(visible)
                 stream_revision += 1
                 # Persist at the polling cadence below; avoid one SQLite write per token.
         except (Exception,):
@@ -107,15 +133,15 @@ async def follow(store, id):
                 run['connection_error'] = None
                 remote_status = status['status']
                 if remote_status in TERMINAL:
-                    # Both the terminal event and GET can carry the final result.
-                    # If GET has none, let an in-flight terminal event arrive before detaching.
-                    if (remote_status == 'completed' and status.get('output') is None
-                            and 'terminal_output' not in run and stream_task and not stream_task.done()):
+                    # A terminal GET can precede the last tool receipt or output on SSE.
+                    if not terminal_seen and stream_task and not stream_task.done():
                         await asyncio.wait({stream_task}, timeout=0.5)
                     if stream_task:
                         stream_task.cancel()
                         await asyncio.gather(stream_task, return_exceptions=True)
                     final = dict(run, status=remote_status)
+                    if not terminal_seen and final.get('events'):
+                        final['events_truncated'] = True
                     event_output = final.pop('terminal_output', None)
                     output = status.get('output')
                     if remote_status == 'completed' and output is None:

@@ -107,6 +107,48 @@ it("delivers ordinary text, quotations, indented and fenced Markdown; suppresses
   );
 });
 
+it("reopens the result and its individual tool outcomes in the real conversation view", async () => {
+  const history = chat([
+    row("user", "Quais recursos foram medidos?"),
+    row("assistant", "A memória foi medida.", {
+      status: "completed",
+      activity: {
+        limited: false,
+        steps: [
+          { kind: "tool", name: "terminal", status: "succeeded" },
+          {
+            kind: "tool",
+            name: "execute_code",
+            status: "failed",
+            reason: "timeout",
+          },
+        ],
+      },
+    }),
+    row("assistant", "", {
+      status: "completed",
+      delivery: "silent",
+      activity: {
+        limited: true,
+        steps: [
+          { kind: "subagent", name: "Especialista 2", status: "unknown" },
+        ],
+      },
+    }),
+  ]);
+  render(<App transport={transport(() => history)} />);
+  await screen.findByText("A memória foi medida.");
+  const embedded = screen.getByText("Resposta entregue").closest("details")!;
+  fireEvent.click(embedded.querySelector("summary")!);
+  expect(within(embedded).getByText("Tempo limite atingido")).toBeTruthy();
+  expect(within(embedded).getByText("1 falha")).toBeTruthy();
+  const silent = screen
+    .getByText("Execução concluída sem resposta de texto")
+    .closest("details")!;
+  expect(silent.closest("article")).toBeNull();
+  expect(screen.queryByText("[SILENT]")).toBeNull();
+});
+
 it("keeps a single delivery receipt for a direct turn, and ignores extra control messages on either side of a useful answer", () => {
   const human = row("user", "Pedido");
   const useful = row("assistant", "Entregue");
