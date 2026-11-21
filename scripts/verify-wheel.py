@@ -14,7 +14,8 @@ with tempfile.TemporaryDirectory(prefix='atlas-wheel-') as directory:
     subprocess.run([str(python), '-m', 'pip', 'install', str(wheel)], check=True, cwd=root)
     subprocess.run([str(python), '-I', '-m', 'atlas.cli', 'install-plugin', '--home', str(root/'home')], check=True, cwd=root)
     plugin = root/'home/plugins/hermes-atlas'
-    for name in ['plugin.yaml', '__init__.py', 'atlas/api.py', 'desktop/plugin.js', 'dashboard/plugin_api.py', 'dashboard/dist/index.js']:
+    for name in ['plugin.yaml', '__init__.py', 'atlas/api.py', 'atlas/preview.py', 'atlas/workspace_identity.py',
+                 'desktop/plugin.js', 'dashboard/plugin_api.py', 'dashboard/dist/index.js']:
         assert (plugin/name).is_file(), name
     code = r'''
 from pathlib import Path
@@ -28,6 +29,10 @@ with TestClient(app, base_url='http://127.0.0.1') as client:
     import re
     asset = re.search(r'src="([^"]+\.js)"', response.text)[1]
     assert client.get(asset).status_code == 200
+    from atlas.server import dist
+    posters, = (dist / 'assets').glob('cinema-*.webp')
+    image = client.get('/assets/' + posters.name)
+    assert image.status_code == 200 and image.content[:4] == b'RIFF'
 '''
     subprocess.run([str(python), '-I', '-c', code], check=True, cwd=root)
     print(json.dumps({'wheel': wheel.name, 'isolated_install': True, 'ui_assets': True, 'plugin_payload': True}))

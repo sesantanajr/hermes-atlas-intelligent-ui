@@ -6,6 +6,16 @@ export type Input = {
   step: number;
 };
 type Base = { id: string; title: string };
+export type CollectionItem = {
+  id: string;
+  title: string;
+  description?: string;
+  metadata?: { [label: string]: string };
+  score?: number | null;
+  source?: { title: string; url: string } | null;
+  image_url?: string | null;
+  illustration?: "coast" | "orbit" | "rain" | "dining" | null;
+};
 export type Block = Base &
   (
     | { type: "text"; text: string }
@@ -17,6 +27,7 @@ export type Block = Base &
       }
     | { type: "table"; columns: string[]; rows: string[][] }
     | { type: "checklist"; items: string[] }
+    | { type: "collection"; items: CollectionItem[] }
     | {
         type: "comparison";
         options: { name: string; description: string; features: string[] }[];
@@ -46,6 +57,8 @@ export type Interaction = {
   sort_column?: number | null;
   sort_reverse?: boolean;
   fields?: { [key: string]: string };
+  selected_ids?: string[];
+  collection_sort?: "original" | "score" | "title";
 };
 export type Canvas = {
   schema_version: "1.0";
@@ -87,6 +100,7 @@ export type Conversation = {
 export type ChatSummary = Omit<Conversation, "messages">;
 export type Run = {
   id: string;
+  preview?: Canvas | null;
   conversation_id: string;
   remote_id?: string;
   status: string;
@@ -107,6 +121,8 @@ export type Run = {
     description?: string;
     question?: string;
     command?: string;
+    choices?: string[];
+    multi_select?: boolean;
   }[];
   artifact?: Record;
   warning?: string;

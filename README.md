@@ -1,21 +1,24 @@
+![Hermes Atlas · Intelligent UI. Um cartógrafo conecta um globo a cartões interativos.](docs/hermes-atlas-cover.jpg)
+
 # Hermes Atlas · Intelligent UI
 
 Interface conversacional e visual para o **Hermes Agent**, com canvases interativos, histórico persistente e execuções recuperáveis.
 
-**0.2.0 — prévia funcional validada com Hermes 0.23.2 real.** Projeto independente de OpenAI, Nous Research e Thesys. A comparação e as escolhas estão em [ADR de UI generativa](docs/GENERATIVE-UI.md); os resultados e limites estão em [Validação](docs/VALIDATION.md).
+**Versão 0.3.0.** Plugin comunitário e independente para o Hermes Agent. Compare opções no próprio chat, leve a seleção ao agente e reabra o canvas com seus controles preservados. [O que mudou e como foi validado](docs/0.3.md)
 
-![Interface do Hermes Atlas](docs/preview.jpg)
+![Coleção interativa no Atlas com dois filmes fictícios selecionados](docs/collection-preview.jpg)
 
 ## Recursos
 
 - Chat com Markdown, resposta progressiva, progresso de ferramentas, cancelamento remoto e recuperação da mesma execução após reconectar.
 - Histórico no servidor, busca, paginação, renomeação, exclusão da cópia Atlas e exportação JSON. Reutilização de mensagens pelo editor.
-- Canvases com texto, indicadores, barras positivas/negativas, tabelas, checklists, comparações, calculadoras e formulários.
+- Coleções de até 24 itens com ordenação por nota ou título, comparação de até quatro opções, fontes por item e uma ação que prepara a próxima mensagem. Para experimentar com dados fictícios, abra **Descobrir → Catálogo com seleção**.
+- Canvases com texto, indicadores, barras positivas/negativas, tabelas, checklists, comparações, calculadoras e formulários. Blocos completos aparecem em prévia durante a geração.
 - Estado dos controles preservado ao alternar visualizações, salvar, exportar e reabrir. Rascunho automático, desfazer/refazer e revisões imutáveis com proteção contra alterações concorrentes.
 - Canvas ativo enviado como contexto, inclusive quando aberto pela biblioteca. Mensagens apontam para a revisão produzida naquela resposta.
 - Até quatro anexos de texto/Markdown/CSV/JSON/log por mensagem, até 200 KB cada e 450 KB no pedido total.
 - Formulários preparam uma mensagem revisável. Aprovações e esclarecimentos do agente usam os controles reais do Hermes.
-- Temas claro, escuro e do sistema; layout adaptável; galeria demonstrativa explicitamente identificada.
+- Temas claro, escuro e do sistema, canvas ampliável e alternância entre conversa e canvas em telas estreitas.
 - Ferramentas nativas `atlas_render`, `atlas_list`, `atlas_get`; dashboard IIFE e Desktop ESM com React fornecido pelo host.
 - Credenciais apenas no backend; armazenamento por perfil; verificação de capacidades antes de admitir execuções.
 
@@ -39,14 +42,14 @@ O chat Atlas usa a **Runs API oficial**. No ambiente do Hermes habilite `API_SER
 
 Para um endpoint explícito, configure no backend `ATLAS_HERMES_URL` e `ATLAS_HERMES_API_KEY`. Fora do loopback, o endpoint deve usar HTTPS. `.env.example` documenta as variáveis, mas não é carregado automaticamente. Nunca coloque chaves no frontend ou no Git.
 
-O chat Atlas possui sessões API próprias e persistentes; não assume a propriedade de sessões CLI/Desktop. Na extensão Desktop, **Enviar à sessão nativa** envia o rascunho e o canvas à sessão atualmente focada por `prompt.submit`; a resposta fica no chat nativo. Trocar perfil ou gateway invalida respostas pendentes da tela anterior.
+O chat Atlas usa sessões persistentes da Runs API. Na extensão Desktop, **Enviar à sessão nativa** envia o texto do editor, o conteúdo dos anexos textuais e o canvas à sessão focada por `prompt.submit`. A resposta aparece no chat nativo. Trocar de perfil ou gateway invalida respostas pendentes da tela anterior.
 
 ## Aplicativo independente / wheel
 
 O wheel inclui o aplicativo compilado e todo o plugin, sem depender do checkout:
 
 ```sh
-pip install ./hermes_atlas_intelligent_ui-0.2.0-py3-none-any.whl
+pip install ./hermes_atlas_intelligent_ui-0.3.0-py3-none-any.whl
 hermes-atlas serve
 # Opcional: copiar o plugin para uma instalação Hermes nova
 hermes-atlas install-plugin --home /caminho/do/hermes
@@ -67,7 +70,7 @@ Use o Python do seu ambiente virtual. No PowerShell, configure variáveis com `$
 
 ## Dados e recuperação
 
-Dados em `<HERMES_HOME>/plugin-data/hermes-atlas/atlas.db`; `ATLAS_DATA_DIR` permite um diretório explícito no standalone. Conversas, execuções e rascunhos são guardados no servidor. A v0.2 não importa automaticamente o antigo localStorage da v0.1, evitando misturar conversas entre perfis. Exporte o histórico antigo antes de removê-lo.
+O arquivo `<HERMES_HOME>/plugin-data/hermes-atlas/atlas.db` guarda conversas, execuções, revisões e o canvas de trabalho. `ATLAS_DATA_DIR` permite um diretório explícito no standalone. O texto e os anexos ainda no editor ficam na aba do navegador, separados por conversa e perfil. Para dados antigos em localStorage da v0.1, exporte o histórico antes da atualização.
 
 Canvases existentes continuam legíveis; os novos campos de estado têm valores padrão. Faça backup do SQLite antes de atualizar. Excluir uma conversa na interface remove sua cópia Atlas; não apaga registros mantidos pelo Hermes ou pelo provedor.
 
@@ -93,6 +96,6 @@ python scripts/verify-live.py --base http://127.0.0.1:7331 --output work/live.js
 
 Esta versão não implementa toda a superfície do Hermes nem paridade com ChatGPT/OpenUI. Não há voz, OCR/PDF/imagens como anexos, colaboração multiusuário, edição/fork do histórico nativo, importação OpenUI Lang/A2UI, HTML/JS arbitrário ou ações externas executadas diretamente por componentes. O modelo e suas ferramentas continuam sujeitos às capacidades e configurações do Hermes.
 
-O backend consome SSE; a tela lê snapshots a cada aproximadamente 450 ms (3 s quando oculta), para funcionar também no transporte JSON do host. O canvas interativo só aparece depois da validação da resposta completa. A galeria permanece disponível offline e nunca simula uma resposta do agente.
+O backend consome eventos SSE. A tela consulta o estado a cada aproximadamente 450 ms enquanto visível e a cada 3 s quando oculta, inclusive pelo transporte JSON do host. A prévia exibe blocos já validados. Ao concluir, o Atlas valida o documento inteiro e habilita a edição. A galeria com dados de exemplo também funciona offline.
 
 Compatibilidade real verificada em Hermes **0.23.2**, não em todas as versões. Os controles de aprovação, clarificação e resultado desconhecido têm testes de contrato; não provocamos operações perigosas para testar aprovações reais. Não há alegação de ausência de todos os bugs, auditoria externa ou superioridade medida sobre outros produtos.

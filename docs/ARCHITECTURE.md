@@ -1,4 +1,4 @@
-# Arquitetura 0.2
+# Arquitetura 0.3
 
 ## Superfícies
 
@@ -11,17 +11,19 @@ O mesmo App React atende o standalone (Vite), o dashboard (IIFE com React do hos
 1. O cliente cria um UUID de pedido e envia texto, anexos e canvas ativo.
 2. A API verifica capacidades oficiais, valida tamanhos e reserva a conversa/execução no SQLite em uma transação.
 3. Um observador envia `POST /v1/runs` com chave de idempotência estável. O histórico continua no Hermes; cada turno envia só o novo conteúdo e instruções compactas.
-4. SSE acumula deltas, sequência, progresso e controles; consultas de status confirmam o resultado. Snapshots são persistidos a cada ciclo de aproximadamente 500 ms.
+4. SSE acumula deltas, sequência, progresso e controles. Consultas de status confirmam o resultado. O observador verifica o estado aproximadamente a cada 500 ms e grava quando detecta mudanças.
 5. A tela consulta o snapshot, adaptando a frequência à visibilidade. Reabrir a tela recupera a execução persistida.
 6. Conclusão, mensagem de resposta e desbloqueio da conversa são transacionais. Artefatos possuem deduplicação por execução e revisão fixada na mensagem.
 
-Falha no POST não prova que o Hermes recusou o pedido: a mesma chave é reutilizada dentro da janela durável anunciada. Após 23 horas de admissão não confirmada o Atlas deixa o resultado como desconhecido, sem repetir a operação. Reiniciar o Atlas encerra os observadores locais, não o agente. Consultar a execução reativa o observador do mesmo ID.
+Se o POST perder a resposta, a recuperação usa a mesma chave dentro de uma janela conservadora baseada na retenção anunciada pelo Hermes. Quando a janela expira sem confirmação, o Atlas apresenta o resultado como desconhecido. O usuário pode reconhecer o encerramento local de um pedido sem ID remoto. Consultar uma execução confirmada reativa o observador do mesmo ID.
 
 ## Perfis e propriedade
 
-O caminho do banco, endpoint e identidade de credencial compõem um hash de workspace. Requisições da UI levam esse hash por header ou query no Desktop; divergências são recusadas. Segredos são resolvidos pelo contexto de perfil nativo. A troca de gateway é protegida pelo epoch do SDK e por remontagem da UI.
+O SQLite associa o diretório do perfil Hermes e o endereço do gateway a um identificador persistente de workspace. A UI envia esse identificador ao backend. Conversas, sessões, rascunhos e revisões de canvas continuam no mesmo workspace após a rotação da chave. Perfis ou gateways distintos têm bibliotecas independentes, inclusive quando compartilham `ATLAS_DATA_DIR`.
 
-O armazenamento nativo de canvases é por diretório do perfil; conversas e workspace possuem ainda owner hash. Rotacionar credenciais muda esse owner, isolando o histórico conversacional anterior. O banco não é um serviço multiusuário.
+Ao atualizar a v0.2, abra o Atlas pela primeira vez com o perfil, o endpoint e a chave anteriores para conservar os IDs de sessão e de idempotência no Hermes. O Atlas recupera as revisões referenciadas pelo histórico ou pelo workspace. No diretório padrão do perfil, um único proprietário verificado também recupera as revisões manuais. Se o perfil usava apenas `atlas_render` e o banco contém somente canvases, o primeiro acesso pelo gateway local padrão recupera a biblioteca.
+
+Em um diretório compartilhado ou com histórico de proprietário desconhecido, as revisões sem vínculo permanecem na tabela original. Para recuperar uma delas, abra uma cópia do `atlas.db` em SQLite e consulte `SELECT id,revision,title,payload FROM canvases ORDER BY id,revision`. Revise o JSON de `payload` e use a ferramenta `atlas_render` no perfil de destino com esse canvas e um novo ID. Isso inicia um novo histórico de revisões no destino.
 
 Sessões API Atlas não se fazem passar por sessões Desktop/CLI. O envio explícito ao chat nativo usa o RPC `prompt.submit`, verifica a sessão focada/perfil e mantém ID de submissão estável durante uma tentativa de reenvio.
 
@@ -29,7 +31,7 @@ Sessões API Atlas não se fazem passar por sessões Desktop/CLI. O envio explí
 
 O protocolo aceita apenas os tipos de bloco declarados em `models.py`. JSON é extraído com `JSONDecoder.raw_decode`, preservando cercas dentro de strings. Conteúdo inválido permanece texto com aviso. Resposta vazia produz erro; nenhum canvas demonstrativo substitui uma falha do modelo.
 
-O canvas contém definição, valores de calculadora, estado de checklists/tabelas/comparações/formulários e fontes. Todos os controles são React controlados. O rascunho é salvo com debounce e fila serial. Salvar uma revisão exige a revisão-base, evitando sobrescrita concorrente. Uma nova criação recebe ID único.
+O canvas contém a definição dos blocos, o estado dos controles e fontes opcionais. A coleção guarda IDs estáveis da seleção. A prévia decodifica um prefixo limitado e valida os blocos concluídos. O rascunho é salvo com debounce e fila serial. O cliente 0.3 envia o token da última gravação e oferece resolução explícita de conflito entre abas. As revisões da biblioteca exigem a revisão-base. Uma nova criação recebe ID único.
 
 Formulários geram texto no editor para revisão humana. Fórmulas são operações enumeradas, sem eval. Markdown não executa HTML; imagens remotas não são buscadas automaticamente. Links de fontes são explícitos. O renderer não aceita código gerado.
 

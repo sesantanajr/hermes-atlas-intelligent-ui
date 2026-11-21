@@ -1,6 +1,7 @@
 import React from "react";
 import { Check, Search, SlidersHorizontal } from "lucide-react";
 import { Block, Canvas as CanvasData, Interaction } from "./types";
+import { CollectionView } from "./collection";
 
 export function calculate(operation: string, values: number[]): number | null {
   let result: number;
@@ -58,6 +59,9 @@ function Component({ block, state, change, onAction }: Props) {
   return (
     <section className={`atlas-block ${block.type}`}>
       <h3>{block.title}</h3>
+      {block.type === "collection" && (
+        <CollectionView block={block} state={state} change={set} onAction={onAction} />
+      )}
       {block.type === "text" && <p className="prose">{block.text}</p>}
       {block.type === "chart" && (
         <div
@@ -190,7 +194,7 @@ function Component({ block, state, change, onAction }: Props) {
                     ),
                   )
                   .sort((a, b) =>
-                    state.sort_column != null
+                    state.sort_column != null && state.sort_column < block.columns.length
                       ? (state.sort_reverse ? -1 : 1) *
                         a[state.sort_column].localeCompare(
                           b[state.sort_column],

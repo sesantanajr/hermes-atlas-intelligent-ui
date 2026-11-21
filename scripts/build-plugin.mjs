@@ -5,6 +5,7 @@ await build({
   minify: true,
   format: "iife",
   outfile: "dashboard/dist/index.js",
+  loader: { ".webp": "dataurl" },
   jsx: "transform",
   jsxFactory: "React.createElement",
   jsxFragment: "React.Fragment",
@@ -33,6 +34,7 @@ await build({
   minify: true,
   format: "esm",
   outfile: "desktop/plugin.js",
+  loader: { ".webp": "dataurl" },
   external: ["react", "react/jsx-runtime", "@hermes/plugin-sdk"],
   jsx: "automatic",
 });

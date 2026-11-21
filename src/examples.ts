@@ -124,4 +124,68 @@ export const examples: Canvas[] = [
       },
     ],
   },
+  {
+    schema_version: "1.0",
+    id: "demo-screening",
+    title: "Sessão de cinema",
+    description:
+      "Filmes fictícios e notas ilustrativas. Compare opções para a próxima sessão do seu cineclube.",
+    blocks: [
+      {
+        type: "collection",
+        id: "screening",
+        title: "Programação do cineclube",
+        items: [
+          {
+            id: "mare",
+            illustration: "coast",
+            title: "Maré de Papel",
+            description:
+              "Cartas chegam a uma vila costeira com trinta anos de atraso.",
+            score: 86,
+            metadata: {
+              Gênero: "Drama",
+              Duração: "92 min",
+              Ritmo: "Contemplativo",
+            },
+          },
+          {
+            id: "orbita",
+            illustration: "orbit",
+            title: "Última Órbita",
+            description:
+              "Uma engenheira procura a origem de um eco no lado escuro de uma lua.",
+            score: 94,
+            metadata: {
+              Gênero: "Ficção científica",
+              Duração: "114 min",
+              Ritmo: "Intenso",
+            },
+          },
+          {
+            id: "mapa",
+            illustration: "rain",
+            title: "O Mapa da Chuva",
+            description:
+              "Dois cartógrafos atravessam uma cidade que muda a cada temporal.",
+            score: 90,
+            metadata: {
+              Gênero: "Aventura",
+              Duração: "103 min",
+              Ritmo: "Moderado",
+            },
+          },
+          {
+            id: "mesa",
+            illustration: "dining",
+            title: "Mesa para Três",
+            description:
+              "Um pequeno restaurante vira o ponto de encontro de três desconhecidos.",
+            score: 82,
+            metadata: { Gênero: "Comédia", Duração: "84 min", Ritmo: "Leve" },
+          },
+        ],
+      },
+    ],
+  },
 ];

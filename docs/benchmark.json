@@ -8,19 +8,19 @@
     "writes": 100,
     "workers": 4,
     "unique_revisions": 100,
-    "seconds": 0.592,
-    "write_median_ms": 4.653,
-    "write_p95_ms": 87.953,
-    "read_median_ms": 0.433
+    "seconds": 0.6102,
+    "write_median_ms": 5.319,
+    "write_p95_ms": 94.248,
+    "read_median_ms": 0.903
   },
   "protocol": {
-    "instruction_bytes": 1165,
-    "full_schema_bytes": 8970,
+    "instruction_bytes": 1581,
+    "full_schema_bytes": 10953,
     "history_resent": false
   },
   "bundles": {
-    "dist\\assets\\index-8dILYgCy.js": 437661,
-    "dashboard\\dist\\index.js": 208662,
-    "desktop\\plugin.js": 237590
+    "dist\\assets\\index-BzaWzm9W.js": 454726,
+    "dashboard\\dist\\index.js": 224948,
+    "desktop\\plugin.js": 324128
   }
 }

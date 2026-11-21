@@ -28,10 +28,21 @@ def register(ctx):
         "description": "Create an interactive Atlas canvas, including safe forms and persistent state. Label examples and cite factual data. A new canvas receives a unique ID. To update, first atlas_get and send its ID with expected_revision equal to the revision you read; stale writes are refused.",
         "parameters": {"type": "object", "$defs": definitions, "properties": {
             "canvas": canvas_schema, "expected_revision": {"type":"integer", "minimum":0, "default":0}}, "required": ["canvas"]}}, handler=render)
+    def list_canvases(params, **kwargs):
+        offset = params.get('offset', 0)
+        limit = params.get('limit', 100)
+        query = params.get('q', '')
+        if (type(offset) is not int or offset < 0 or type(limit) is not int or not 1 <= limit <= 100
+                or not isinstance(query, str) or len(query) > 256):
+            return json.dumps({'success': False, 'error': 'Invalid search or pagination parameters.'})
+        return json.dumps(Store().list(offset, limit, query), ensure_ascii=False)
+
     ctx.register_tool(name="atlas_list", toolset="atlas", schema={
-        "name": "atlas_list", "description": "List the latest Atlas canvases in the active Hermes profile.",
-        "parameters": {"type": "object", "properties": {}}},
-        handler=lambda params, **kwargs: json.dumps(Store().list(), ensure_ascii=False))
+        "name": "atlas_list", "description": "Search Atlas canvases by title or list the latest saved canvases in the active profile.",
+        "parameters": {"type": "object", "properties": {
+            "q": {"type": "string", "maxLength": 256}, "offset": {"type": "integer", "minimum": 0},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 100}}}},
+        handler=list_canvases)
     ctx.register_tool(name='atlas_get', toolset='atlas', schema={
         'name':'atlas_get', 'description':'Read a saved Atlas canvas, including interaction state and its revision. Use before making a revision.',
         'parameters':{'type':'object','properties':{'id':{'type':'string'},'revision':{'type':'integer','minimum':1}},'required':['id']}},

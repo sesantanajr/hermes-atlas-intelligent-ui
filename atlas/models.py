@@ -1,5 +1,5 @@
 from typing import Annotated, Literal
-from pydantic import BaseModel, ConfigDict, Field, model_validator, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator, HttpUrl
 
 Text = Annotated[str, Field(max_length=12000)]
 Label = Annotated[str, Field(min_length=1, max_length=160)]
@@ -66,6 +66,40 @@ class Comparison(Block):
     options: Annotated[list[Option], Field(min_length=2, max_length=4)]
 
 
+class Source(Strict):
+    title: Label
+    url: HttpUrl
+
+
+class CollectionItem(Strict):
+    id: Identifier
+    title: Label
+    description: Annotated[str, Field(max_length=1000)] = ""
+    metadata: Annotated[dict[Label, Label], Field(max_length=8)] = {}
+    score: Annotated[float | None, Field(ge=0, le=100, allow_inf_nan=False)] = None
+    source: Source | None = None
+    image_url: HttpUrl | None = None
+    illustration: Literal["coast", "orbit", "rain", "dining"] | None = None
+
+    @field_validator("image_url")
+    @classmethod
+    def https_image(cls, url):
+        if url and (url.scheme != "https" or url.username or url.password):
+            raise ValueError("Images require an HTTPS URL without credentials")
+        return url
+
+
+class Collection(Block):
+    type: Literal["collection"]
+    items: Annotated[list[CollectionItem], Field(min_length=1, max_length=24)]
+
+    @model_validator(mode="after")
+    def unique_items(self):
+        if len({item.id for item in self.items}) != len(self.items):
+            raise ValueError("Collection item ids must be unique")
+        return self
+
+
 class Input(Strict):
     label: Label
     value: Number
@@ -128,14 +162,11 @@ class Interaction(Strict):
     sort_column: Annotated[int | None, Field(ge=0, le=11)] = None
     sort_reverse: bool = False
     fields: dict[Identifier, Annotated[str, Field(max_length=4000)]] = {}
+    selected_ids: Annotated[list[Identifier], Field(max_length=4)] = []
+    collection_sort: Literal["original", "score", "title"] = "original"
 
 
-class Source(Strict):
-    title: Label
-    url: HttpUrl
-
-
-Component = Annotated[TextBlock | Metric | Chart | Table | Checklist | Comparison | Calculator | Form, Field(discriminator="type")]
+Component = Annotated[TextBlock | Metric | Chart | Table | Checklist | Comparison | Calculator | Form | Collection, Field(discriminator="type")]
 
 
 class Canvas(Strict):
@@ -155,4 +186,17 @@ class Canvas(Strict):
             raise ValueError("State must reference an existing block")
         if any(len(s.fields) > 12 for s in self.state.values()):
             raise ValueError("Too many field values")
+        for block in self.blocks:
+            interaction = self.state.get(block.id)
+            if not interaction:
+                continue
+            if interaction.selected_ids:
+                selected = set(interaction.selected_ids)
+                if (not isinstance(block, Collection)
+                        or len(selected) != len(interaction.selected_ids)
+                        or not selected.issubset({item.id for item in block.items})):
+                    raise ValueError("Selection must reference distinct items of the collection")
+            if (isinstance(block, Table) and interaction.sort_column is not None
+                    and interaction.sort_column >= len(block.columns)):
+                interaction.sort_column = None
         return self

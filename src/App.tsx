@@ -8,7 +8,8 @@ import {
   LayoutGrid,
   MessageSquare,
   Settings2,
-  Sparkles,
+  Maximize2,
+  Minimize2,
   PanelLeftClose,
   PanelLeftOpen,
   Download,
@@ -29,6 +30,11 @@ import {
   Trash2,
 } from "lucide-react";
 import { Canvas } from "./Canvas";
+import { LiveCanvasPreview } from "./LiveCanvasPreview";
+import { RunControl } from "./RunControl";
+import { useComposer } from "./useComposer";
+import { useDirectory } from "./useDirectory";
+import { useWorkspace, type WorkspaceSnapshot } from "./useWorkspace";
 import { examples } from "./examples";
 import { createClient, download } from "./client";
 import {
@@ -56,13 +62,8 @@ const stateLabel: Record<string, string> = {
   waiting_for_approval: "Aguardando sua decisão",
   unknown: "Execução sem desfecho confirmado",
 };
-const initialWorkspace: Workspace = {
-  chat_id: null,
-  canvas: null,
-  revision: 0,
-  theme: "system",
-};
-function Markdown({ text }: { text: string }) {
+const messageLimit = 12_000;
+const Markdown = React.memo(function Markdown({ text }: { text: string }) {
   return (
     <div className="markdown">
       <ReactMarkdown
@@ -80,7 +81,7 @@ function Markdown({ text }: { text: string }) {
       </ReactMarkdown>
     </div>
   );
-}
+});
 function Logo() {
   return (
     <div className="brand">
@@ -112,32 +113,47 @@ export function App({
   );
   const [sidebar, setSidebar] = useState(() => window.innerWidth > 800);
   const [status, setStatus] = useState<Status | null>(null);
-  const [chats, setChats] = useState<ChatSummary[]>([]);
   const [current, setCurrent] = useState<Conversation | null>(null);
-  const [workspace, setWorkspace] = useState<Workspace>(initialWorkspace);
-  const [draft, setDraft] = useState("");
+  const sync = useWorkspace(api);
+  const { workspace, setWorkspace, saving } = sync;
+  const composer = useComposer();
+  const {
+    text: draft,
+    setText: setDraft,
+    attachments,
+    setFiles: setAttachments,
+  } = composer;
   const [run, setRun] = useState<Run | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [loaded, setLoaded] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [records, setRecords] = useState<Summary[]>([]);
+  const chats = useDirectory<ChatSummary>(
+    api,
+    "/conversations",
+    loaded ? status?.scope || "" : "",
+  );
+  const records = useDirectory<Summary>(
+    api,
+    "/canvases",
+    loaded ? status?.scope || "" : "",
+  );
   const [versions, setVersions] = useState<Summary[]>([]);
-  const [query, setQuery] = useState("");
   const [tab, setTab] = useState<"preview" | "json">("preview");
   const [past, setPast] = useState<CanvasData[]>([]);
   const [future, setFuture] = useState<CanvasData[]>([]);
-  const [attachments, setAttachments] = useState<
-    { name: string; text: string }[]
-  >([]);
   const [submitting, setSubmitting] = useState(false);
-  const pending = useRef<{
-    request_id: string;
-    conversation_id: string;
-    input: string;
-    context: unknown;
-    attachments: unknown;
-  } | null>(null);
+  const appElement = useRef<HTMLDivElement>(null);
+  const [compact, setCompact] = useState(() => window.innerWidth <= 900);
+  const [canvasOnly, setCanvasOnly] = useState(false);
+  const promptElement = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (!appElement.current || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver((entries) =>
+      setCompact(entries[0].contentRect.width <= 900),
+    );
+    observer.observe(appElement.current);
+    return () => observer.disconnect();
+  }, []);
   const inFlight = useRef(false);
   const navigation = useRef(0);
   const mounted = useRef(true);
@@ -146,22 +162,29 @@ export function App({
   const end = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const followBottom = useRef(true);
-  const newestWorkspace = useRef<Workspace | null>(null);
-  const savingWorkspace = useRef(false);
   const canvas = workspace.canvas;
   const busy = submitting || !!(run && !terminal.has(run.status));
   const fail = (e: unknown) =>
     setError(e instanceof Error ? e.message : String(e));
   const refreshLists = async () => {
-    const [c, r] = await Promise.all([
-      api<ChatSummary[]>("/conversations"),
-      api<Summary[]>("/canvases"),
-    ]);
-    if (mounted.current) {
-      setChats(c);
-      setRecords(r);
-    }
+    await Promise.all([chats.refresh(), records.refresh()]);
   };
+  function showTerminal(r: Run) {
+    const record = r.artifact;
+    if (record) {
+      setCanvasOnly(false);
+      setWorkspace((w) => ({
+        ...w,
+        canvas: record.canvas,
+        revision: record.revision,
+      }));
+      setPast([]);
+      setFuture([]);
+      setVersions([]);
+      setTab("preview");
+    }
+    if (r.warning) setNotice(r.warning);
+  }
   const loadChat = async (id: string) => {
     const ticket = ++navigation.current;
     const c = await api<Conversation>(`/conversations/${id}`);
@@ -169,10 +192,17 @@ export function App({
       ? await api<Run>(`/runs/${c.active_run}`)
       : null;
     if (!mounted.current || ticket !== navigation.current) return;
+    composer.select(scope.current, id);
     setCurrent(c);
     setRun(active);
     setWorkspace((w) => ({ ...w, chat_id: id }));
     setView("chat");
+    if (active && terminal.has(active.status)) {
+      const complete = await api<Conversation>(`/conversations/${id}`);
+      if (!mounted.current || ticket !== navigation.current) return;
+      setCurrent(complete);
+      showTerminal(active);
+    }
   };
 
   useEffect(() => {
@@ -185,19 +215,15 @@ export function App({
         scope.current = s.scope;
         client.scope(s.scope);
         setStatus(s);
-        const [w, c, r] = await Promise.all([
-          api<Workspace>("/workspace"),
-          api<ChatSummary[]>("/conversations"),
-          api<Summary[]>("/canvases"),
-        ]);
+        const remote = await api<WorkspaceSnapshot>("/workspace");
         if (!alive) return;
-        setWorkspace(w);
-        setChats(c);
-        setRecords(r);
+        const w = sync.hydrate(s.scope, remote);
+        composer.select(s.scope, w.chat_id);
         if (w.chat_id) {
           try {
             await loadChat(w.chat_id);
           } catch {
+            composer.select(s.scope, null);
             setWorkspace((x) => ({ ...x, chat_id: null }));
           }
         }
@@ -215,21 +241,19 @@ export function App({
         if (!alive) return;
         if (!ready.current || (scope.current && s.scope !== scope.current)) {
           const changedProfile = scope.current && s.scope !== scope.current;
+          navigation.current++;
           ready.current = false;
           setLoaded(false);
           setCurrent(null);
           setRun(null);
-          setChats([]);
-          setRecords([]);
-          setWorkspace(initialWorkspace);
+          sync.disconnect();
           if (changedProfile) {
-            pending.current = null;
-            setDraft("");
-            setAttachments([]);
+            composer.select("", null);
+            chats.setQuery("");
+            records.setQuery("");
           }
           setPast([]);
           setFuture([]);
-          newestWorkspace.current = null;
           await boot();
         } else setStatus(s);
       } catch (e) {
@@ -238,11 +262,9 @@ export function App({
           ready.current = false;
           setLoaded(false);
           setCurrent(null);
-          setChats([]);
           setRun(null);
-          setRecords([]);
-          newestWorkspace.current = null;
-          setWorkspace(initialWorkspace);
+          navigation.current++;
+          sync.disconnect();
           fail(e);
         }
       }
@@ -255,32 +277,6 @@ export function App({
   }, [client]);
 
   useEffect(() => {
-    if (!loaded) return;
-    newestWorkspace.current = workspace;
-    const timer = setTimeout(async () => {
-      if (savingWorkspace.current) return;
-      savingWorkspace.current = true;
-      setSaving(true);
-      try {
-        while (newestWorkspace.current) {
-          const snapshot = newestWorkspace.current;
-          newestWorkspace.current = null;
-          await api("/workspace", snapshot, "PUT");
-        }
-      } catch (e) {
-        fail(e);
-        setNotice(
-          "Não foi possível salvar o rascunho. Exporte o canvas antes de sair.",
-        );
-      } finally {
-        savingWorkspace.current = false;
-        if (mounted.current) setSaving(false);
-      }
-    }, 180);
-    return () => clearTimeout(timer);
-  }, [workspace, loaded, client]);
-
-  useEffect(() => {
     if (!run || terminal.has(run.status)) return;
     let alive = true;
     let timer: ReturnType<typeof setTimeout>;
@@ -288,28 +284,18 @@ export function App({
       try {
         const r = await api<Run>(`/runs/${run.id}`);
         if (!alive) return;
-        setRun(r);
         if (terminal.has(r.status)) {
           const conversation = await api<Conversation>(
             `/conversations/${r.conversation_id}`,
           );
           if (!alive) return;
           setCurrent(conversation);
-          if (r.artifact) {
-            setWorkspace((w) => ({
-              ...w,
-              canvas: r.artifact!.canvas,
-              revision: r.artifact!.revision,
-            }));
-            setPast([]);
-            setFuture([]);
-            setTab("preview");
-          }
-          if (r.warning) setNotice(r.warning);
-          pending.current = null;
+          setRun(r);
+          showTerminal(r);
           await refreshLists();
           return;
         }
+        setRun(r);
       } catch (e) {
         if (alive) fail(e);
       }
@@ -334,6 +320,7 @@ export function App({
         `/canvases/${encodeURIComponent(id)}${revision ? `?revision=${revision}` : ""}`,
       );
       setWorkspace((w) => ({ ...w, canvas: r.canvas, revision: r.revision }));
+      setCanvasOnly(compact);
       setPast([]);
       setFuture([]);
       setTab("preview");
@@ -348,6 +335,7 @@ export function App({
     setWorkspace((w) => ({ ...w, canvas: next }));
   };
   const openExample = (i: number) => {
+    setCanvasOnly(compact);
     setWorkspace((w) => ({
       ...w,
       canvas: {
@@ -362,63 +350,101 @@ export function App({
     setTab("preview");
   };
   const newChat = () => {
+    setCanvasOnly(false);
     navigation.current++;
     setCurrent(null);
     setRun(null);
-    pending.current = null;
+    composer.select(scope.current, null);
     setWorkspace((w) => ({ ...w, chat_id: null, canvas: null, revision: 0 }));
     setView("home");
     setError("");
-    setDraft("");
-    setAttachments([]);
   };
   const send = async () => {
     if (!draft.trim() || inFlight.current || busy) return;
-    if (!status?.connected) {
+    if (!withinMessageLimit()) return;
+    if (!loaded || (!status?.connected && !composer.pending)) {
       setView("settings");
       setError(status?.detail || "Conecte o Hermes antes de enviar.");
       return;
     }
-    const text = draft.trim();
-    const payload =
-      pending.current && pending.current.input === text
-        ? pending.current
-        : {
-            request_id: crypto.randomUUID(),
-            conversation_id: current?.id || crypto.randomUUID(),
-            input: text,
-            context: canvas ? { canvas, revision: workspace.revision } : null,
-            attachments,
-          };
-    pending.current = payload;
+    const ticket = navigation.current;
+    const payload = composer.prepare(
+      current?.id || null,
+      canvas ? { canvas, revision: workspace.revision } : null,
+    );
     inFlight.current = true;
     setSubmitting(true);
     setError("");
     try {
       const r = await api<Run>("/runs", payload);
-      if (!mounted.current) return;
-      setRun(r);
-      setCurrent(
-        await api<Conversation>(`/conversations/${r.conversation_id}`),
+      const conversation = await api<Conversation>(
+        `/conversations/${r.conversation_id}`,
       );
+      if (!mounted.current || ticket !== navigation.current) return;
+      setRun(r);
+      setCurrent(conversation);
+      setNotice("");
       setWorkspace((w) => ({ ...w, chat_id: r.conversation_id }));
-      setDraft("");
-      setAttachments([]);
+      if (terminal.has(r.status)) showTerminal(r);
+      composer.clear();
+      composer.select(scope.current, r.conversation_id);
       setView("chat");
       followBottom.current = true;
       await refreshLists();
     } catch (e) {
       fail(e);
       setNotice(
-        "A mensagem foi preservada. Enviar novamente repete a mesma identidade, sem iniciar uma cópia da execução.",
+        "O pedido está no editor. Reenviar com o mesmo conteúdo consulta a mesma execução.",
       );
     } finally {
       inFlight.current = false;
       setSubmitting(false);
     }
   };
+  function withinMessageLimit() {
+    if (Array.from(draft.trim()).length <= messageLimit) return true;
+    setError(
+      "A mensagem excede o limite de 12.000 caracteres. Reduza o texto antes de enviar.",
+    );
+    promptElement.current?.focus();
+    return false;
+  }
+  const sendNative = async () => {
+    if (
+      !nativeContext?.sessionId ||
+      !draft.trim() ||
+      inFlight.current ||
+      !loaded
+    )
+      return;
+    if (!withinMessageLimit()) return;
+    const key = composer.key.current;
+    const message = [
+      draft.trim(),
+      ...attachments.map(
+        (a) => `Arquivo fornecido pelo usuário: ${a.name}\n${a.text}`,
+      ),
+    ];
+    if (canvas) message.push("Canvas ativo:\n" + JSON.stringify(canvas));
+    inFlight.current = true;
+    setSubmitting(true);
+    try {
+      await nativeContext.send(message.join("\n\n"));
+      if (mounted.current && key === composer.key.current) {
+        composer.clear();
+        setNotice(
+          "Mensagem enviada à sessão ativa do Desktop. Acompanhe a resposta no chat nativo.",
+        );
+      }
+    } catch (e) {
+      fail(e);
+    } finally {
+      inFlight.current = false;
+      if (mounted.current) setSubmitting(false);
+    }
+  };
   const control = async (action: string, body: unknown = {}) => {
-    if (!run) return;
+    if (!run) return false;
     try {
       await api(`/runs/${run.id}/${action}`, body);
       setNotice(
@@ -426,8 +452,10 @@ export function App({
           ? "Interrupção solicitada; aguardando o Hermes confirmar."
           : "Decisão enviada ao Hermes.",
       );
+      return true;
     } catch (e) {
       fail(e);
+      return false;
     }
   };
   const save = async () => {
@@ -480,6 +508,7 @@ export function App({
       return;
     try {
       await api(`/conversations/${current.id}`, {}, "DELETE");
+      composer.clear();
       newChat();
       await refreshLists();
     } catch (e) {
@@ -488,6 +517,7 @@ export function App({
   };
   const files = async (list: FileList | null) => {
     if (!list) return;
+    const key = composer.key.current;
     try {
       const next: { name: string; text: string }[] = [];
       for (const file of Array.from(list)) {
@@ -499,7 +529,7 @@ export function App({
       }
       if (next.length + attachments.length > 4)
         throw new Error("O limite é de quatro arquivos por mensagem.");
-      setAttachments((a) => [...a, ...next]);
+      if (key === composer.key.current) setAttachments((a) => [...a, ...next]);
     } catch (e) {
       fail(e);
     }
@@ -512,6 +542,10 @@ export function App({
       const raw = data.canvas || data;
       raw.id = "canvas-" + crypto.randomUUID().replaceAll("-", "");
       const r = await api<CanvasRecord>("/canvases", raw);
+      setCanvasOnly(compact);
+      setPast([]);
+      setFuture([]);
+      setVersions([]);
       setWorkspace((w) => ({ ...w, canvas: r.canvas, revision: r.revision }));
       await refreshLists();
     } catch (e) {
@@ -521,6 +555,7 @@ export function App({
 
   return (
     <div
+      ref={appElement}
       className={`atlas-app ${sidebar ? "" : "sidebar-hidden"}`}
       data-theme={
         workspace.theme === "system"
@@ -532,25 +567,32 @@ export function App({
     >
       <aside className="atlas-sidebar">
         <Logo />
-        <button className="new-chat" onClick={newChat} disabled={submitting}>
+        <button
+          className="new-chat"
+          onClick={newChat}
+          disabled={!loaded || submitting}
+        >
           <Plus size={18} /> Nova conversa
         </button>
         <nav aria-label="Navegação principal">
           <button
             className={view === "home" ? "active" : ""}
-            onClick={() => setView("home")}
+            onClick={() => {
+              setCanvasOnly(false);
+              setView("home");
+            }}
           >
             <Compass size={18} /> Descobrir
           </button>
           <button
             className={view === "library" ? "active" : ""}
             onClick={() => {
+              setCanvasOnly(false);
               setView("library");
               void refreshLists().catch(fail);
             }}
           >
             <LayoutGrid size={18} /> Minha biblioteca{" "}
-            <span>{records.length}</span>
           </button>
         </nav>
         <div className="sidebar-label">CONVERSAS</div>
@@ -559,57 +601,56 @@ export function App({
           <input
             aria-label="Buscar conversas"
             placeholder="Buscar conversas"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={chats.query}
+            onChange={(e) => chats.setQuery(e.target.value)}
           />
         </label>
         <div className="recent-chats">
-          {chats
-            .filter((c) => c.title.toLowerCase().includes(query.toLowerCase()))
-            .map((c) => (
-              <button
-                key={c.id}
-                className={current?.id === c.id ? "active" : ""}
-                onClick={() => void loadChat(c.id).catch(fail)}
-              >
-                <MessageSquare size={16} />
-                <span>{c.title}</span>
-                {c.active_run && <Activity size={13} />}
-              </button>
-            ))}
-          {chats.length === 0 && (
+          {chats.rows.map((c) => (
+            <button
+              key={c.id}
+              disabled={submitting}
+              className={current?.id === c.id ? "active" : ""}
+              onClick={() => {
+                setCanvasOnly(false);
+                void loadChat(c.id).catch(fail);
+              }}
+            >
+              <MessageSquare size={16} />
+              <span>{c.title}</span>
+              {c.active_run && <Activity size={13} />}
+            </button>
+          ))}
+          {chats.error && <p role="alert">{chats.error}</p>}
+          {!chats.busy && !chats.error && chats.rows.length === 0 && (
             <p>
-              Seu histórico fica no perfil Hermes.
-              <br />
-              Comece uma conversa.
+              {chats.query
+                ? "Nenhuma conversa encontrada."
+                : "Nenhuma conversa neste perfil."}
             </p>
           )}
-          {chats.length >= 50 && (
+          {chats.more && (
             <button
-              onClick={() =>
-                void api<ChatSummary[]>(`/conversations?offset=${chats.length}`)
-                  .then((c) => setChats((old) => [...old, ...c]))
-                  .catch(fail)
-              }
+              disabled={chats.busy}
+              onClick={() => void chats.refresh(true)}
             >
               Carregar mais
             </button>
           )}
         </div>
         <div className="sidebar-bottom">
-          <div className="local-card">
-            <Layers size={19} />
-            <div>
-              Seu espaço, seu Hermes<small>Estado e versões preservados</small>
-            </div>
-          </div>
-          <button onClick={() => setView("settings")}>
+          <button
+            onClick={() => {
+              setCanvasOnly(false);
+              setView("settings");
+            }}
+          >
             <Settings2 size={18} /> Configurações
           </button>
           <div className="profile">
             <span>HA</span>
             <div>
-              Atlas Intelligent UI<small>Versão 0.2.0</small>
+              Atlas Intelligent UI<small>Versão 0.3.0</small>
             </div>
           </div>
         </div>
@@ -640,7 +681,13 @@ export function App({
                     : "Descobrir"}
             </b>
           </div>
-          <button className="connection" onClick={() => setView("settings")}>
+          <button
+            className="connection"
+            onClick={() => {
+              setCanvasOnly(false);
+              setView("settings");
+            }}
+          >
             <i className={status?.connected ? "online" : ""} />
             {status?.connected ? "Hermes conectado" : "Hermes desconectado"}
           </button>
@@ -661,43 +708,96 @@ export function App({
             </button>
           </div>
         )}
-        <div className={`workspace ${canvas ? "with-canvas" : ""}`}>
+        {sync.conflict ? (
+          <div className="alert workspace-conflict" role="alert">
+            <span>
+              Outra aba alterou o rascunho compartilhado. Suas edições estão
+              preservadas nesta aba.
+            </span>
+            <button onClick={sync.keepLocal}>
+              Substituir pelo meu rascunho
+            </button>
+            <button
+              onClick={() => {
+                const remote = sync.acceptRemote();
+                if (!remote) return;
+                navigation.current++;
+                setPast([]);
+                setFuture([]);
+                setVersions([]);
+                setRun(null);
+                setCurrent(null);
+                composer.select(scope.current, remote.chat_id);
+                setCanvasOnly(compact && !!remote.canvas);
+                setView(remote.chat_id ? "chat" : "home");
+                if (remote.chat_id) void loadChat(remote.chat_id).catch(fail);
+              }}
+            >
+              Usar rascunho da outra aba
+            </button>
+          </div>
+        ) : (
+          sync.error && (
+            <div className="alert error workspace-conflict" role="alert">
+              <span>O rascunho aguarda sincronização. {sync.error}</span>
+              <button onClick={sync.keepLocal}>Tentar salvar novamente</button>
+            </div>
+          )
+        )}
+        {canvas && compact && (
+          <div
+            className="mobile-panes"
+            role="group"
+            aria-label="Painel visível"
+          >
+            <button
+              aria-pressed={!canvasOnly}
+              onClick={() => setCanvasOnly(false)}
+            >
+              {view === "library"
+                ? "Biblioteca"
+                : view === "settings"
+                  ? "Configurações"
+                  : "Conversa"}
+            </button>
+            <button
+              aria-pressed={canvasOnly}
+              onClick={() => setCanvasOnly(true)}
+            >
+              Canvas
+            </button>
+          </div>
+        )}
+        <div
+          className={`workspace ${canvas ? "with-canvas" : ""} ${compact ? "compact" : ""} ${canvasOnly ? "canvas-only" : ""}`}
+        >
           <div className="conversation-pane">
             {view === "home" && (
               <div className="welcome">
-                <div className="eyebrow">
-                  <Sparkles size={14} /> PENSE. EXPLORE. CONSTRUA.
-                </div>
-                <h1>
-                  Mais que respostas.
-                  <br />
-                  <span>Ideias com as quais interagir.</span>
-                </h1>
-                <p>
-                  Seu Hermes, em um espaço para conversar,
-                  <br className="desktop-break" /> comparar caminhos e
-                  transformar ideias.
-                </p>
+                <h1>O que vamos explorar?</h1>
                 <div className="suggestions">
                   {[
                     "Crie uma calculadora para dividir uma conta.",
                     "Compare duas opções de projeto em um canvas.",
                     "Crie um formulário para planejar minha semana.",
+                    "Crie um catálogo de livros fictícios para eu escolher e comparar.",
                   ].map((s, i) => (
                     <button
                       key={s}
+                      disabled={!loaded || submitting}
                       onClick={() => {
                         setDraft(s);
-                        document.getElementById("atlas-prompt")?.focus();
+                        promptElement.current?.focus();
                       }}
                     >
-                      <span>{["◷", "◈", "▤"][i]}</span>
+                      <span aria-hidden="true">{["◷", "◈", "▤", "▦"][i]}</span>
                       <b>
                         {
                           [
-                            "Explorar possibilidades",
-                            "Decidir com clareza",
-                            "Do plano à ação",
+                            "Calcular",
+                            "Comparar",
+                            "Planejar",
+                            "Escolher itens",
                           ][i]
                         }
                       </b>
@@ -707,16 +807,15 @@ export function App({
                 </div>
                 <div className="section-heading">
                   <div>
-                    <h2>Um pouco do que é possível</h2>
-                    <p>Exemplos ilustrativos para experimentar.</p>
+                    <h2>Exemplos interativos</h2>
                   </div>
-                  <span>GALERIA INTERATIVA</span>
                 </div>
                 <div className="example-grid">
                   {examples.map((e, i) => (
                     <button
                       className={`example example-${i}`}
                       key={e.id}
+                      disabled={!loaded || submitting}
                       onClick={() => openExample(i)}
                     >
                       <div className="example-art" aria-hidden="true">
@@ -735,6 +834,12 @@ export function App({
                               strokeWidth="3"
                             />
                           </svg>
+                        ) : i === 3 ? (
+                          <div className="mini-collection">
+                            {["Crônicas", "Ensaios", "Poesia"].map((s) => (
+                              <span key={s}>{s}</span>
+                            ))}
+                          </div>
                         ) : (
                           <div className="mini-compare">
                             <div>
@@ -757,6 +862,7 @@ export function App({
                               "Planejamento visual",
                               "Simulação ao vivo",
                               "Comparação interativa",
+                              "Catálogo com seleção",
                             ][i]
                           }
                         </span>
@@ -886,6 +992,7 @@ export function App({
                           )}
                         />
                       )}
+                      <LiveCanvasPreview canvas={run.preview ?? undefined} />
                       <details open={!!run.events.length}>
                         <summary>
                           Atividade do agente ({run.events.length})
@@ -906,74 +1013,11 @@ export function App({
                         </p>
                       )}
                       {run.pending_controls?.map((p) => (
-                        <form
-                          className="approval-card"
-                          key={p.prompt_id}
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            const answer = new FormData(e.currentTarget).get(
-                              "answer",
-                            );
-                            void control("clarify", {
-                              request_id: p.prompt_id,
-                              execution_generation: p.execution_generation,
-                              answer,
-                            });
-                          }}
-                        >
-                          <strong>
-                            {p.kind === "approval"
-                              ? "O Hermes solicita aprovação"
-                              : "O Hermes precisa de uma resposta"}
-                          </strong>
-                          <p>
-                            {p.description ||
-                              p.question ||
-                              p.prompt ||
-                              p.command ||
-                              p.prompt_id}
-                          </p>
-                          {p.kind === "approval" ? (
-                            <div>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  void control("approval", {
-                                    request_id: p.prompt_id,
-                                    execution_generation:
-                                      p.execution_generation,
-                                    choice: "once",
-                                  })
-                                }
-                              >
-                                Permitir uma vez
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  void control("approval", {
-                                    request_id: p.prompt_id,
-                                    execution_generation:
-                                      p.execution_generation,
-                                    choice: "deny",
-                                  })
-                                }
-                              >
-                                Recusar
-                              </button>
-                            </div>
-                          ) : (
-                            <>
-                              <input
-                                name="answer"
-                                aria-label="Resposta ao Hermes"
-                                required
-                                maxLength={12000}
-                              />
-                              <button type="submit">Responder</button>
-                            </>
-                          )}
-                        </form>
+                        <RunControl
+                          key={`${run.id}:${p.execution_generation}:${p.prompt_id}`}
+                          prompt={p}
+                          respond={control}
+                        />
                       ))}
                       {run.status === "unknown" && (
                         <button
@@ -984,10 +1028,16 @@ export function App({
                                 "Reconhecer que esta execução foi interrompida? Verifique seus efeitos no Hermes antes de continuar.",
                               )
                             )
-                              void control("resolve-unknown", {
-                                admission_id: run.admission_id,
-                                execution_generation: run.execution_generation,
-                              });
+                              void control(
+                                "resolve-unknown",
+                                run.remote_id
+                                  ? {
+                                      admission_id: run.admission_id,
+                                      execution_generation:
+                                        run.execution_generation,
+                                    }
+                                  : {},
+                              );
                           }}
                         >
                           Reconhecer interrupção
@@ -1001,9 +1051,6 @@ export function App({
             )}
             {view === "library" && (
               <div className="library">
-                <div className="eyebrow">
-                  <Layers size={14} /> SEU REPERTÓRIO VISUAL
-                </div>
                 <h1>Minha biblioteca</h1>
                 <p>
                   As respostas mantêm a versão original. Salve suas mudanças
@@ -1014,14 +1061,25 @@ export function App({
                   <input
                     type="file"
                     accept=".json"
+                    disabled={!loaded}
                     onChange={(e) => {
                       void importCanvas(e.target.files?.[0]);
                       e.target.value = "";
                     }}
                   />
                 </label>
+                <label className="library-search">
+                  <Search size={17} />
+                  <input
+                    aria-label="Buscar canvas"
+                    placeholder="Buscar por título"
+                    value={records.query}
+                    onChange={(e) => records.setQuery(e.target.value)}
+                  />
+                </label>
+                {records.error && <p role="alert">{records.error}</p>}
                 <div className="saved-grid">
-                  {records.map((r) => (
+                  {records.rows.map((r) => (
                     <button key={r.id} onClick={() => void openSaved(r.id)}>
                       <LayoutGrid size={24} />
                       <h3>{r.title}</h3>
@@ -1035,22 +1093,23 @@ export function App({
                     </button>
                   ))}
                 </div>
-                {!records.length && (
+                {!records.busy && !records.error && !records.rows.length && (
                   <div className="empty">
                     <LayoutGrid size={38} />
-                    <h2>Espaço para suas próximas ideias.</h2>
+                    <h2>
+                      {records.query
+                        ? "Nenhum canvas encontrado"
+                        : "Sua biblioteca está vazia"}
+                    </h2>
                     <button className="primary" onClick={() => setView("home")}>
                       Explorar exemplos
                     </button>
                   </div>
                 )}
-                {records.length >= 50 && (
+                {records.more && (
                   <button
-                    onClick={() =>
-                      void api<Summary[]>(`/canvases?offset=${records.length}`)
-                        .then((r) => setRecords((old) => [...old, ...r]))
-                        .catch(fail)
-                    }
+                    disabled={records.busy}
+                    onClick={() => void records.refresh(true)}
                   >
                     Carregar mais
                   </button>
@@ -1062,7 +1121,7 @@ export function App({
                 <div className="eyebrow">
                   <Settings2 size={14} /> SEU AMBIENTE
                 </div>
-                <h1>Conectado ao seu Hermes.</h1>
+                <h1>Configurações</h1>
                 <p>
                   Execuções, ferramentas e decisões continuam sob controle do
                   seu agente.
@@ -1084,7 +1143,9 @@ export function App({
                   <button
                     className="primary"
                     onClick={() =>
-                      void api<Status>("/status").then(setStatus).catch(fail)
+                      void api<Status>("/status?force=true")
+                        .then(setStatus)
+                        .catch(fail)
                     }
                   >
                     Verificar conexão
@@ -1097,6 +1158,7 @@ export function App({
                     <select
                       aria-label="Tema"
                       value={workspace.theme}
+                      disabled={!loaded}
                       onChange={(e) =>
                         setWorkspace((w) => ({
                           ...w,
@@ -1121,9 +1183,8 @@ export function App({
                     perfis do navegador.
                   </p>
                   <p>
-                    Arquivos de texto, Markdown, CSV e JSON podem ser anexados à
-                    conversa. Formulários preparam uma mensagem para sua
-                    revisão.
+                    O texto e os anexos ainda não enviados ficam nesta aba por
+                    conversa e perfil.
                   </p>
                   <a
                     href="https://github.com/sesantanajr/hermes-atlas-intelligent-ui"
@@ -1140,7 +1201,12 @@ export function App({
                 {canvas && (
                   <div className="context-chip">
                     <LayoutGrid size={14} /> Canvas em contexto: {canvas.title}{" "}
-                    · {saving ? "salvando rascunho…" : "rascunho atualizado"}
+                    ·{" "}
+                    {saving
+                      ? "salvando…"
+                      : sync.error || sync.conflict
+                        ? "alterações não salvas"
+                        : "rascunho salvo"}
                   </div>
                 )}
                 {attachments.map((a, i) => (
@@ -1162,15 +1228,15 @@ export function App({
                   }}
                 >
                   <textarea
+                    ref={promptElement}
                     id="atlas-prompt"
+                    disabled={!loaded || submitting}
                     aria-label="Mensagem para o Hermes"
                     placeholder="O que vamos explorar hoje?"
-                    maxLength={12000}
+                    maxLength={messageLimit}
                     value={draft}
                     onChange={(e) => {
                       setDraft(e.target.value);
-                      if (pending.current?.input !== e.target.value.trim())
-                        pending.current = null;
                     }}
                     onKeyDown={(e) => {
                       if (
@@ -1192,6 +1258,7 @@ export function App({
                         <Paperclip size={18} />
                         <input
                           aria-label="Anexar arquivos"
+                          disabled={!loaded || submitting}
                           className="hidden-file"
                           type="file"
                           multiple
@@ -1202,7 +1269,7 @@ export function App({
                           }}
                         />
                       </label>
-                      <Sparkles size={15} /> Interface inteligente
+                      <span>Anexar texto</span>
                     </span>
                     {busy ? (
                       <button
@@ -1227,34 +1294,15 @@ export function App({
                 {nativeContext?.sessionId && (
                   <button
                     className="native-send"
-                    disabled={!draft.trim()}
-                    onClick={() =>
-                      void nativeContext
-                        .send(
-                          draft +
-                            (canvas
-                              ? "\n\nCanvas ativo:\n" + JSON.stringify(canvas)
-                              : ""),
-                        )
-                        .then(() => {
-                          setDraft("");
-                          setNotice(
-                            "Mensagem enviada à sessão ativa do Desktop. Acompanhe a resposta no chat nativo.",
-                          );
-                        })
-                        .catch(fail)
-                    }
+                    disabled={!draft.trim() || submitting || !loaded}
+                    onClick={() => void sendNative()}
                   >
                     Enviar à sessão ativa do Desktop
                   </button>
                 )}
                 <p>
                   Enter para enviar · Shift + Enter para nova linha{" "}
-                  <span>
-                    {busy
-                      ? "A execução continua no Hermes"
-                      : "Seu agente. Seu espaço."}
-                  </span>
+                  <span>{busy ? "A execução continua no Hermes" : ""}</span>
                 </p>
               </div>
             )}
@@ -1269,6 +1317,27 @@ export function App({
                   </small>
                 </span>
                 <div>
+                  <button
+                    className="icon-button"
+                    aria-label={
+                      canvasOnly
+                        ? "Mostrar conversa e canvas"
+                        : "Ampliar canvas"
+                    }
+                    title={
+                      canvasOnly
+                        ? "Mostrar conversa e canvas"
+                        : "Ampliar canvas"
+                    }
+                    hidden={compact}
+                    onClick={() => setCanvasOnly(!canvasOnly)}
+                  >
+                    {canvasOnly ? (
+                      <Minimize2 size={16} />
+                    ) : (
+                      <Maximize2 size={16} />
+                    )}
+                  </button>
                   <button
                     className="icon-button"
                     aria-label="Desfazer interação"
@@ -1364,10 +1433,16 @@ export function App({
                     canvas={canvas}
                     onChange={setCanvas}
                     onAction={(text) => {
-                      setDraft(text);
+                      setDraft(
+                        draft.trim() ? draft.trimEnd() + "\n\n" + text : text,
+                      );
+                      setCanvasOnly(false);
                       setView(current ? "chat" : "home");
+                      requestAnimationFrame(() =>
+                        promptElement.current?.focus(),
+                      );
                       setNotice(
-                        "Revise os valores na mensagem e envie quando estiver pronto.",
+                        "Seleção adicionada ao editor. Revise e envie ao Hermes.",
                       );
                     }}
                   />
@@ -1381,10 +1456,6 @@ export function App({
                     <pre>{JSON.stringify(canvas, null, 2)}</pre>
                   </div>
                 )}
-                <div className="canvas-footer">
-                  <Layers size={13} /> Interações preservadas · Componentes
-                  validados
-                </div>
               </div>
             </aside>
           )}

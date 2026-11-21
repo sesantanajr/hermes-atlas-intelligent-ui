@@ -13,6 +13,7 @@ import { Transport } from "./types";
 
 afterEach(() => {
   cleanup();
+  sessionStorage.clear();
   vi.useRealTimers();
 });
 it("rehydrates the workspace after a transient outage instead of leaving chat disabled", async () => {
@@ -26,7 +27,7 @@ it("rehydrates the workspace after a transient outage instead of leaving chat di
       return { scope: "same-profile", connected: true, features: {} };
     if (path === "/workspace")
       return { chat_id: null, canvas: null, revision: 0, theme: "light" };
-    if (path === "/conversations")
+    if (path.startsWith("/conversations?"))
       return [{ id: "existing", title: "Saved conversation" }];
     return [];
   };

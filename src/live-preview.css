@@ -1,0 +1,4 @@
+.atlas-app .atlas-live-preview { margin: .85rem 0; min-width: 0; }
+.atlas-app .atlas-live-preview-heading { display: flex; flex-wrap: wrap; gap: .35rem 1rem; justify-content: space-between; margin-bottom: .65rem; }
+.atlas-app .atlas-live-preview-heading span { font-size: .8rem; color: var(--muted); }
+.atlas-app .atlas-live-preview fieldset { border: 0; margin: 0; padding: 0; min-inline-size: 0; }

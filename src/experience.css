@@ -176,6 +176,41 @@
   font-size: 13px;
   cursor: pointer;
 }
+.atlas-app .approval-card pre {
+  padding: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.atlas-app .approval-card fieldset {
+  min-width: 0;
+  margin: 8px 0 0;
+  padding: 0;
+  border: 0;
+}
+.atlas-app .clarify-options,
+.atlas-app .clarify-custom {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0;
+}
+.atlas-app .clarify-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+.atlas-app .clarify-options input {
+  width: 1rem;
+  height: 1rem;
+}
+.atlas-app .clarify-custom input {
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
 .atlas-app .file-button input,
 .atlas-app .hidden-file {
   position: absolute;
@@ -401,6 +436,114 @@
   letter-spacing: 1.5px;
   white-space: nowrap;
 }
+
+.atlas-app {
+  width: 100%;
+  min-width: 0;
+}
+.atlas-app .mobile-panes {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.atlas-app .mobile-panes button {
+  padding: 6px 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+}
+.atlas-app .mobile-panes button[aria-pressed="true"] {
+  background: var(--green);
+  color: #fff;
+}
+.atlas-app .workspace.with-canvas.canvas-only .conversation-pane,
+.atlas-app .workspace.with-canvas.compact:not(.canvas-only) .canvas-pane,
+.atlas-app .canvas-toolbar button[hidden] {
+  display: none;
+}
+.atlas-app .workspace.with-canvas.canvas-only .canvas-pane {
+  width: 100%;
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.atlas-app .workspace.with-canvas.compact .conversation-pane {
+  width: 100%;
+  max-width: none;
+  flex: 1;
+}
+.atlas-app .workspace.with-canvas.compact:not(.canvas-only) .welcome {
+  display: block;
+}
+.atlas-app .workspace.with-canvas.canvas-only .canvas-content {
+  width: min(100%, 1160px);
+  margin-inline: auto;
+}
+.atlas-app .canvas-content > h2 {
+  max-width: none;
+  overflow-wrap: anywhere;
+}
+.atlas-app .suggestions,
+.atlas-app .example-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 185px), 1fr));
+}
+.atlas-app .welcome {
+  padding-block: clamp(24px, 4vh, 52px);
+}
+.atlas-app .welcome .suggestions {
+  margin-block: 24px 32px;
+}
+.atlas-app .library-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 0;
+  padding: 8px 12px;
+  max-width: 480px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--muted);
+  background: var(--surface);
+}
+.atlas-app .library-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  color: var(--text);
+  background: transparent;
+}
+.atlas-app .mini-collection {
+  display: grid;
+  gap: 5px;
+  width: 76%;
+}
+.atlas-app .mini-collection span {
+  border: 1px solid currentColor;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.atlas-app .mini-collection span:first-child {
+  background: var(--surface);
+}
+@media (min-width: 901px) {
+  .atlas-app .workspace.with-canvas:not(.compact):not(.canvas-only) {
+    display: grid;
+    grid-template-columns: minmax(290px, 0.85fr) minmax(320px, 1.15fr);
+  }
+  .atlas-app .workspace.with-canvas:not(.compact) .conversation-pane {
+    max-width: none;
+  }
+  .atlas-app .workspace.with-canvas .canvas-content {
+    padding-inline: clamp(16px, 2vw, 38px);
+  }
+  .atlas-app .workspace.with-canvas .messages {
+    padding-inline: clamp(12px, 1.8vw, 28px);
+  }
+}
 .atlas-app[data-theme="dark"] .atlas-sidebar nav button,
 .atlas-app[data-theme="dark"] .sidebar-bottom > button,
 .atlas-app[data-theme="dark"] .recent-chats button,
@@ -421,4 +564,16 @@
   .atlas-app .messages {
     min-height: 0;
   }
+}
+.atlas-app .workspace-conflict {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.atlas-app .workspace-conflict > span {
+  flex: 1 1 240px;
+}
+.atlas-app .workspace-conflict button {
+  padding: 6px 10px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
 }

@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import json
 from typing import Annotated, Literal
 from uuid import UUID
@@ -23,10 +24,10 @@ DB = Annotated[Store, Depends(scoped_store)]
 
 
 @router.get('/status')
-async def status(store: DB):
-    result = {'connected': False, 'mode': 'offline', 'version': '0.2.0', 'scope': store.scope, 'features': {}}
+async def status(store: DB, force: bool = False):
+    result = {'connected': False, 'mode': 'offline', 'version': '0.3.0', 'scope': store.scope, 'features': {}}
     try:
-        caps = await gateway.capabilities(force=True)
+        caps = await gateway.capabilities(force=force)
         result.update(connected=caps['atlas_compatible'], mode='hermes', features=caps['features'], model=caps.get('model', 'hermes-agent'))
         if not result['connected']:
             result['detail'] = 'Atualize o Hermes: o Atlas requer Runs com idempotência persistente.'
@@ -36,8 +37,8 @@ async def status(store: DB):
 
 
 @router.get('/canvases')
-def canvases(store: DB, offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100)):
-    return store.list(offset, limit)
+def canvases(store: DB, offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100), q: str = Query('', max_length=256)):
+    return store.list(offset, limit, q)
 
 
 @router.get('/canvases/{id}')
@@ -66,21 +67,31 @@ class Workspace(Strict):
     canvas: Canvas | None = None
     revision: int = Field(0, ge=0)
     theme: Literal['system', 'light', 'dark'] = 'system'
+    workspace_token: str | None = Field(None, pattern=r'^[0-9a-f]{64}$')
+    # v0.2 replays unknown GET fields unchanged and ignores the PUT response.
+    # Only an explicit precondition opts the caller in to compare-and-swap.
+    expected_workspace_token: str | None = Field(None, pattern=r'^[0-9a-f]{64}$')
+
+    def content(self):
+        return self.model_dump(mode='json', exclude={'workspace_token', 'expected_workspace_token'})
 
 
 @router.get('/workspace')
 def workspace(store: DB):
-    return store.doc('workspace', 'current') or Workspace().model_dump()
+    return store.workspace(Workspace().content())
 
 
 @router.put('/workspace')
 def save_workspace(body: Workspace, store: DB):
-    return store.put('workspace', 'current', json.loads(body.model_dump_json()))
+    try:
+        return store.save_workspace(body.content(), Workspace().content(), body.expected_workspace_token)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
 
 
 @router.get('/conversations')
-def conversations(store: DB, offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100)):
-    return [{k: v for k, v in c.items() if k != 'messages'} for c in store.docs('conversation', offset, limit)]
+def conversations(store: DB, offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100), q: str = Query('', max_length=256)):
+    return store.conversations(offset, limit, q)
 
 
 @router.get('/conversations/{id}')
@@ -97,17 +108,20 @@ class Rename(Strict):
 
 @router.patch('/conversations/{id}')
 def rename(id: Identifier, body: Rename, store: DB):
-    c = conversation(id, store)
-    c['title'] = body.title
-    return store.put('conversation', id, c)
+    result = store.rename_conversation(id, body.title)
+    if result is None:
+        raise HTTPException(404, 'Conversa não encontrada.')
+    return result
 
 
 @router.delete('/conversations/{id}')
 def delete(id: Identifier, store: DB):
-    c = conversation(id, store)
-    if c.get('active_run'):
-        raise HTTPException(409, 'Interrompa e aguarde a execução terminar antes de excluir a conversa.')
-    store.delete_doc('conversation', id)
+    try:
+        deleted = store.delete_conversation(id)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    if not deleted:
+        raise HTTPException(404, 'Conversa não encontrada.')
     return {'deleted': True}
 
 
@@ -131,6 +145,16 @@ class RunRequest(Strict):
 
 @router.post('/runs', status_code=202)
 async def create_run(body: RunRequest, store: DB):
+    # Hash the user request, independent of a later model/config/instruction
+    # change. An already admitted request can be read while Hermes is offline.
+    fingerprint = hashlib.sha256(json.dumps(body.model_dump(mode='json'), sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+    previous = await asyncio.to_thread(store.doc, 'run', str(body.request_id))
+    if previous and previous.get('request_hash'):
+        if previous['request_hash'] != fingerprint:
+            raise HTTPException(409, 'A chave desta execução já pertence a outro pedido.')
+        if previous['status'] not in runs.TERMINAL and previous['status'] != 'unknown':
+            runs.ensure(store, previous['id'])
+        return runs.public(previous)
     caps = await gateway.capabilities()
     if not caps['atlas_compatible']:
         raise HTTPException(503, 'Esta versão do Hermes não oferece o contrato de execução exigido pelo Atlas.')
@@ -148,10 +172,13 @@ async def create_run(body: RunRequest, store: DB):
     if len(json.dumps(payload).encode()) > 450000:
         raise HTTPException(413, 'Mensagem, arquivos e canvas excedem 450 KB. Reduza os anexos.')
     try:
-        run = await asyncio.to_thread(store.reserve, str(body.request_id), str(body.conversation_id), payload, body.input)
+        retention = caps['features']['runs_idempotency'].get('retention_seconds')
+        run = await asyncio.to_thread(store.reserve, str(body.request_id), str(body.conversation_id), payload,
+                                      body.input, fingerprint, retention)
     except ValueError as exc:
         raise HTTPException(409, str(exc)) from exc
-    runs.ensure(store, run['id'])
+    if run['status'] not in runs.TERMINAL and run['status'] != 'unknown':
+        runs.ensure(store, run['id'])
     return runs.public(run)
 
 
@@ -175,8 +202,15 @@ class Control(Strict):
 
 @router.post('/runs/{id}/{action}')
 async def control(id: UUID, action: Literal['stop', 'approval', 'clarify', 'resolve-unknown'], body: Control, store: DB):
-    run = await get_run(id, store)
+    run = await asyncio.to_thread(store.doc, 'run', str(id))
+    if not run:
+        raise HTTPException(404, 'Execução não encontrada neste perfil.')
     if not run.get('remote_id'):
+        if action == 'resolve-unknown' and run['status'] == 'unknown':
+            run.update(status='interrupted', connection_error=None, pending_controls=[],
+                       warning='Admissão sem confirmação encerrada localmente por você. O estado remoto continua desconhecido.')
+            await asyncio.to_thread(store.finish, run)
+            return runs.public(run)
         raise HTTPException(409, 'Aguarde a confirmação de admissão do gateway.')
     if action == 'approval' and (not body.request_id or not body.choice):
         raise HTTPException(422, 'Escolha e identificação da aprovação são obrigatórias.')
@@ -185,6 +219,8 @@ async def control(id: UUID, action: Literal['stop', 'approval', 'clarify', 'reso
     if action == 'resolve-unknown' and (not body.admission_id or body.execution_generation is None):
         raise HTTPException(422, 'Identidade e geração são obrigatórias para reconhecer uma execução interrompida.')
     response = await gateway.request('POST', '/runs/' + run['remote_id'] + '/' + action, body.model_dump(exclude_none=True))
+    if action == 'resolve-unknown':
+        await asyncio.to_thread(store.resume_remote_unknown, str(id))
     runs.ensure(store, str(id))
     return response
 

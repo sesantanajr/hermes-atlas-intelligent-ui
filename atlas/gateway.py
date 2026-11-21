@@ -21,14 +21,21 @@ def setting(name, default=''):
     return get_secret(name) or default
 
 
-def upstream():
+def profile_home():
     try:
         from hermes_constants import get_hermes_home
-        home = get_hermes_home()
+        return get_hermes_home()
     except ImportError:
-        home = Path(os.environ.get('HERMES_HOME', str(Path.home()/'.hermes')))
+        return Path(os.environ.get('HERMES_HOME', str(Path.home()/'.hermes')))
+
+
+def gateway_url(home):
     prefix = '/p/' + quote(home.name, safe='') if home.parent.name == 'profiles' else ''
-    url = setting('ATLAS_HERMES_URL', 'http://127.0.0.1:8642' + prefix + '/v1').rstrip('/')
+    return setting('ATLAS_HERMES_URL', 'http://127.0.0.1:8642' + prefix + '/v1').rstrip('/')
+
+
+def upstream():
+    url = gateway_url(profile_home())
     p = urlsplit(url)
     if p.scheme not in {'http', 'https'} or not p.hostname or p.username or p.password or p.query or p.fragment:
         raise HTTPException(503, 'ATLAS_HERMES_URL inválida.')
