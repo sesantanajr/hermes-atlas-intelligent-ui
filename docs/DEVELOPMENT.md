@@ -1,7 +1,8 @@
 # Desenvolvimento
 
-Requisitos: Python 3.11+ e Node 22+. O Hermes Agent não é necessário para compilar e testar: os
-testes reproduzem o carregamento do plugin pelo Hermes.
+Requisitos: Python 3.11+ e Node 22+. As instalações atuais do Hermes rodam no Python 3.14, e o CI
+testa o 3.11 e o 3.14. O Hermes Agent não é necessário para compilar e testar: os testes
+reproduzem o carregamento do plugin pelo Hermes.
 
 ```sh
 npm ci

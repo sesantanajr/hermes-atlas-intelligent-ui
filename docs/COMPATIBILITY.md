@@ -86,9 +86,11 @@ resultado desconhecido, e rotas `/p/<perfil>/v1` para perfis secundários.
 - **No navegador.** As três interfaces foram abertas com páginas de teste (`harness/`) que
   carregam os bundles compilados, simulam o SDK e o tema de cada host e falam com um servidor
   Atlas real numa pasta isolada. As capturas em `docs/screenshots/` vêm dessas páginas.
-- **Integração contínua.** Cada push roda os testes, compila os bundles e confere que os
-  arquivos versionados estão atualizados; um segundo job instala o Hermes Agent do GitHub em
-  Linux e roda `hermes plugins validate` e `hermes plugins doctor --ci` neste repositório.
+- **Integração contínua.** Cada push roda os testes de interface, compila os bundles e confere
+  que os arquivos versionados estão atualizados; roda os testes Python no 3.11 e no 3.14, a
+  versão das instalações atuais do Hermes; e instala o Hermes Agent em Linux pelo instalador
+  oficial (última versão estável), para rodar `hermes plugins validate` e
+  `hermes plugins doctor --ci` neste repositório.
 
 **Limites desta verificação.** A 1.0 não foi executada dentro de um Hermes Desktop ou dashboard
 real antes da publicação: o Hermes não roda na máquina de desenvolvimento. O comportamento
