@@ -1,7 +1,7 @@
 import pytest
 from pydantic import TypeAdapter, ValidationError
 
-from atlas.editorial import EDITORIAL_TYPES, EditorialBlocks, validate_editorial_state
+from hermes_atlas.schema.editorial import EDITORIAL_TYPES, EditorialBlocks, validate_editorial_state
 
 
 def build(kind, **data):

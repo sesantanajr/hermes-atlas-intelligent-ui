@@ -4,7 +4,7 @@ from typing import Annotated
 import pytest
 from pydantic import Field, TypeAdapter, ValidationError
 
-from atlas.controls import ControlBlocks
+from hermes_atlas.schema.controls import ControlBlocks
 
 adapter = TypeAdapter(Annotated[ControlBlocks, Field(discriminator="type")])
 options = [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}]

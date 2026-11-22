@@ -4,9 +4,9 @@ from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
-from atlas import runs
-from atlas.server import app
-from atlas.store import Store
+from hermes_atlas.server import runs
+from hermes_atlas.server.app import app
+from hermes_atlas.storage.store import Store
 
 
 def test_conditional_poll_replays_updates_and_recovers_after_restart(tmp_path, monkeypatch):

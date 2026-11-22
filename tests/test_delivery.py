@@ -4,9 +4,9 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-from atlas import gateway, runs
-from atlas.protocol import extract
-from atlas.store import Store
+from hermes_atlas.server import gateway, runs
+from hermes_atlas.server.protocol import extract
+from hermes_atlas.storage.store import Store
 
 
 MARKERS = ('[SILENT]', 'silent', 'no_reply', 'NO REPLY', '[静默]', '静默', '[沉默]', '沉默')
@@ -55,7 +55,7 @@ def test_interim_history_and_artifacts_use_their_own_presentation():
 
 def test_legacy_public_history_and_rename_preserve_human_input_and_artifacts(tmp_path, monkeypatch):
     monkeypatch.setenv('ATLAS_DATA_DIR', str(tmp_path))
-    from atlas.server import app
+    from hermes_atlas.server.app import app
 
     store = Store()
     artifact = {'id': 'canvas-demo', 'revision': 2}

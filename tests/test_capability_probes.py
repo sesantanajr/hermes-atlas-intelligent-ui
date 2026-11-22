@@ -2,7 +2,7 @@ import asyncio
 from contextvars import ContextVar
 import pytest
 from fastapi import HTTPException
-from atlas import gateway
+from hermes_atlas.server import gateway
 
 
 def test_concurrent_status_probes_share_requests_and_survive_client_cancellation(monkeypatch):

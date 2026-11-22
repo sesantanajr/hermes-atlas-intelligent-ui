@@ -1,6 +1,6 @@
 import pytest
 from pydantic import ValidationError
-from atlas.models import Canvas
+from hermes_atlas.schema.canvas import Canvas
 
 
 def collection(items, selected=None):

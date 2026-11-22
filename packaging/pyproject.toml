@@ -1,0 +1,43 @@
+# Metadata of the optional standalone wheel (`pip install hermes-atlas-intelligent-ui`), for
+# running the Atlas app on a machine that does not have Hermes installed.
+#
+# `python scripts/build_wheel.py` copies this file next to a staged copy of hermes_atlas/ and
+# builds there. Inside Hermes the plugin is installed from Git and uses none of this.
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hermes-atlas-intelligent-ui"
+dynamic = ["version"]
+description = "Interactive canvases for Hermes Agent: standalone app and library"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{ name = "sesantanajr" }]
+keywords = ["hermes-agent", "generative-ui", "canvas"]
+dependencies = [
+    "pydantic>=2.10,<3",
+    "fastapi>=0.104,<1",
+    "httpx>=0.27,<1",
+    "uvicorn>=0.31,<1",
+]
+
+[project.urls]
+Homepage = "https://github.com/sesantanajr/hermes-atlas-intelligent-ui"
+
+[project.scripts]
+hermes-atlas = "hermes_atlas.agent.cli:main"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+include = ["hermes_atlas*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "hermes_atlas.__version__" }
+
+[tool.setuptools.package-data]
+hermes_atlas = ["catalog.json", "static/**/*", "static/*", "assets/*"]

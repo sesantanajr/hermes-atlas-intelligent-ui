@@ -1,9 +1,9 @@
 import asyncio
 import json
 
-from atlas import gateway, runs
-from atlas.activity import step_event, summarize
-from atlas.store import Store
+from hermes_atlas.server import gateway, runs
+from hermes_atlas.chat.activity import step_event, summarize
+from hermes_atlas.storage.store import Store
 
 
 def terminal(seq, call_id, **fields):

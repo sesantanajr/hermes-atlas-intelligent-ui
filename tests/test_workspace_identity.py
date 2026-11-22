@@ -5,8 +5,8 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import closing
 import pytest
 
-from atlas.models import Canvas
-from atlas.store import Store
+from hermes_atlas.schema.canvas import Canvas
+from hermes_atlas.storage.store import Store
 
 
 def sample(title="First"):

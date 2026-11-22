@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
-from atlas.models import Canvas
-from atlas.catalog import detail
+from hermes_atlas.schema.canvas import Canvas
+from hermes_atlas.catalog import detail
 
 
 @pytest.mark.parametrize('kind,values', [

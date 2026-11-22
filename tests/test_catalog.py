@@ -7,9 +7,9 @@ from fastapi.testclient import TestClient
 import pytest
 from pydantic import TypeAdapter, ValidationError
 
-from atlas.catalog import detail, entries, search
-from atlas.models import Canvas, Component
-from atlas.preview import decorate_live
+from hermes_atlas.catalog import detail, entries, search
+from hermes_atlas.schema.canvas import Canvas, Component
+from hermes_atlas.server.preview import decorate_live
 
 BASE = "/api/plugins/hermes-atlas"
 
@@ -17,7 +17,7 @@ BASE = "/api/plugins/hermes-atlas"
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     monkeypatch.setenv("ATLAS_DATA_DIR", str(tmp_path))
-    from atlas.server import app
+    from hermes_atlas.server.app import app
 
     with TestClient(app, base_url="http://localhost") as instance:
         yield instance
@@ -77,38 +77,26 @@ def test_api_lists_filters_and_saves_a_quiz_revision_with_persisted_state(client
     assert client.get(endpoint).json()["revision"] == 1
 
 
-def test_native_tool_discovers_a_type_then_renders_and_reads_it(tmp_path, monkeypatch):
-    monkeypatch.setenv("ATLAS_DATA_DIR", str(tmp_path))
-    root = Path(__file__).resolve().parents[1]
-    spec = importlib.util.spec_from_file_location("atlas_plugin_catalog_test", root / "__init__.py",
-                                                  submodule_search_locations=[str(root)])
-    plugin = importlib.util.module_from_spec(spec)
-    monkeypatch.setitem(sys.modules, spec.name, plugin)
-    spec.loader.exec_module(plugin)
-    class Context:
-        def __init__(self):
-            self.handlers = {}
+def test_native_tool_discovers_a_type_then_renders_and_reads_it():
+    from hermes_host import registered
 
-        def register_tool(self, *, name, handler, **_metadata):
-            self.handlers[name] = handler
-
-        def call(self, name, **params):
-            return json.loads(self.handlers[name](params))
-
-    ctx = Context()
-    plugin.register(ctx)
-    assert ctx.call("atlas_components", q="timer") == search(q="timer")
-    record = ctx.call("atlas_components", type="timer")
-    assert record == detail("timer")
+    ctx, _ = registered()
+    assert [m["type"] for m in ctx.call("atlas_components", {"q": "timer"})["matches"]] == [e["type"] for e in search(q="timer")]
+    record = ctx.call("atlas_components", {"type": "timer"})["blocks"][0]
+    assert record["schema"] == detail("timer")["schema"] and record["example"] == detail("timer")["example"]
     block = record["example"]
     canvas = {"id": "sample", "title": "Tempo", "blocks": [block],
               "state": {block["id"]: {"values": {"remaining_ms": "500"}}}}
-    rendered = ctx.call("atlas_render", canvas=canvas)
+    rendered = ctx.call("atlas_render", {"canvas": canvas})
     assert rendered["success"]
-    fetched = ctx.call("atlas_get", id=rendered["id"])["canvas"]
+    fetched = ctx.call("atlas_get", {"id": rendered["id"]})["canvas"]
     assert fetched["state"][block["id"]]["values"] == {"remaining_ms": "500"}
+    # Atlas 0.x replaced a canvas through atlas_render(expected_revision); that call still validates state.
     fetched["state"][block["id"]]["values"]["remaining_ms"] = "-5"
-    assert ctx.call("atlas_render", canvas=fetched, expected_revision=1)["success"] is False
+    assert ctx.call("atlas_render", {"canvas": fetched, "expected_revision": 1})["success"] is False
+    fetched["state"][block["id"]]["values"]["remaining_ms"] = "250"
+    replaced = ctx.call("atlas_render", {"canvas": fetched, "expected_revision": 1})
+    assert replaced["success"] and replaced["revision"] == 2 and replaced["status"] == "updated"
 
 
 def test_block_limit_and_legacy_canvas_are_preserved():

@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
-from atlas.models import Canvas
-from atlas.preview import decorate_live
+from hermes_atlas.schema.canvas import Canvas
+from hermes_atlas.server.preview import decorate_live
 import json
 
 def block(kind="diagram"):

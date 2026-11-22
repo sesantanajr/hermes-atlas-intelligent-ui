@@ -3,7 +3,7 @@ from typing import Annotated
 import pytest
 from pydantic import Field, TypeAdapter, ValidationError
 
-from atlas.analytics import AnalyticsBlocks, validate_analytics_values
+from hermes_atlas.schema.analytics import AnalyticsBlocks, validate_analytics_values
 
 
 schema = TypeAdapter(Annotated[AnalyticsBlocks, Field(discriminator="type")])

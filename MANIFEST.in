@@ -1,9 +1,0 @@
-include __init__.py plugin.yaml setup.py atlas/catalog.json
-recursive-include dist *
-recursive-include desktop *
-recursive-include dashboard *
-recursive-include atlas *.py
-recursive-include atlas/static *
-recursive-include atlas/plugin *
-global-exclude *.pyc
-prune atlas/__pycache__

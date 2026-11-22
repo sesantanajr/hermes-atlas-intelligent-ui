@@ -1,8 +1,8 @@
 import pytest
 from pydantic import ValidationError
 
-from atlas.explore import Tabs, Timeline
-from atlas.models import Canvas
+from hermes_atlas.schema.explore import Tabs, Timeline
+from hermes_atlas.schema.canvas import Canvas
 
 
 def item(id):

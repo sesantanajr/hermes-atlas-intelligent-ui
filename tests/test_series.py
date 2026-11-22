@@ -1,8 +1,8 @@
 import pytest
 from pydantic import ValidationError
 
-from atlas.models import Canvas
-from atlas.series import SeriesChart
+from hermes_atlas.schema.canvas import Canvas
+from hermes_atlas.schema.series import SeriesChart
 
 
 def chart(**patch):

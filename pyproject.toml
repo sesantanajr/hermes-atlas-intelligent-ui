@@ -1,22 +1,23 @@
-# Hermes gives dependency-only workspace members a unique name per profile.
-# setup.py also supports the standard setuptools fallback for wheel builds.
+# Tooling configuration only.
+#
+# There is deliberately no [project] table in this file. Hermes reads a [project] table beside
+# plugin.yaml as the plugin's Python dependency declaration and would then resolve the shared
+# environment every time the plugin is enabled. Atlas needs nothing beyond what Hermes core ships,
+# so it declares nothing. The metadata of the optional standalone wheel lives in
+# packaging/pyproject.toml and is built with `python scripts/build_wheel.py`.
 
-[project]
-name = "hermes-atlas-intelligent-ui"
-version = "0.6.0"
-description = "Validated generative UI for Hermes Agent"
-requires-python = ">=3.11"
-dependencies = ["pydantic>=2.10,<3", "fastapi>=0.115,<1", "httpx>=0.28,<1", "uvicorn>=0.34,<1"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q -p no:cacheprovider"
+filterwarnings = [
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
 
-[project.optional-dependencies]
-test = ["pytest>=8,<10"]
+[tool.ruff]
+line-length = 140
+target-version = "py311"
+extend-exclude = ["node_modules", "dist", "build", "work"]
 
-[project.scripts]
-hermes-atlas = "atlas.cli:main"
-
-[tool.setuptools]
-packages = ["atlas"]
-include-package-data = false
-
-[tool.setuptools.package-data]
-atlas = ["catalog.json", "static/**/*", "static/*", "plugin/**/*", "plugin/*"]
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "UP"]
+ignore = ["E501", "E701", "E702", "B008", "B904", "UP007"]

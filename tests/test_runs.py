@@ -5,11 +5,11 @@ from uuid import uuid4
 import httpx
 import pytest
 from fastapi.testclient import TestClient
-from atlas import gateway
-from atlas.models import Canvas
-from atlas.protocol import extract, INSTRUCTIONS
-from atlas.store import Store
-from atlas import runs
+from hermes_atlas.server import gateway
+from hermes_atlas.schema.canvas import Canvas
+from hermes_atlas.server.protocol import extract, INSTRUCTIONS
+from hermes_atlas.storage.store import Store
+from hermes_atlas.server import runs
 from contextlib import closing
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
@@ -49,7 +49,7 @@ class Hermes:
 
 @pytest.fixture
 def runtime(tmp_path,monkeypatch):
-    from atlas.server import app
+    from hermes_atlas.server.app import app
     monkeypatch.setenv('ATLAS_DATA_DIR',str(tmp_path))
     monkeypatch.delenv('ATLAS_HERMES_URL',raising=False)
     gateway._capabilities.clear()

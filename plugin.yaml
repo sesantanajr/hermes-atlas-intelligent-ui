@@ -1,15 +1,57 @@
+# Hermes Atlas — plugin manifest (manifest v2; older Hermes releases read it as v1 and ignore
+# the fields they do not know).
+#
+# No python_dependencies on purpose: Atlas uses only what Hermes core already ships (pydantic for
+# the tools; FastAPI and httpx for the dashboard API), so enabling it never changes the shared
+# Python environment and needs no restart.
 name: hermes-atlas
-version: "0.6.0"
-description: "Hermes Atlas Intelligent UI — validated interactive canvases for Hermes Agent"
+version: "1.0.0"
+description: "Interactive canvases for Hermes Agent: answers become charts, tables, forms, maps, boards and 70+ other validated UI blocks, inline in Hermes Desktop, in the dashboard, and as text or files everywhere else."
 author: sesantanajr
+license: MIT
+homepage: https://github.com/sesantanajr/hermes-atlas-intelligent-ui
+manifest_version: 2
+api_version: 1
+kind: standalone
+requires_hermes: ">=0.21.0"
+tags:
+  - ui
+  - canvas
+  - generative-ui
+  - charts
+  - forms
+  - dashboard
+  - desktop
 provides_tools:
-  - atlas_resources
   - atlas_components
   - atlas_render
-  - atlas_list
+  - atlas_update
   - atlas_get
-python_dependencies:
-  - "pydantic>=2.10,<3"
-  - "fastapi>=0.115,<1"
-  - "httpx>=0.28,<1"
-  - "uvicorn>=0.34,<1"
+  - atlas_list
+  - atlas_export
+  - atlas_resources
+provides_hooks:
+  - pre_llm_call
+config_schema:
+  reply_style:
+    type: str
+    choices: [auto, file, directive, text]
+    default: auto
+    label: "How canvases appear in replies"
+    description: "auto: the live canvas in Hermes Desktop and the Atlas chat, plain text in terminals and messaging apps. file: always attach the canvas as an interactive HTML page (MEDIA). directive: always ask for the ::atlas line. text: never show it inline."
+  context_hints:
+    type: bool
+    default: true
+    label: "Tell the agent when I change a canvas"
+    description: "When you tick, edit or save a canvas the agent created, its next turn in that conversation is told once."
+  resources_tool:
+    type: bool
+    default: true
+    label: "Host metrics tool"
+    description: "Offer atlas_resources (disk, memory, swap and load of the machine running Hermes) to the agent."
+  locale:
+    type: str
+    choices: [auto, pt-BR, en]
+    default: auto
+    label: "Language of /atlas and hermes atlas"
+    description: "auto follows Hermes's display language, then the system locale."

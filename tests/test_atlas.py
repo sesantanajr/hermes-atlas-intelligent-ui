@@ -5,8 +5,8 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
-from atlas.models import Canvas
-from atlas.store import Store
+from hermes_atlas.schema.canvas import Canvas
+from hermes_atlas.storage.store import Store
 
 
 def payload():
@@ -16,7 +16,7 @@ def payload():
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     monkeypatch.setenv("ATLAS_DATA_DIR", str(tmp_path))
-    from atlas.server import app
+    from hermes_atlas.server.app import app
     with TestClient(app, base_url="http://localhost") as client:
         yield client
 
@@ -75,32 +75,64 @@ def test_local_origin_guard(client):
     assert client.get('/api/plugins/hermes-atlas/status', headers={"Host": "evil.example"}).status_code == 400
 
 
-def test_plugin_registers_and_renders(tmp_path, monkeypatch):
-    monkeypatch.setenv("ATLAS_DATA_DIR", str(tmp_path))
-    root = Path(__file__).resolve().parents[1]
-    spec = importlib.util.spec_from_file_location("atlas_plugin_test", root / "__init__.py", submodule_search_locations=[str(root)])
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    class Context:
-        def __init__(self): self.tools = {}
-        def register_tool(self, **kwargs): self.tools[kwargs["name"]] = kwargs
-    ctx = Context()
-    module.register(ctx)
-    assert set(ctx.tools) == {"atlas_render", "atlas_list", "atlas_get", "atlas_components", "atlas_resources"}
-    resources = json.loads(ctx.tools["atlas_resources"]["handler"]({}))
+def test_plugin_registers_and_renders():
+    from hermes_host import registered
+
+    ctx, _ = registered()
+    assert set(ctx.tools) == {"atlas_render", "atlas_update", "atlas_list", "atlas_get", "atlas_components",
+                              "atlas_export", "atlas_resources"}
+    resources = ctx.call("atlas_resources")
     assert 'observed_at' in resources and 'disk' in resources
-    result = json.loads(ctx.tools["atlas_render"]["handler"]({"canvas": payload()}))
+    result = ctx.call("atlas_render", {"canvas": payload()})
     assert result["success"] and result["revision"] == 1
-    assert not json.loads(ctx.tools["atlas_render"]["handler"]({}))["success"]
+    assert not ctx.call("atlas_render", {})["success"]
 
 
-def test_dashboard_router_loads():
+def load_dashboard_api(name):
+    """Import ``dashboard/plugin_api.py`` the way Hermes does (``plugin_isolation.import_user_code``):
+    by path, as a top-level module with no package, registered in ``sys.modules`` while it runs."""
     path = Path(__file__).resolve().parents[1] / "dashboard/plugin_api.py"
-    spec = importlib.util.spec_from_file_location("atlas_dashboard_test", path)
+    spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    assert any(route.path == "/chat" for route in module.router.routes)
+    sys.modules[name] = module
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.modules.pop(name, None)
+    return module
+
+
+def test_dashboard_router_loads_as_hermes_imports_it():
+    module = load_dashboard_api("hermes_dashboard_plugin_hermes-atlas")
+    paths = {route.path for route in module.router.routes}
+    assert {"/status", "/canvases", "/canvases/{id}/draft", "/canvases/{id}/export", "/runs", "/clients/{kind}"} <= paths
+    # In this process the package is already imported, so the dashboard reuses that copy.
+    assert module._loaded_package() == "hermes_atlas"
+
+
+def test_dashboard_router_loads_in_a_process_that_never_imported_atlas():
+    """The plugin host and a dashboard without the agent half start from nothing: run it in a fresh
+    interpreter where neither the package nor the repository is importable by name."""
+    import subprocess
+    root = Path(__file__).resolve().parents[1]
+    code = (
+        "import importlib.util, sys\n"
+        f"path = {str(root / 'dashboard' / 'plugin_api.py')!r}\n"
+        "assert not any(p and __import__('pathlib').Path(p).resolve() == __import__('pathlib').Path(path).parents[1] for p in sys.path)\n"
+        "name = 'hermes_dashboard_plugin_hermes-atlas'\n"
+        "spec = importlib.util.spec_from_file_location(name, path)\n"
+        "module = importlib.util.module_from_spec(spec); sys.modules[name] = module; spec.loader.exec_module(module)\n"
+        "private = [n for n in sys.modules if n.startswith('_hermes_atlas_') and '.' not in n]\n"
+        "assert len(private) == 1 and 'hermes_atlas' not in sys.modules, private\n"
+        "from fastapi import FastAPI\n"
+        "from fastapi.testclient import TestClient\n"
+        "app = FastAPI(); app.include_router(module.router, prefix='/api/plugins/hermes-atlas')\n"
+        "client = TestClient(app)\n"
+        "print(client.get('/api/plugins/hermes-atlas/components').status_code, len(module.router.routes))\n")
+    done = subprocess.run([sys.executable, "-I", "-c", code], capture_output=True, text=True, cwd=root.parent, timeout=120)
+    assert done.returncode == 0, done.stderr[-2000:]
+    status, routes = done.stdout.split()
+    assert status == "200" and int(routes) >= 20
 
 
 def test_remote_http_rejected(client, monkeypatch):

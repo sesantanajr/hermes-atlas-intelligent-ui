@@ -1,8 +1,8 @@
 import pytest
 from pydantic import ValidationError
 
-from atlas.models import Canvas
-from atlas.study import Flashcards
+from hermes_atlas.schema.canvas import Canvas
+from hermes_atlas.schema.study import Flashcards
 
 
 def item(id):

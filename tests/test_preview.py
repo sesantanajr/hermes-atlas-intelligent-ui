@@ -1,6 +1,6 @@
 import json
 
-from atlas.preview import decorate_live
+from hermes_atlas.server.preview import decorate_live
 
 
 def test_complete_blocks_appear_before_the_next_one_finishes():

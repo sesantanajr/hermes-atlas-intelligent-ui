@@ -1,71 +1,73 @@
-"""Install a built wheel outside the checkout and smoke-test its complete payload."""
+"""Install the optional standalone wheel in a fresh virtual environment, outside the checkout,
+and check that it carries a working app: the command, the interface, the API and the export.
+
+    python scripts/build_wheel.py && python scripts/verify-wheel.py work/wheels
+"""
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
-import tomllib
 import venv
 from pathlib import Path
 
-version = tomllib.loads((Path(__file__).resolve().parents[1] / 'pyproject.toml').read_text(encoding='utf-8'))['project']['version']
-wheel = Path(sys.argv[1]).resolve()
-if wheel.is_dir():
-    wheel = wheel / f'hermes_atlas_intelligent_ui-{version}-py3-none-any.whl'
-assert wheel.name == f'hermes_atlas_intelligent_ui-{version}-py3-none-any.whl' and wheel.is_file(), wheel
-with tempfile.TemporaryDirectory(prefix='atlas-wheel-') as directory:
-    root = Path(directory)
-    venv.create(root/'env', with_pip=True)
-    python = root/'env'/('Scripts/python.exe' if sys.platform == 'win32' else 'bin/python')
-    subprocess.run([str(python), '-m', 'pip', 'install', str(wheel)], check=True, cwd=root)
-    subprocess.run([str(python), '-I', '-m', 'atlas.cli', 'install-plugin', '--home', str(root/'home')], check=True, cwd=root)
-    plugin = root/'home/plugins/hermes-atlas'
-    for name in ['plugin.yaml', '__init__.py', 'atlas/api.py', 'atlas/preview.py', 'atlas/workspace_identity.py',
-                 'atlas/block_base.py', 'atlas/explore.py', 'atlas/series.py', 'atlas/spatial.py', 'atlas/study.py',
-                 'atlas/analytics.py', 'atlas/catalog.py', 'atlas/catalog.json', 'atlas/controls.py',
-                 'atlas/editorial.py', 'atlas/experience.py', 'atlas/activity.py', 'atlas/resources.py',
-                 'desktop/plugin.js', 'dashboard/plugin_api.py', 'dashboard/dist/index.js']:
-        assert (plugin/name).is_file(), name
-    code = r'''
+ROOT = Path(__file__).resolve().parents[1]
+VERSION = re.search(r'__version__ = "([^"]+)"', (ROOT / "hermes_atlas" / "__init__.py").read_text(encoding="utf-8"))[1]
+NAME = f"hermes_atlas_intelligent_ui-{VERSION}-py3-none-any.whl"
+
+SMOKE = r'''
+import json, sys
 from pathlib import Path
-import atlas
+import hermes_atlas
 from fastapi.testclient import TestClient
-from atlas.server import app
-assert Path(atlas.__file__).is_relative_to(Path.cwd()/'env'), atlas.__file__
-with TestClient(app, base_url='http://127.0.0.1') as client:
-    response = client.get('/')
-    assert response.status_code == 200 and '<html' in response.text
-    import re
-    from atlas.models import Canvas
-    from atlas.resources import snapshot
-    from atlas.activity import summarize
-    assert snapshot()['observed_at']
-    receipt = summarize([{'type': 'tool.completed', 'tool': 'terminal', 'exit_code': 124}], terminal=True)
-    assert receipt['steps'][0]['reason'] == 'timeout'
-    base = '/api/plugins/hermes-atlas/components'
-    entries = client.get(base).json()
-    assert len({entry['type'] for entry in entries}) == 73
-    assert len({entry['category'] for entry in entries}) == 8
+from hermes_atlas.schema.canvas import Canvas
+from hermes_atlas.server.app import app
+
+assert Path(hermes_atlas.__file__).is_relative_to(Path(sys.prefix)), hermes_atlas.__file__
+base = "/api/plugins/hermes-atlas"
+with TestClient(app, base_url="http://127.0.0.1") as client:
+    page = client.get("/")
+    assert page.status_code == 200 and "<html" in page.text, page.status_code
+    assets = [name for name in __import__("re").findall(r'(?:src|href)="(/assets/[^"]+)"', page.text)]
+    assert assets and all(client.get(name).status_code == 200 for name in assets), assets
+    entries = client.get(base + "/components").json()
+    assert len({entry["type"] for entry in entries}) == 73
     for entry in entries:
-        details = client.get(base + '/' + entry['type'])
-        assert details.status_code == 200, entry['type']
-        example = details.json()['example']
-        canvas = Canvas.model_validate({'id': 'sample', 'title': entry['label'], 'blocks': [example]})
-        assert canvas.blocks[0].type == entry['type']
-    asset = re.search(r'src="([^"]+\.js)"', response.text)[1]
-    assert client.get(asset).status_code == 200
-    from atlas.server import dist
-    for pattern in ['cinema-*.webp', 'camera-*.webp']:
-        asset, = (dist / 'assets').glob(pattern)
-        image = client.get('/assets/' + asset.name)
-        assert image.status_code == 200 and image.content[:4] == b'RIFF'
-    for pattern, content_type in [('focus-*.mp4', 'video/mp4'), ('tone-*.mp3', 'audio/mpeg')]:
-        asset, = (dist / 'assets').glob(pattern)
-        media = client.get('/assets/' + asset.name)
-        assert media.status_code == 200 and media.headers['content-type'].split(';')[0] == content_type
-        assert len(media.content) == asset.stat().st_size > 0
+        example = client.get(base + "/components/" + entry["type"]).json()["example"]
+        Canvas.model_validate({"id": "sample", "title": entry["label"], "blocks": [example]})
+    saved = client.post(base + "/canvases", json={"id": "wheel-check", "title": "Wheel check",
+                        "blocks": [{"type": "text", "id": "t", "title": "Text", "text": "Hello"}]}).json()
+    exported = client.get(base + "/canvases/wheel-check/export?format=html").json()
+    assert exported["content"].startswith("<!doctype html>") and "Wheel check" in exported["content"]
+    assert client.get(base + "/status").json()["exports"]["html"] is True
+print(json.dumps({"assets": len(assets), "blocks": len(entries), "export": True}))
 '''
-    subprocess.run([str(python), '-I', '-c', code], check=True, cwd=root,
-                   env={**os.environ, 'ATLAS_DATA_DIR': str(root/'data')})
-    print(json.dumps({'wheel': wheel.name, 'isolated_install': True, 'ui_assets': True,
-                      'plugin_payload': True, 'catalog_types': 73}))
+
+
+def main():
+    wheel = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else ROOT / "work" / "wheels"
+    if wheel.is_dir():
+        wheel = wheel / NAME
+    if wheel.name != NAME or not wheel.is_file():
+        sys.exit(f"expected {NAME}; build it with scripts/build_wheel.py")
+    with tempfile.TemporaryDirectory(prefix="atlas-wheel-") as directory:
+        root = Path(directory)
+        venv.create(root / "env", with_pip=True)
+        bin_dir = root / "env" / ("Scripts" if sys.platform == "win32" else "bin")
+        python = bin_dir / ("python.exe" if sys.platform == "win32" else "python")
+        env = {**os.environ, "HERMES_HOME": str(root / "home"), "ATLAS_DATA_DIR": str(root / "data")}
+        subprocess.run([str(python), "-m", "pip", "install", "--quiet", str(wheel), "httpx"], check=True, cwd=root)
+        command = bin_dir / ("hermes-atlas.exe" if sys.platform == "win32" else "hermes-atlas")
+        status = subprocess.run([str(command), "status"], check=True, cwd=root, env=env, capture_output=True, text=True)
+        assert "Atlas" in status.stdout, status.stdout
+        doctor = subprocess.run([str(command), "doctor", "--json"], cwd=root, env=env, capture_output=True, text=True)
+        report = json.loads(doctor.stdout)
+        smoke = subprocess.run([str(python), "-I", "-c", SMOKE], check=True, cwd=root, env=env,
+                               capture_output=True, text=True)
+        print(json.dumps({"wheel": wheel.name, "command": True, "doctor": report.get("ok"),
+                          **json.loads(smoke.stdout.strip().splitlines()[-1])}))
+
+
+if __name__ == "__main__":
+    main()

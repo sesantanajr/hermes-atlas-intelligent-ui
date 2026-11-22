@@ -1,7 +1,7 @@
 import io
 import shutil
 from types import SimpleNamespace
-from atlas import resources
+from hermes_atlas import resources
 
 
 def test_capacity_uses_os_counters(monkeypatch):
