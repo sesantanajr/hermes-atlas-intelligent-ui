@@ -1,0 +1,252 @@
+/*
+ * Base layer: typography, resets and the small set of controls shared by the workspace, the
+ * inline canvas and exported pages. Everything is scoped to `.atlas-app`, because inside Hermes
+ * the page belongs to the host and Atlas must not restyle it.
+ */
+
+.atlas-app {
+  color: var(--atlas-text);
+  font-family: var(--atlas-font);
+  font-size: 14px;
+  line-height: 1.55;
+  text-align: left;
+  -webkit-font-smoothing: antialiased;
+  overflow-wrap: anywhere;
+}
+.atlas-app *,
+.atlas-app *::before,
+.atlas-app *::after {
+  box-sizing: border-box;
+}
+.atlas-app :where(p, h1, h2, h3, h4, h5, figure, blockquote, dl, dd, fieldset) {
+  margin: 0;
+}
+.atlas-app :where(fieldset) {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+.atlas-app :where(ul, ol) {
+  margin: 0;
+  padding-left: 1.3em;
+}
+.atlas-app :where(h1, h2, h3, h4) {
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+.atlas-app :where(svg) {
+  flex-shrink: 0;
+}
+.atlas-app :where(a) {
+  color: var(--atlas-accent-text);
+  text-underline-offset: 2px;
+}
+.atlas-app :where(button, input, select, textarea) {
+  font: inherit;
+  color: inherit;
+}
+.atlas-app :where(button) {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+}
+.atlas-app :where(button:disabled, input:disabled, select:disabled, textarea:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.atlas-app :where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--atlas-focus);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.atlas-app :where(code, pre, kbd) {
+  font-family: var(--atlas-mono);
+  font-size: 0.92em;
+}
+.atlas-app [hidden] {
+  display: none !important;
+}
+
+/* Text fields. */
+.atlas-app :where(input[type="text"], input[type="search"], input[type="number"], input[type="date"], input:not([type]), select, textarea) {
+  background: var(--atlas-surface);
+  border: 1px solid var(--atlas-line-strong);
+  border-radius: var(--atlas-radius-sm);
+  padding: 8px 11px;
+  min-height: 38px;
+  max-width: 100%;
+}
+.atlas-app :where(input, textarea)::placeholder {
+  color: var(--atlas-faint);
+  opacity: 1;
+}
+.atlas-app :where(input[type="checkbox"], input[type="radio"], input[type="range"]) {
+  accent-color: var(--atlas-accent);
+}
+
+/* Buttons. `.btn` is the neutral button; modifiers change its weight. */
+.atlas-app .btn,
+.atlas-app .primary,
+.atlas-app .inline-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 14px;
+  border: 1px solid var(--atlas-line-strong);
+  border-radius: var(--atlas-radius-sm);
+  background: var(--atlas-surface);
+  color: var(--atlas-text);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.12s, border-color 0.12s;
+}
+.atlas-app :where(.btn, .inline-action):hover:not(:disabled) {
+  background: var(--atlas-surface-2);
+}
+.atlas-app .primary,
+.atlas-app .btn.primary {
+  background: var(--atlas-accent);
+  border-color: var(--atlas-accent);
+  color: var(--atlas-on-accent);
+}
+.atlas-app .primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.atlas-app .btn.ghost {
+  border-color: transparent;
+  background: none;
+  color: var(--atlas-muted);
+}
+.atlas-app .btn.ghost:hover:not(:disabled) {
+  background: var(--atlas-surface-2);
+  color: var(--atlas-text);
+}
+.atlas-app .btn.danger {
+  color: var(--atlas-danger);
+}
+.atlas-app .btn.small {
+  min-height: 30px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+.atlas-app .icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--atlas-muted);
+}
+.atlas-app .icon-button:hover:not(:disabled) {
+  background: var(--atlas-surface-2);
+  color: var(--atlas-text);
+}
+
+/* Small pieces. */
+.atlas-app .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border: 1px solid var(--atlas-line);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--atlas-muted);
+  background: var(--atlas-surface);
+  white-space: nowrap;
+}
+.atlas-app .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--atlas-faint);
+}
+.atlas-app .muted {
+  color: var(--atlas-muted);
+}
+.atlas-app .sr-only,
+.atlas-app .hidden-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Messages to the person: something happened, something went wrong. */
+.atlas-app .alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 20px 0;
+  padding: 10px 14px;
+  border: 1px solid var(--atlas-line);
+  border-left: 3px solid var(--atlas-info);
+  border-radius: var(--atlas-radius-sm);
+  background: var(--atlas-info-soft);
+  font-size: 13.5px;
+}
+.atlas-app .alert.error {
+  border-left-color: var(--atlas-danger);
+  background: var(--atlas-danger-soft);
+}
+.atlas-app .alert > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+.atlas-app .alert > button {
+  flex-shrink: 0;
+  color: var(--atlas-muted);
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.atlas-app .alert > button:hover {
+  background: color-mix(in srgb, var(--atlas-text) 8%, transparent);
+  color: var(--atlas-text);
+}
+
+.atlas-app .empty {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 44px 20px;
+  text-align: center;
+  color: var(--atlas-muted);
+  border: 1px dashed var(--atlas-line-strong);
+  border-radius: var(--atlas-radius);
+}
+.atlas-app .empty h2 {
+  font-size: 16px;
+  color: var(--atlas-text);
+}
+
+/* Shared by every surface: the shell, an inline canvas in a Desktop conversation, the exported page. */
+@keyframes atlas-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.atlas-app .atlas-spin {
+  animation: atlas-rotate 0.9s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atlas-app *,
+  .atlas-app *::before,
+  .atlas-app *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,377 @@
+/*
+ * The canvas: its grid, the card around every block, and the blocks drawn by Canvas.tsx itself
+ * (text, metric, bar chart, checklist, comparison, table, calculator, sources). Families of
+ * blocks with their own renderer keep their styles next to it (analytics.css, controls.css, ...).
+ */
+
+.atlas-app .canvas-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  container-type: inline-size;
+}
+.atlas-app .atlas-block {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface);
+  overflow: hidden;
+}
+.atlas-app .atlas-block > h3 {
+  margin-bottom: 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Metric: half width, so two sit side by side. */
+.atlas-app .atlas-block.metric {
+  grid-column: auto;
+}
+.atlas-app .metric > p {
+  font-size: 13px;
+  color: var(--atlas-muted);
+}
+.atlas-app .metric > strong {
+  display: block;
+  margin: 8px 0 4px;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.atlas-app .metric > span {
+  font-size: 13px;
+  color: var(--atlas-muted);
+}
+@container (max-width: 420px) {
+  .atlas-app .atlas-block.metric {
+    grid-column: 1 / -1;
+  }
+}
+
+.atlas-app .prose {
+  white-space: pre-wrap;
+  line-height: 1.7;
+  color: var(--atlas-text);
+}
+
+/* Bar chart with a zero line, so negative values grow to the left. */
+.atlas-app .bars {
+  display: grid;
+  gap: 12px;
+}
+.atlas-app .bar-row {
+  display: grid;
+  grid-template-columns: minmax(70px, 0.9fr) minmax(0, 2.4fr) minmax(56px, auto);
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--atlas-muted);
+}
+.atlas-app .bar-track {
+  position: relative;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--atlas-surface-3);
+}
+.atlas-app .bar-track > div {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  background: var(--atlas-series-0);
+}
+.atlas-app .bar-track > div.negative {
+  background: var(--atlas-danger);
+}
+.atlas-app .bar-track .zero-line {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 1px;
+  background: var(--atlas-muted);
+  z-index: 1;
+}
+.atlas-app .bar-row b {
+  font-weight: 600;
+  text-align: right;
+  color: var(--atlas-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.atlas-app .checks {
+  display: grid;
+  gap: 10px;
+}
+.atlas-app .checks label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+.atlas-app .checks input {
+  width: 17px;
+  height: 17px;
+  margin: 2px 0 0;
+  flex-shrink: 0;
+}
+.atlas-app .checks .done span {
+  text-decoration: line-through;
+  color: var(--atlas-faint);
+}
+.atlas-app .checks small {
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: var(--atlas-muted);
+}
+
+.atlas-app .comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+.atlas-app .comparison-grid button {
+  padding: 16px;
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius-sm);
+  background: var(--atlas-surface-2);
+  text-align: left;
+  transition: border-color 0.12s, background-color 0.12s;
+}
+.atlas-app .comparison-grid button:hover {
+  border-color: var(--atlas-line-strong);
+}
+.atlas-app .comparison-grid button.selected {
+  border-color: var(--atlas-accent);
+  background: var(--atlas-accent-soft);
+}
+.atlas-app .comparison-grid strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+.atlas-app .comparison-grid p {
+  margin: 6px 0 12px;
+  font-size: 13px;
+  color: var(--atlas-muted);
+}
+.atlas-app .comparison-grid span {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 6px 0;
+  font-size: 13px;
+}
+.atlas-app .comparison-grid span svg {
+  margin-top: 3px;
+  color: var(--atlas-positive);
+}
+
+.atlas-app .table-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 0 10px;
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius-sm);
+  background: var(--atlas-surface-2);
+  color: var(--atlas-faint);
+}
+.atlas-app .table-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  outline: none;
+  padding-left: 0;
+}
+.atlas-app .table-search:focus-within {
+  border-color: var(--atlas-focus);
+}
+.atlas-app .table-scroll {
+  overflow: auto;
+  max-height: 520px;
+}
+.atlas-app .atlas-block table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  text-align: left;
+}
+.atlas-app .atlas-block th {
+  position: sticky;
+  top: 0;
+  background: var(--atlas-surface);
+  font-weight: 600;
+  color: var(--atlas-muted);
+  white-space: nowrap;
+}
+.atlas-app .atlas-block th button {
+  font-weight: inherit;
+  text-align: left;
+}
+.atlas-app .atlas-block th button:hover {
+  color: var(--atlas-text);
+}
+.atlas-app .atlas-block td,
+.atlas-app .atlas-block th {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--atlas-line);
+  min-width: 80px;
+  vertical-align: top;
+}
+.atlas-app .atlas-block tbody tr:hover td {
+  background: var(--atlas-surface-2);
+}
+
+.atlas-app .calculator-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: center;
+}
+@container (max-width: 520px) {
+  .atlas-app .calculator-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.atlas-app .slider {
+  display: block;
+  margin-bottom: 16px;
+}
+.atlas-app .slider > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13.5px;
+  color: var(--atlas-muted);
+}
+.atlas-app .slider b {
+  font-weight: 600;
+  color: var(--atlas-text);
+  font-variant-numeric: tabular-nums;
+}
+.atlas-app .slider input {
+  width: 100%;
+  margin: 8px 0 2px;
+}
+.atlas-app .slider small {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--atlas-faint);
+}
+.atlas-app .calc-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 22px 16px;
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-accent-soft);
+  color: var(--atlas-accent-text);
+  text-align: center;
+}
+.atlas-app .calc-result > span {
+  font-size: 13px;
+}
+.atlas-app .calc-result strong {
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--atlas-text);
+  font-variant-numeric: tabular-nums;
+}
+.atlas-app .calc-result small {
+  font-size: 12px;
+  color: var(--atlas-muted);
+}
+
+.atlas-app .canvas-sources {
+  display: grid;
+  gap: 6px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--atlas-line);
+  font-size: 13px;
+}
+.atlas-app .canvas-sources h3 {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--atlas-faint);
+}
+
+/*
+ * A canvas shown outside the workspace: inside a Hermes Desktop conversation, or as an exported
+ * page. It brings its own heading and toolbar.
+ */
+.atlas-app.atlas-inline {
+  display: block;
+  margin: 10px 0;
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface-2);
+  overflow: hidden;
+}
+.atlas-app .inline-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 10px 16px;
+  border-bottom: 1px solid var(--atlas-line);
+}
+.atlas-app .inline-head .inline-title {
+  flex: 1;
+  min-width: 0;
+}
+.atlas-app .inline-head h2 {
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.atlas-app .inline-head p {
+  font-size: 12.5px;
+  color: var(--atlas-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.atlas-app .inline-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.atlas-app .inline-body {
+  padding: 14px;
+  max-height: min(78vh, 880px);
+  overflow: auto;
+}
+.atlas-app .inline-body > .inline-description {
+  margin: 0 2px 12px;
+  color: var(--atlas-muted);
+}
+.atlas-app .inline-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  color: var(--atlas-muted);
+  font-size: 13.5px;
+}
+.atlas-app .inline-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 14px;
+  border-top: 1px solid var(--atlas-line);
+  font-size: 12.5px;
+  color: var(--atlas-muted);
+}

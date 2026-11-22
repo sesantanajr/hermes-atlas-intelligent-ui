@@ -1,0 +1,212 @@
+.atlas-app .atlas-block:has(.ana-view) {
+  min-width: 0;
+}
+.atlas-app .ana-view {
+  --ana-0: var(--atlas-series-0);
+  --ana-1: var(--atlas-series-1);
+  --ana-2: var(--atlas-series-2);
+  --ana-3: var(--atlas-series-3);
+  --ana-4: var(--atlas-series-4);
+  --ana-5: var(--atlas-series-5);
+  display: grid;
+  gap: 0.8rem;
+  min-width: 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.atlas-app .ana-tools,
+.atlas-app .ana-tools label,
+.atlas-app .ana-discuss,
+.atlas-app .ana-line-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.atlas-app .ana-tools {
+  justify-content: space-between;
+}
+.atlas-app .ana-tools :is(select, button),
+.atlas-app .ana-discuss {
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  font: inherit;
+  min-height: 2.2rem;
+  max-width: 100%;
+  padding: 0.3rem 0.7rem;
+}
+.atlas-app .ana-tools label {
+  min-width: 0;
+  max-width: 100%;
+}
+.atlas-app .ana-discuss {
+  justify-self: start;
+  cursor: pointer;
+}
+.atlas-app .ana-tools button {
+  cursor: pointer;
+}
+.atlas-app .ana-view :is(button, select):focus-visible {
+  outline: 2px solid var(--ana-0);
+  outline-offset: 2px;
+}
+.atlas-app .ana-view small {
+  color: var(--muted);
+}
+.atlas-app .ana-plot {
+  width: 100%;
+  max-height: 15rem;
+  display: block;
+  overflow: hidden;
+}
+.atlas-app .ana-plot text {
+  fill: currentColor;
+  font: 12px var(--atlas-font);
+}
+.atlas-app .ana-plot .ana-dial-number {
+  font-weight: 700;
+  font-size: 16px;
+}
+.atlas-app .ana-plot .ana-tile-number {
+  font-weight: 700;
+  fill: var(--text);
+  stroke: var(--surface);
+  paint-order: stroke;
+  stroke-width: 3px;
+}
+.atlas-app .ana-grid {
+  stroke: var(--line);
+  fill: none;
+}
+.atlas-app .ana-axis {
+  stroke: var(--muted);
+  fill: none;
+}
+.atlas-app .ana-dial-track {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 12;
+}
+.atlas-app .ana-key,
+.atlas-app .ana-funnel,
+.atlas-app .ana-ranks {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+.atlas-app .ana-key,
+.atlas-app .ana-funnel {
+  list-style: none;
+}
+.atlas-app .ana-key li {
+  display: grid;
+  grid-template-columns: 0.65rem minmax(3rem, 1fr) auto auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+.atlas-app .ana-dot {
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+}
+.atlas-app .ana-ranks {
+  padding-inline-start: 1.65rem;
+}
+.atlas-app .ana-ranks li::marker {
+  color: var(--muted);
+}
+.atlas-app .ana-line-label {
+  justify-content: space-between;
+  row-gap: 0.1rem;
+}
+.atlas-app .ana-strip,
+.atlas-app .ana-funnel-stage {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 0.65rem;
+  margin-top: 0.25rem;
+  background: var(--line);
+  border-radius: 0.22rem;
+  overflow: hidden;
+}
+.atlas-app .ana-strip i {
+  position: absolute;
+  inset-block: 0;
+}
+.atlas-app .ana-strip b {
+  position: absolute;
+  inset-block: 0;
+  border-left: 1px solid var(--text);
+}
+.atlas-app .ana-funnel-stage {
+  height: 1rem;
+  background: transparent;
+}
+.atlas-app .ana-funnel-stage i {
+  display: block;
+  height: 100%;
+  margin-inline: auto;
+}
+.atlas-app .ana-big {
+  display: block;
+  font-size: clamp(1.35rem, 4vw, 2.25rem);
+  line-height: 1.25;
+}
+.atlas-app .ana-progress {
+  display: grid;
+  gap: 0.75rem;
+}
+.atlas-app .ana-progress progress {
+  width: 100%;
+  height: 1rem;
+  accent-color: var(--ana-0);
+}
+.atlas-app .ana-table-wrap {
+  overflow-x: auto;
+  min-width: 0;
+  max-width: 100%;
+}
+.atlas-app .ana-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.atlas-app .ana-table-wrap :is(td, th) {
+  text-align: start;
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+}
+.atlas-app .ana-heat td {
+  white-space: nowrap;
+}
+.atlas-app .ana-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr));
+  gap: 0.55rem;
+  margin: 0;
+}
+.atlas-app .ana-metrics > div {
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  padding: 0.6rem;
+}
+.atlas-app .ana-metrics dt {
+  color: var(--muted);
+}
+.atlas-app .ana-metrics dd {
+  margin: 0.35rem 0 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.atlas-app .ana-view :is(p, h4) {
+  margin: 0;
+}
+.atlas-app .ana-selection {
+  padding-inline-start: 0.6rem;
+  border-inline-start: 2px solid var(--ana-0);
+}

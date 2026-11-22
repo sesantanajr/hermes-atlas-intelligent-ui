@@ -1,0 +1,276 @@
+.atlas-app .atlas-block.collection {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.atlas-app .collection-view {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.atlas-app .collection-tools,
+.atlas-app .collection-footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+.atlas-app .collection-tools label,
+.atlas-app .collection-footer button,
+.atlas-app .collection-tools button,
+.atlas-app .collection-pick,
+.atlas-app .collection-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.atlas-app .collection-tools select,
+.atlas-app .collection-tools button,
+.atlas-app .collection-footer button {
+  padding: 0.45rem 0.65rem;
+  min-height: 2.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.atlas-app .collection-tools button[aria-pressed="true"] {
+  border-color: var(--green);
+}
+.atlas-app .collection-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.atlas-app .collection-pagination > div {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+.atlas-app .collection-pagination button {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+}
+.atlas-app .collection-footer {
+  justify-content: space-between;
+}
+.atlas-app .collection-footer > span,
+.atlas-app .collection-tools label {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.atlas-app .collection-footer button.primary {
+  background: var(--text);
+  color: var(--surface);
+}
+.atlas-app .collection-view button:disabled {
+  opacity: 0.52;
+  cursor: default;
+}
+.atlas-app .collection-view :focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+.atlas-app .collection-cards {
+  display: grid;
+  grid-auto-columns: minmax(min(13.25rem, 83%), min(16rem, 85%));
+  grid-auto-flow: column;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
+  gap: 0.7rem;
+  padding: 0.2rem 0.15rem 0.8rem;
+  min-width: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--green) var(--surface);
+}
+.atlas-app .collection-card {
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+.atlas-app .collection-card[data-selected="true"] {
+  border-color: var(--green);
+  box-shadow: inset 0 0 0 1px var(--green);
+}
+.atlas-app .collection-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.85rem;
+  flex: 1;
+}
+.atlas-app .collection-card h4 {
+  margin: 0;
+  font-size: 1.08rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.atlas-app .collection-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.87rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.atlas-app .collection-card dl {
+  display: grid;
+  gap: 0.4rem;
+  width: 100%;
+  margin: 0;
+  font-size: 0.8rem;
+}
+.atlas-app .collection-card dl > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.65rem;
+  border-bottom: 1px solid var(--line);
+}
+.atlas-app .collection-card dt {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.atlas-app .collection-card dd {
+  margin: 0;
+  text-align: end;
+  overflow-wrap: anywhere;
+}
+.atlas-app .collection-score {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8rem;
+}
+.atlas-app .collection-source {
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  overflow-wrap: anywhere;
+}
+.atlas-app .collection-pick {
+  margin-top: auto;
+  padding: 0.45rem 0;
+  min-height: 2.5rem;
+  cursor: pointer;
+}
+.atlas-app .collection-pick input {
+  accent-color: var(--green);
+  width: 1rem;
+  height: 1rem;
+}
+.atlas-app .collection-cover {
+  --cover-sky: var(--atlas-series-0);
+  --cover-accent: color-mix(in srgb, var(--atlas-surface) 70%, transparent);
+  aspect-ratio: 16/9;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  color: var(--atlas-surface);
+  background:
+    radial-gradient(
+      circle at 74% 14%,
+      var(--cover-accent) 0 3%,
+      transparent 3.5%
+    ),
+    repeating-radial-gradient(
+      ellipse at 12% 160%,
+      transparent 0 9px,
+      color-mix(in srgb, var(--atlas-surface) 14%, transparent) 10px,
+      transparent 11px
+    ),
+    linear-gradient(132deg, var(--cover-sky), var(--atlas-text));
+}
+.atlas-app .collection-card[data-tone="1"] .collection-cover {
+  --cover-sky: var(--atlas-series-1);
+}
+.atlas-app .collection-card[data-tone="2"] .collection-cover {
+  --cover-sky: var(--atlas-series-2);
+}
+.atlas-app .collection-card[data-tone="3"] .collection-cover {
+  --cover-sky: var(--atlas-series-3);
+}
+.atlas-app .collection-monogram {
+  font-family: var(--atlas-font);
+  font-size: 2.8rem;
+  font-style: italic;
+  letter-spacing: -0.06em;
+}
+.atlas-app .collection-cover[data-illustration] {
+  background-image: url("./cinema.webp");
+  background-size: 400% auto;
+  background-position: 0% 50%;
+  background-repeat: no-repeat;
+}
+.atlas-app .collection-cover[data-illustration="orbit"] {
+  background-position-x: 33.3333%;
+}
+.atlas-app .collection-cover[data-illustration="rain"] {
+  background-position-x: 66.6667%;
+}
+.atlas-app .collection-cover[data-illustration="dining"] {
+  background-position-x: 100%;
+}
+.atlas-app .collection-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  inset: 0;
+}
+.atlas-app .collection-image-trigger {
+  position: absolute;
+  inset: auto auto 0.4rem 0.4rem;
+  max-width: calc(100% - 0.8rem);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 0.4rem;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.72rem;
+  background: var(--atlas-accent);
+  color: var(--atlas-on-accent);
+}
+.atlas-app .collection-matrix {
+  min-width: 0;
+  overflow-x: auto;
+}
+.atlas-app .collection-matrix table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.85rem;
+}
+.atlas-app .collection-matrix caption {
+  text-align: start;
+  padding-block: 0.4rem;
+  font-weight: 600;
+}
+.atlas-app .collection-matrix :is(td, th) {
+  padding: 0.65rem;
+  min-width: 8rem;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+.atlas-app .collection-matrix th:first-child {
+  min-width: 6rem;
+}
+.atlas-app .collection-matrix th {
+  color: var(--text);
+}

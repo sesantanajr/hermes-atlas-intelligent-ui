@@ -1,11 +1,11 @@
-import type { SeriesBlock, SeriesState } from "./seriesTypes";
-import type { ExploreBlock, ExploreInteraction } from "./exploreTypes";
-import type { SpatialBlock } from "./spatial";
-import type { FlashcardsBlock, StudyInteraction } from "./study";
-import type { EditorialBlock } from "./editorial";
-import type { AnalyticsBlock } from "./analytics";
-import type { ControlBlock } from "./controls";
-import type { ExperienceBlock } from "./experienceBlocks";
+import type { SeriesBlock, SeriesState } from "./blocks/seriesTypes";
+import type { ExploreBlock, ExploreInteraction } from "./blocks/exploreTypes";
+import type { SpatialBlock } from "./blocks/spatial";
+import type { FlashcardsBlock, StudyInteraction } from "./blocks/study";
+import type { EditorialBlock } from "./blocks/editorial";
+import type { AnalyticsBlock } from "./blocks/analytics";
+import type { ControlBlock } from "./blocks/controls";
+import type { ExperienceBlock } from "./blocks/experienceBlocks";
 export type Input = {
   label: string;
   value: number;
@@ -173,14 +173,30 @@ export type Run = {
 export type Status = {
   connected: boolean;
   scope: string;
+  version?: string;
   model?: string;
   detail?: string;
   features: { [key: string]: unknown };
+  exports?: { html: boolean; markdown: boolean; json: boolean };
+  clients?: { desktop: boolean; dashboard: boolean; standalone: boolean };
 };
 export type Workspace = {
   chat_id: string | null;
   canvas: Canvas | null;
   revision: number;
   theme: "system" | "light" | "dark";
+  locale?: "auto" | "pt-BR" | "en";
+};
+export type Draft = {
+  id: string;
+  base_revision: number;
+  canvas: Canvas;
+  updated: string;
+  token: string;
+};
+export type ExportedFile = {
+  filename: string;
+  media_type: string;
+  content: string;
 };
 export type Transport = (path: string, init?: RequestInit) => Promise<unknown>;

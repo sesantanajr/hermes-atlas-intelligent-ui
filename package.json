@@ -1,12 +1,16 @@
 {
   "name": "hermes-atlas-intelligent-ui",
-  "version": "0.6.0",
+  "version": "1.0.0",
   "private": true,
+  "description": "Front end of Hermes Atlas: the canvas renderer and its hosts (Hermes dashboard, Hermes Desktop, standalone app, exported page)",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "tsc --noEmit && node scripts/build-catalog.mjs && vite build && node scripts/build-plugin.mjs && node scripts/package-assets.mjs",
-    "test": "vitest run"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "tsc --noEmit && node scripts/build-catalog.mjs && vite build && node scripts/build.mjs && node scripts/check-bundles.mjs",
+    "check": "node scripts/check-bundles.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

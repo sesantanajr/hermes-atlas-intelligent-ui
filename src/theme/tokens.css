@@ -1,0 +1,186 @@
+/*
+ * Design tokens. Every colour, radius, shadow and font in Atlas comes from this file.
+ *
+ * `.atlas-app` is the root of anything Atlas draws: the workspace, a canvas shown inline in a
+ * Hermes Desktop conversation, an exported page. Three attributes select the values:
+ *
+ *   data-theme="light" | "dark"       which palette (and which chart colours) to use
+ *   data-host="dashboard" | "desktop" adopt the host application's own theme variables
+ *
+ * Inside a host, surfaces, text, lines and the accent follow the host's variables, so Atlas
+ * reskins with every Hermes theme; `data-theme` is then derived from the host's background and
+ * only picks chart colours that contrast with it.
+ *
+ * Styles must use these tokens and never a literal colour.
+ */
+
+.atlas-app {
+  color-scheme: light;
+
+  /* Surfaces, from the page outwards. */
+  --atlas-bg: #f5f7f3;
+  --atlas-surface: #ffffff;
+  --atlas-surface-2: #eff3ec;
+  --atlas-surface-3: #e1e8dd;
+
+  /* Text and lines. */
+  --atlas-text: #1d2b24;
+  --atlas-muted: #57675d;
+  --atlas-faint: #84928a;
+  --atlas-line: #dde4d9;
+  --atlas-line-strong: #bcc8b7;
+
+  /* Accent: actions, selection, focus. */
+  --atlas-accent: #2c6a48;
+  --atlas-on-accent: #ffffff;
+  --atlas-accent-soft: #dcefd4;
+  --atlas-accent-text: #25593c;
+  --atlas-focus: #4f8a3c;
+
+  /* Meaning. `-soft` is a tinted background for the same meaning. */
+  --atlas-positive: #1c7c4e;
+  --atlas-positive-soft: #ddf2e5;
+  --atlas-warning: #94590a;
+  --atlas-warning-soft: #faedd3;
+  --atlas-danger: #ad332c;
+  --atlas-danger-soft: #fae2df;
+  --atlas-info: #2a5f9e;
+  --atlas-info-soft: #deeaf8;
+
+  /* Categorical chart colours, distinguishable in order and in greyscale. */
+  --atlas-series-0: #0a6c66;
+  --atlas-series-1: #8a5413;
+  --atlas-series-2: #6747a8;
+  --atlas-series-3: #a83557;
+  --atlas-series-4: #2d65a8;
+  --atlas-series-5: #546e1f;
+
+  /* Shape and type. */
+  --atlas-radius: 14px;
+  --atlas-radius-sm: 9px;
+  --atlas-shadow: 0 1px 2px rgb(22 40 30 / 5%), 0 10px 28px rgb(22 40 30 / 7%);
+  --atlas-shadow-sm: 0 1px 2px rgb(22 40 30 / 7%);
+  --atlas-overlay: rgb(16 26 20 / 42%);
+  --atlas-font: Inter, "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --atlas-mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+
+  /* Names used by block styles written before 1.0. */
+  --bg: var(--atlas-bg);
+  --surface: var(--atlas-surface);
+  --text: var(--atlas-text);
+  --muted: var(--atlas-muted);
+  --line: var(--atlas-line);
+  --green: var(--atlas-accent-text);
+  --lime: var(--atlas-accent-soft);
+}
+
+.atlas-app[data-theme="dark"] {
+  color-scheme: dark;
+
+  --atlas-bg: #141c17;
+  --atlas-surface: #1c2720;
+  --atlas-surface-2: #243228;
+  --atlas-surface-3: #2f4033;
+
+  --atlas-text: #e6eee1;
+  --atlas-muted: #b1c2ab;
+  --atlas-faint: #84957f;
+  --atlas-line: #354638;
+  --atlas-line-strong: #4b604d;
+
+  --atlas-accent: #b2d68a;
+  --atlas-on-accent: #15231a;
+  --atlas-accent-soft: #2f472d;
+  --atlas-accent-text: #b9dc93;
+  --atlas-focus: #c5e59f;
+
+  --atlas-positive: #7fd6a2;
+  --atlas-positive-soft: #1f3a2a;
+  --atlas-warning: #ecbb6c;
+  --atlas-warning-soft: #40311a;
+  --atlas-danger: #f19a92;
+  --atlas-danger-soft: #45221f;
+  --atlas-info: #9cc0f2;
+  --atlas-info-soft: #1e2f47;
+
+  --atlas-series-0: #6ccfc1;
+  --atlas-series-1: #eab273;
+  --atlas-series-2: #bca5ea;
+  --atlas-series-3: #f19cae;
+  --atlas-series-4: #9abff5;
+  --atlas-series-5: #c0d584;
+
+  --atlas-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 10px 28px rgb(0 0 0 / 28%);
+  --atlas-shadow-sm: 0 1px 2px rgb(0 0 0 / 34%);
+  --atlas-overlay: rgb(0 0 0 / 55%);
+}
+
+/*
+ * Hermes web dashboard. Its themes are palettes applied as CSS variables on <html>; the shadcn
+ * style `--color-*` names are what bundled plugins use. Each has a fallback built from the two
+ * base variables (`--background-base`, `--midground-base`) in case a release renames the others.
+ */
+.atlas-app[data-host="dashboard"] {
+  --atlas-bg: transparent;
+  --atlas-surface: var(--color-card, color-mix(in srgb, var(--midground-base, #ffe6cb) 4%, var(--background-base, #041c1c)));
+  --atlas-surface-2: var(--color-secondary, color-mix(in srgb, var(--midground-base, #ffe6cb) 7%, var(--background-base, #041c1c)));
+  --atlas-surface-3: var(--color-accent, color-mix(in srgb, var(--midground-base, #ffe6cb) 12%, var(--background-base, #041c1c)));
+  --atlas-text: var(--color-foreground, var(--midground-base, #ffe6cb));
+  --atlas-muted: var(--color-muted-foreground, color-mix(in srgb, var(--midground-base, #ffe6cb) 78%, transparent));
+  --atlas-faint: color-mix(in srgb, var(--atlas-text) 52%, transparent);
+  --atlas-line: var(--color-border, color-mix(in srgb, var(--midground-base, #ffe6cb) 15%, transparent));
+  --atlas-line-strong: color-mix(in srgb, var(--atlas-text) 30%, transparent);
+  --atlas-accent: var(--color-primary, var(--midground-base, #ffe6cb));
+  --atlas-on-accent: var(--color-primary-foreground, var(--background-base, #041c1c));
+  --atlas-accent-soft: color-mix(in srgb, var(--atlas-accent) 16%, transparent);
+  --atlas-accent-text: var(--atlas-accent);
+  --atlas-focus: var(--color-ring, var(--atlas-accent));
+  --atlas-positive: var(--color-success, #4ade80);
+  --atlas-positive-soft: color-mix(in srgb, var(--atlas-positive) 16%, transparent);
+  --atlas-warning: var(--color-warning, #ffbd38);
+  --atlas-warning-soft: color-mix(in srgb, var(--atlas-warning) 16%, transparent);
+  --atlas-danger: var(--color-destructive, #fb2c36);
+  --atlas-danger-soft: color-mix(in srgb, var(--atlas-danger) 16%, transparent);
+  --atlas-info-soft: color-mix(in srgb, var(--atlas-info) 18%, transparent);
+  --atlas-radius: calc(var(--theme-radius, 0.5rem) + 4px);
+  --atlas-radius-sm: var(--theme-radius, 0.5rem);
+  --atlas-shadow: none;
+  --atlas-shadow-sm: none;
+  --atlas-font: var(--theme-font-sans, system-ui, sans-serif);
+  --atlas-mono: var(--theme-font-mono, ui-monospace, monospace);
+}
+
+/*
+ * Hermes Desktop and Webapp. Plugins are asked to style with the `--ui-*` variables and to
+ * leave the background alone: panes already sit on the app's own surface.
+ */
+.atlas-app[data-host="desktop"] {
+  --atlas-bg: transparent;
+  --atlas-surface: var(--ui-bg-card, color-mix(in srgb, currentColor 4%, transparent));
+  --atlas-surface-2: var(--ui-bg-secondary, color-mix(in srgb, currentColor 6%, transparent));
+  --atlas-surface-3: var(--ui-bg-tertiary, color-mix(in srgb, currentColor 10%, transparent));
+  --atlas-text: var(--ui-text-primary, currentColor);
+  --atlas-muted: var(--ui-text-secondary, color-mix(in srgb, currentColor 74%, transparent));
+  --atlas-faint: var(--ui-text-tertiary, color-mix(in srgb, currentColor 54%, transparent));
+  --atlas-line: var(--ui-stroke-secondary, color-mix(in srgb, currentColor 14%, transparent));
+  --atlas-line-strong: var(--ui-stroke-primary, color-mix(in srgb, currentColor 26%, transparent));
+  --atlas-accent: var(--ui-accent, currentColor);
+  --atlas-on-accent: var(--ui-bg-editor, Canvas);
+  --atlas-accent-soft: color-mix(in srgb, var(--atlas-accent) 14%, transparent);
+  --atlas-accent-text: var(--atlas-accent);
+  --atlas-focus: var(--atlas-accent);
+  --atlas-positive: var(--ui-green, #1f8a65);
+  --atlas-positive-soft: color-mix(in srgb, var(--atlas-positive) 14%, transparent);
+  --atlas-warning: var(--ui-yellow, #c08532);
+  --atlas-warning-soft: color-mix(in srgb, var(--atlas-warning) 16%, transparent);
+  --atlas-danger: var(--ui-red, #cf2d56);
+  --atlas-danger-soft: color-mix(in srgb, var(--atlas-danger) 14%, transparent);
+  --atlas-info: var(--ui-blue, #0053fd);
+  --atlas-info-soft: color-mix(in srgb, var(--atlas-info) 14%, transparent);
+  --atlas-radius: var(--radius, 0.75rem);
+  --atlas-radius-sm: calc(var(--radius, 0.75rem) - 4px);
+  --atlas-shadow: none;
+  --atlas-shadow-sm: none;
+  --atlas-font: var(--font-sans, system-ui, sans-serif);
+  --atlas-mono: var(--font-mono, ui-monospace, monospace);
+}

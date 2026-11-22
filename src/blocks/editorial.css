@@ -1,0 +1,290 @@
+.atlas-app
+  .atlas-block:is(
+    .article,
+    .code,
+    .markdown,
+    .columns,
+    .cards,
+    .steps_list,
+    .document,
+    .heading
+  ) {
+  grid-column: 1 / -1;
+}
+.atlas-app
+  :is(
+    .ae-article,
+    .ae-columns,
+    .ae-cards,
+    .ae-carousel,
+    .ae-glossary,
+    .ae-code,
+    .ae-document,
+    .ae-entity,
+    .ae-steps,
+    .ae-accordion,
+    .ae-markdown,
+    .ae-callout
+  ) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.atlas-app
+  :is(
+    .ae-heading,
+    .ae-quote,
+    .ae-equation,
+    .ae-badges,
+    .ae-facts,
+    .ae-glossary dl
+  ) {
+  margin: 0;
+}
+.atlas-app .ae-heading :is(h2, h3, h4, h5) {
+  margin: 0;
+  color: var(--text);
+  letter-spacing: -0.025em;
+}
+.atlas-app .ae-heading h2 {
+  font-size: clamp(1.45rem, 3vw, 2.05rem);
+}
+.atlas-app .ae-heading p,
+.atlas-app .ae-quote figcaption,
+.atlas-app .ae-equation figcaption,
+.atlas-app .ae-byline,
+.atlas-app .ae-bibliography small {
+  color: var(--muted);
+}
+.atlas-app :is(.ae-callout, .ae-quote) {
+  border-inline-start: 3px solid var(--ae-tone, var(--green));
+  padding: 0.45rem 0.95rem;
+}
+.atlas-app [data-tone="info"] {
+  --ae-tone: var(--atlas-info);
+}
+.atlas-app [data-tone="success"] {
+  --ae-tone: var(--green);
+}
+.atlas-app [data-tone="warning"] {
+  --ae-tone: var(--atlas-warning);
+}
+.atlas-app [data-tone="neutral"] {
+  --ae-tone: var(--muted);
+}
+.atlas-app
+  :is(
+    .ae-callout,
+    .ae-heading,
+    .ae-entity,
+    .ae-article,
+    .ae-carousel,
+    .ae-columns,
+    .ae-cards,
+    .ae-steps,
+    .ae-accordion
+  )
+  p {
+  margin: 0.4rem 0;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+.atlas-app .ae-quote blockquote {
+  margin: 0 0 0.5rem;
+  font: italic 1.1rem/1.55 var(--atlas-font);
+  white-space: pre-line;
+}
+.atlas-app :is(.ae-glossary, .ae-document) label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+.atlas-app :is(.ae-glossary input, .ae-document textarea) {
+  width: 100%;
+  box-sizing: border-box;
+}
+.atlas-app .ae-glossary dl > div,
+.atlas-app .ae-facts > div {
+  border-bottom: 1px solid var(--line);
+  padding: 0.65rem 0;
+}
+.atlas-app .ae-glossary dt,
+.atlas-app .ae-facts dt {
+  font-weight: 600;
+}
+.atlas-app .ae-glossary dd,
+.atlas-app .ae-facts dd {
+  margin: 0.2rem 0 0;
+}
+.atlas-app .ae-facts > div {
+  display: grid;
+  grid-template-columns: minmax(5rem, 2fr) minmax(0, 3fr);
+  gap: 0.65rem;
+  align-items: baseline;
+  overflow-wrap: anywhere;
+}
+.atlas-app .ae-facts dd {
+  margin: 0;
+}
+.atlas-app .ae-toolbar,
+.atlas-app .ae-article nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+}
+.atlas-app .ae-toolbar select {
+  min-width: 0;
+  max-width: 100%;
+}
+.atlas-app .ae-code pre,
+.atlas-app .ae-markdown pre {
+  overflow-x: auto;
+  max-width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  tab-size: 4;
+}
+.atlas-app .ae-code code {
+  white-space: pre;
+}
+.atlas-app .ae-line-number {
+  display: inline-block;
+  min-width: 2.75em;
+  user-select: none;
+  color: var(--muted);
+  text-align: right;
+  margin-right: 1em;
+}
+.atlas-app .ae-markdown {
+  overflow-x: auto;
+}
+.atlas-app .ae-markdown :is(ol, ul) {
+  padding-inline-start: 1.5rem;
+}
+.atlas-app .ae-equation {
+  overflow-x: auto;
+}
+.atlas-app .ae-equation math {
+  padding: 1rem 0.25rem;
+  font-size: 1.5rem;
+}
+.atlas-app .ae-equation figcaption {
+  margin: 0.3rem 0;
+  overflow-wrap: anywhere;
+}
+.atlas-app .ae-badges {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 0;
+}
+.atlas-app .ae-badges li {
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  overflow-wrap: anywhere;
+}
+.atlas-app .ae-badges li::before {
+  content: "";
+  width: 0.52rem;
+  height: 0.52rem;
+  flex-shrink: 0;
+  background: var(--ae-tone, var(--muted));
+  border-radius: 50%;
+}
+.atlas-app .ae-article {
+  max-width: 72ch;
+}
+.atlas-app .ae-article .ae-lead {
+  font-size: 1.07em;
+}
+.atlas-app .ae-article nav {
+  justify-content: flex-start;
+  margin: 0.65rem 0;
+}
+.atlas-app
+  :is(.ae-article, .ae-cards, .ae-columns, .ae-carousel, .ae-entity)
+  h4 {
+  font-size: 1.04em;
+  margin: 0.55rem 0 0.2rem;
+}
+.atlas-app .ae-article section + section {
+  border-top: 1px solid var(--line);
+  margin-top: 0.85rem;
+  padding-top: 0.4rem;
+}
+.atlas-app .ae-accordion > div {
+  border-bottom: 1px solid var(--line);
+}
+.atlas-app .ae-accordion button {
+  width: 100%;
+  text-align: start;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.6rem;
+}
+.atlas-app .ae-accordion p {
+  padding: 0.3rem 0.55rem 0.65rem;
+}
+.atlas-app .ae-cards,
+.atlas-app .ae-columns {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+}
+.atlas-app .ae-cards section {
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+}
+.atlas-app .ae-columns section {
+  padding-inline-start: 0.8rem;
+  border-inline-start: 2px solid var(--line);
+}
+.atlas-app .ae-carousel > div:first-child {
+  padding: 0.3rem 0 0.65rem;
+}
+.atlas-app .ae-steps ol,
+.atlas-app .ae-bibliography {
+  margin: 0.5rem 0;
+  padding-inline-start: 1.75rem;
+}
+.atlas-app .ae-steps li,
+.atlas-app .ae-bibliography li {
+  padding: 0.45rem 0.2rem;
+}
+.atlas-app .ae-steps label {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  font-weight: 600;
+}
+.atlas-app .ae-steps input {
+  width: auto;
+}
+.atlas-app .ae-steps progress {
+  accent-color: var(--green);
+  width: 100%;
+}
+.atlas-app .ae-document textarea {
+  resize: vertical;
+  min-height: 7rem;
+  line-height: 1.55;
+  font: inherit;
+  font-weight: normal;
+}
+.atlas-app .ae-document .ae-toolbar,
+.atlas-app .ae-entity .ae-toolbar {
+  margin-top: 0.65rem;
+}
+.atlas-app .ae-bibliography cite {
+  overflow-wrap: anywhere;
+}

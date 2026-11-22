@@ -1,1 +1,14 @@
-{"name":"hermes-atlas","label":"Atlas","description":"Intelligent UI workspace","icon":"Sparkles","version":"0.6.0","tab":{"path":"/atlas","position":"after:chat"},"entry":"dist/index.js","css":"dist/index.css","api":"plugin_api.py"}
+{
+  "name": "hermes-atlas",
+  "label": "Atlas",
+  "description": "Interactive canvases made by your agent: library, block catalogue and chat",
+  "icon": "Sparkles",
+  "version": "1.0.0",
+  "tab": {
+    "path": "/atlas",
+    "position": "after:chat"
+  },
+  "entry": "dist/index.js",
+  "css": "dist/index.css",
+  "api": "plugin_api.py"
+}

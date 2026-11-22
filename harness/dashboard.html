@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Atlas · dashboard harness</title>
+    <link rel="stylesheet" href="/dashboard/dist/index.css" />
+    <style>
+      /* Dashboard-like theme variables (approximations of a dark and a light Hermes theme). */
+      :root {
+        --background-base: #041c1c;
+        --midground-base: #ffe6cb;
+        --color-card: #0b2a29;
+        --color-foreground: #ffe6cb;
+        --color-border: #1f4644;
+        --color-muted-foreground: #b9a58f;
+        --color-primary: #ffb45e;
+        --color-primary-foreground: #241405;
+        --color-success: #6fd39b;
+        --color-warning: #f2c14e;
+        --color-destructive: #ff7b6b;
+        --color-ring: #ffb45e;
+        --theme-font-sans: "Segoe UI", system-ui, sans-serif;
+        --theme-font-mono: ui-monospace, Consolas, monospace;
+        --theme-radius: 0.6rem;
+      }
+      :root[data-theme="light"] {
+        --background-base: #f6f3ee;
+        --midground-base: #2a2118;
+        --color-card: #ffffff;
+        --color-foreground: #2a2118;
+        --color-border: #e1d8cc;
+        --color-muted-foreground: #7a6b5b;
+        --color-primary: #b35c00;
+        --color-primary-foreground: #ffffff;
+        --color-success: #2f7d4f;
+        --color-warning: #9a6a00;
+        --color-destructive: #b3362a;
+        --color-ring: #b35c00;
+      }
+      html, body { margin: 0; min-height: 100%; background: var(--background-base); color: var(--color-foreground); font-family: var(--theme-font-sans); }
+      .dashboard-page header { padding: 14px 24px; border-bottom: 1px solid var(--color-border); font-weight: 600; letter-spacing: 0.02em; }
+      .dashboard-page section { padding: 16px 24px; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/harness/dashboard.tsx"></script>
+  </body>
+</html>

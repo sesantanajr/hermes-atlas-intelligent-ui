@@ -1,0 +1,108 @@
+.atlas-ui .atlas-media figure,
+.atlas-media figure {
+  margin: 0;
+}
+.atlas-media img,
+.atlas-media video,
+.atlas-map svg {
+  display: block;
+  width: 100%;
+  max-height: 310px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: var(--atlas-surface-2);
+}
+.atlas-media audio {
+  width: 100%;
+}
+.atlas-media figcaption,
+.atlas-map small,
+.atlas-budget small,
+.atlas-directory small {
+  display: block;
+  font-size: 0.83em;
+  margin: 0.45rem 0;
+  opacity: 0.78;
+}
+.atlas-media details {
+  margin-top: 0.6rem;
+}
+.mini-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  margin: 0.6rem 0;
+}
+.atlas-map svg path {
+  fill: var(--atlas-line-strong);
+}
+.atlas-map svg circle {
+  fill: var(--atlas-series-0);
+  stroke: var(--atlas-surface-2);
+  stroke-width: 0.5;
+  vector-effect: non-scaling-stroke;
+}
+.atlas-map svg .current {
+  fill: var(--atlas-series-1);
+}
+.atlas-directory ul {
+  list-style: none;
+  padding: 0;
+}
+.atlas-directory li,
+.atlas-board section,
+.atlas-budget > div {
+  padding: 0.75rem;
+  border: 1px solid var(--atlas-line);
+  border-radius: 10px;
+  margin: 0.45rem 0;
+}
+.atlas-directory p,
+.atlas-budget p {
+  margin: 0.35rem 0;
+}
+.atlas-product {
+  display: grid;
+  gap: 0.65rem;
+}
+.atlas-product output {
+  font-size: 1.65rem;
+  font-weight: 700;
+}
+.atlas-board {
+  display: flex;
+  overflow: auto;
+  gap: 0.45rem;
+}
+.atlas-board section {
+  flex: 1 0 9rem;
+}
+.atlas-board h4 {
+  margin: 0 0 0.6rem;
+}
+.atlas-board strong {
+  display: block;
+}
+.atlas-board select {
+  max-width: 100%;
+  margin: 0.4rem 0;
+}
+.atlas-budget label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0;
+}
+.atlas-budget input {
+  width: 5em;
+}
+.atlas-block select,
+.atlas-block input {
+  max-width: 100%;
+}
+.atlas-decision > p {
+  font-size: 1.12em;
+  font-weight: 600;
+}

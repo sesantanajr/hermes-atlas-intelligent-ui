@@ -1,0 +1,116 @@
+.atlas-app .atlas-block:is(.route, .diagram, .series, .timeline, .tabs) {
+  grid-column: 1/-1;
+  min-width: 0;
+}
+.atlas-app .atlas-spatial {
+  display: grid;
+  gap: 0.8rem;
+  min-width: 0;
+}
+.atlas-app .spatial-stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 0.85rem;
+  border: 1px solid var(--line);
+}
+.atlas-app .spatial-grid {
+  aspect-ratio: 2/1;
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 8.333% 16.667%;
+}
+.atlas-app .spatial-stage img {
+  border-radius: inherit;
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.atlas-app .diagram .spatial-stage {
+  margin: 1rem;
+  overflow: visible;
+}
+.atlas-app .spatial-stage svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--green);
+}
+.atlas-app .spatial-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 2px solid var(--atlas-on-accent);
+  border-radius: 50%;
+  background: var(--atlas-accent);
+  color: var(--atlas-on-accent);
+  font: bold 0.875rem var(--atlas-font);
+  box-shadow: var(--atlas-shadow-sm);
+}
+.atlas-app .spatial-pin[aria-pressed="true"] {
+  background: var(--atlas-on-accent);
+  color: var(--atlas-accent);
+  border-color: var(--atlas-accent);
+  z-index: 1;
+}
+.atlas-app .spatial-pin:focus-visible {
+  z-index: 2;
+  outline: 3px solid var(--atlas-focus);
+  outline-offset: 2px;
+}
+.atlas-app .spatial-picker,
+.atlas-app .spatial-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.atlas-app .spatial-picker select,
+.atlas-app .spatial-actions button,
+.atlas-app .spatial-load {
+  font: inherit;
+  color: var(--text);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  max-width: 100%;
+}
+.atlas-app .spatial-actions :is(button, a) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.atlas-app .spatial-actions a {
+  color: var(--green);
+}
+.atlas-app .spatial-detail h4,
+.atlas-app .spatial-detail p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.atlas-app .spatial-detail p {
+  color: var(--muted);
+  margin-top: 0.3rem;
+}
+.atlas-app .atlas-spatial small {
+  color: var(--muted);
+}
+.atlas-app .studio-camera-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 38%;
+}
+.atlas-app .studio-series-thumb {
+  width: 100%;
+  height: 100%;
+  color: var(--green);
+}

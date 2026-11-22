@@ -1,0 +1,375 @@
+/**
+ * English for the canvas blocks (src/blocks). Keys are the Portuguese strings passed to `t()` or
+ * marked with `msg()` there; `blocks.coverage.test.ts` fails when one is missing here or when an
+ * entry here is no longer used. The application shell has its own table in ./en.ts, and its
+ * entries win when both tables translate the same string, so a shared string says the same here.
+ *
+ * A string is listed once, under the first file that shows it.
+ */
+export const enBlocks: Record<string, string> = {
+  // Canvas.tsx
+  "{n} de {total} concluídos": "{n} of {total} completed",
+  "Filtrar {title}": "Filter {title}",
+  "Filtrar linhas...": "Filter rows...",
+  "Resultado da simulação": "Simulation result",
+  Indefinido: "Undefined",
+  "Atualizado com os valores selecionados": "Updated with the selected values",
+  Fontes: "Sources",
+
+  // CanvasForm.tsx
+  Sim: "Yes",
+  Não: "No",
+  "Formulário “{title}”:": "Form “{title}”:",
+  Selecione: "Select",
+  "Enviar ao Hermes": "Send to Hermes",
+  "Os valores serão colocados na mensagem para você revisar antes de enviar.":
+    "The values are placed in the message for you to review before sending.",
+
+  // LiveCanvasPreview.tsx
+  "Prévia do canvas": "Canvas preview",
+  "Gerando canvas…": "Generating canvas…",
+  "Prévia dos blocos recebidos": "Preview of the blocks received",
+
+  // BlockCatalog.tsx
+  "Catálogo de blocos": "Block catalogue", // also in ./en.ts
+  "Experimente os {n} blocos e combine-os no seu canvas.":
+    "Try the {n} blocks and combine them in your canvas.",
+  "Pesquisar blocos": "Search blocks",
+  "Buscar por nome, exemplo ou tipo…": "Search by name, example or type…",
+  "Categoria de blocos": "Block category",
+  "Todas as categorias": "All categories",
+  "{n} bloco encontrado": "{n} block found",
+  "{n} blocos encontrados": "{n} blocks found",
+  "Experimentar {label}": "Try {label}",
+  Experimentar: "Try it",
+  "Adicionar ao canvas": "Add to canvas",
+  "Disponível com o agente em repouso e até 31 blocos no canvas.":
+    "Available while the agent is idle and the canvas has up to 31 blocks.",
+  "Tente outro termo ou outra categoria.": "Try another term or another category.",
+
+  // catalogData.ts: the categories and block names BlockCatalog.tsx shows. They repeat the
+  // `labelEn` values of that file, which is what the agent calls each category and block.
+  "Texto e formatação": "Text and formatting",
+  "Layout e organização": "Layout and organisation",
+  Formulários: "Forms",
+  "Controles interativos": "Interactive controls",
+  "Visualização de dados": "Data visualisation",
+  "Mídia e conteúdo visual": "Media",
+  "Informações conectadas": "Connected information",
+  "Aplicações e documentos": "Apps and documents",
+  Texto: "Text",
+  "Título de seção": "Section heading",
+  "Aviso em destaque": "Callout",
+  Citação: "Quote",
+  "Texto Markdown": "Markdown text",
+  "Fórmula matemática": "Equation",
+  Etiquetas: "Badges",
+  "Ficha de informações": "Fact sheet",
+  Artigo: "Article",
+  Abas: "Tabs",
+  Acordeão: "Accordion",
+  "Grade de cartões": "Card grid",
+  Colunas: "Columns",
+  Carrossel: "Carousel",
+  "Passo a passo": "Step list",
+  "Tabela pesquisável": "Searchable table",
+  "Formulário composto": "Form",
+  "Resposta curta": "Short answer",
+  "Resposta longa": "Long answer",
+  "Campo numérico": "Number input",
+  "Seletor de data": "Date picker",
+  "Intervalo de datas": "Date range",
+  "Escolha única": "Single choice",
+  "Seleção múltipla": "Multiple choice",
+  "Lista de tarefas": "Checklist",
+  "Cartões de estudo": "Flashcards",
+  Interruptor: "Toggle",
+  "Controle deslizante": "Slider",
+  "Avaliação por estrelas": "Star rating",
+  "Controle segmentado": "Segmented control",
+  "Tarefas por grupo": "Grouped checklist",
+  Enquete: "Poll",
+  Questionário: "Quiz",
+  Temporizador: "Timer",
+  Indicador: "Metric", // also a column of the dashboard's values table (analyticsData.ts)
+  "Gráfico de barras": "Bar chart",
+  "Série temporal": "Series chart",
+  "Gráfico de rosca": "Donut chart",
+  "Gráfico de pizza": "Pie chart",
+  "Gráfico de dispersão": "Scatter plot",
+  "Gráfico de bolhas": "Bubble chart",
+  "Gráfico radar": "Radar chart",
+  "Mapa de calor": "Heatmap",
+  Histograma: "Histogram",
+  "Gráfico de cascata": "Waterfall chart",
+  Funil: "Funnel",
+  Medidor: "Gauge",
+  "Progresso de meta": "Progress",
+  "Minigráfico de tendência": "Sparkline",
+  Classificação: "Ranking",
+  "Mapa de áreas": "Treemap",
+  "Painel de indicadores": "Dashboard",
+  "Imagem com legenda": "Image",
+  "Galeria de imagens": "Gallery",
+  "Player de vídeo": "Video",
+  "Player de áudio": "Audio",
+  "Diagrama anotado": "Annotated diagram",
+  "Mapa geográfico": "Map",
+  "Diretório de locais": "Places directory",
+  "Roteiro geográfico": "Route",
+  "Produto com variantes": "Product",
+  "Coleção comparável": "Collection",
+  "Perfil de entidade": "Entity profile",
+  Bibliografia: "Bibliography",
+  Glossário: "Glossary",
+  "Linha do tempo": "Timeline",
+  Comparativo: "Comparison",
+  "Documento editável": "Editable document",
+  "Código-fonte": "Code",
+  Calculadora: "Calculator",
+  "Quadro Kanban": "Kanban board",
+  "Árvore de decisão": "Decision tree",
+  "Planejador de orçamento": "Budget planner",
+
+  // analytics.tsx
+  "Área da bolha proporcional ao tamanho informado.":
+    "Bubble area is proportional to the size given.",
+  "O contorno externo corresponde ao máximo de cada eixo.":
+    "The outer outline marks the maximum of each axis.",
+  "Turno / grupo": "Shift / group",
+  "{n} observações numéricas · {missing} sem dado":
+    "Numeric observations: {n} · no data: {missing}",
+  "Saldo final": "Final balance",
+  "{percent} da etapa anterior": "{percent} of the previous step",
+  "{n} de {total}": "{n} of {total}", // also controls.tsx and editorial.tsx
+  "Restante · {value}": "Remaining · {value}",
+  "Última medição · {label}": "Latest reading · {label}",
+  "Analise {title} com base nos valores exibidos.": "Analyse {title} based on the values shown.",
+  Período: "Period", // also a column in analyticsData.ts
+  Destaque: "Highlight",
+  Todos: "All",
+  "Ver gráfico": "View chart",
+  "Ver valores": "View values",
+  "Analisar na conversa": "Analyse in chat",
+
+  // analyticsPlots.tsx
+  "Total zero. As categorias estão na tabela de valores.":
+    "The total is zero. The categories are in the values table.",
+  Total: "Total",
+  Tamanho: "Size", // also a column in analyticsData.ts
+  "Sem observações numéricas.": "No numeric observations.",
+  "{range} · {n} observações": "{range} · observations: {n}",
+  Variação: "Change", // also a column in analyticsData.ts
+  Saldo: "Balance", // also a column in analyticsData.ts
+  Início: "Start",
+  Fim: "End",
+  "Sem medições neste intervalo.": "No readings in this range.",
+  "Total zero. Nenhuma área para distribuir.": "The total is zero. There is no area to divide.",
+
+  // analyticsData.ts: the values table and the draft sent to the chat
+  "Sem dado": "No data", // also series.tsx
+  Inicial: "Initial",
+  Final: "Final",
+  Categoria: "Category", // also series.tsx
+  Valor: "Value",
+  Participação: "Share",
+  Posição: "Rank",
+  Item: "Item",
+  Etapa: "Step",
+  Volume: "Volume",
+  "Conversão da etapa anterior": "Conversion from the previous step",
+  Ponto: "Point",
+  Eixo: "Axis",
+  Máximo: "Maximum",
+  Atingimento: "Attainment",
+  Linha: "Row",
+  "Faixa ({unit})": "Range ({unit})",
+  Faixa: "Range",
+  Observações: "Observations",
+  Medida: "Measure",
+  Mínimo: "Minimum",
+  Atual: "Current",
+  Concluído: "Completed", // also the label of a success callout (editorial.tsx)
+  Restante: "Remaining",
+  Meta: "Target",
+  Grupo: "Group",
+  Indicadores: "Metrics",
+
+  // collection.tsx
+  "Carregar imagem de {title} em {host}": "Load image of {title} from {host}",
+  "Tentar imagem novamente": "Try the image again",
+  "Carregar imagem": "Load image", // also spatial.tsx
+  "Comparação lado a lado": "Side-by-side comparison",
+  "Comparação dos itens selecionados": "Comparison of the selected items",
+  Critério: "Criterion",
+  Descrição: "Description",
+  // "Nota" alone is the callout label "Note" (editorial.tsx). `t` has no notion of context, so
+  // collection.tsx adds the always-empty {as_score} hint to give this meaning its own key.
+  "Nota{as_score}": "Score{as_score}",
+  Fonte: "Source",
+  "Analise minha seleção em “{title}”.": "Analyse my selection in “{title}”.",
+  "Compare as alternativas e explique as diferenças mais relevantes.":
+    "Compare the alternatives and explain the most relevant differences.",
+  "Explique os pontos fortes e as limitações deste item.":
+    "Explain the strengths and limitations of this item.",
+  Ordenar: "Sort",
+  "Ordem original": "Original order",
+  "Maior nota": "Highest score",
+  "Título (A–Z)": "Title (A–Z)",
+  "Voltar aos cartões": "Back to cards",
+  "Comparar selecionados": "Compare selected",
+  "{n} item": "{n} item",
+  "{n} itens": "{n} items",
+  "Itens anteriores": "Previous items",
+  "Próximos itens": "Next items",
+  "Itens de {title}": "Items in {title}",
+  "Nota {score}": "Score {score}",
+  "Selecionar {title}": "Select {title}",
+  Selecionado: "Selected",
+  Selecionar: "Select",
+  "{n} de 4 selecionados": "{n} of 4 selected",
+  "Selecione até 4 itens": "Select up to 4 items",
+  "Usar seleção no chat": "Use selection in chat",
+
+  // controls.tsx
+  "Tempo esgotado": "Time's up",
+  "Em andamento": "In progress", // also explore.tsx and ./en.ts
+  Pausado: "Paused",
+  Pronto: "Ready",
+  Pausar: "Pause",
+  Reiniciar: "Restart",
+  Retomar: "Resume",
+  Iniciar: "Start",
+  Redefinir: "Reset",
+  "Usar resposta no chat": "Use answer in chat",
+  "Informe um valor entre {min} e {max}.": "Enter a value between {min} and {max}.",
+  "Data inicial": "Start date",
+  "Data final": "End date",
+  "A data final deve ser igual ou posterior à inicial.":
+    "The end date must be the same as or after the start date.",
+  "Selecione uma data dentro dos limites definidos.": "Select a date within the allowed range.",
+  "Selecione uma opção": "Select an option",
+  "Selecione as opções desejadas": "Select the options you want",
+  Ativado: "On",
+  Desativado: "Off",
+  "Escolha uma nota de 1 a {stars}": "Choose a rating from 1 to {stars}",
+  "Limpar avaliação": "Clear rating",
+  "Progresso das tarefas": "Task progress",
+  "{n} de {total} concluídas": "{n} of {total} completed",
+  "Concluídas ({n}/{total}): {tasks}": "Completed ({n}/{total}): {tasks}",
+  "Resposta correta. {explanation}": "Correct answer. {explanation}",
+  "Resposta incorreta. {explanation}": "Incorrect answer. {explanation}",
+  "Seu voto: {option}": "Your vote: {option}",
+  "Seu voto": "Your vote",
+  "Tentar novamente": "Try again", // also in ./en.ts
+  "Alterar voto": "Change vote",
+  "Corrigir resposta": "Check answer",
+  "Registrar meu voto": "Cast my vote",
+
+  // editorial.tsx
+  Nota: "Note",
+  Informação: "Information",
+  Atenção: "Warning",
+  "Filtrar termos": "Filter terms",
+  "Nenhum termo encontrado.": "No term found.",
+  "Numerar linhas": "Number lines",
+  "Seções do artigo": "Article sections",
+  "Explorar {title}": "Explore {title}",
+  carrossel: "carousel",
+  Anterior: "Previous", // also experienceView.tsx
+  "Escolher painel": "Choose panel",
+  Próximo: "Next",
+  "{n} de {total} etapas concluídas": "{n} of {total} steps completed",
+  "Etapas concluídas": "Steps completed",
+  "Consultar referência": "View reference",
+  "Explique {name} no contexto de {title}.": "Explain {name} in the context of {title}.",
+  "Perguntar sobre {name}": "Ask about {name}",
+  "Editar documento": "Edit document",
+  "{n} palavra": "{n} word",
+  "{n} palavras": "{n} words",
+  "Usar documento no chat": "Use document in chat",
+
+  // experienceView.tsx
+  "Mídia indisponível. {alt}": "Media unavailable. {alt}",
+  "Carregar mídia de {origin}": "Load media from {origin}",
+  Legendas: "Captions",
+  Próxima: "Next",
+  Transcrição: "Transcript",
+  "Mapa com {places}": "Map with {places}",
+  Local: "Place",
+  "Diminuir zoom": "Zoom out",
+  "Aumentar zoom": "Zoom in",
+  "Abrir no OpenStreetMap": "Open in OpenStreetMap",
+  "Base cartográfica · Natural Earth": "Base map · Natural Earth",
+  "Pesquisar locais": "Search places",
+  "Ver no mapa": "View on map", // also spatial.tsx
+  "Nenhum local encontrado.": "No place found.",
+  Variante: "Variant",
+  Indisponível: "Unavailable",
+  Disponível: "Available",
+  "Consultar oferta": "View offer",
+  "Avalie a variante {variant} de {product}.": "Evaluate the {variant} variant of {product}.",
+  "Perguntar ao Hermes": "Ask Hermes",
+  "Mover {task}": "Move {task}",
+  "Etapa {n}": "Step {n}",
+  "Voltar uma etapa": "Go back one step",
+  "{price} / unidade": "{price} / unit",
+  "Quantidade de {item}": "Quantity of {item}",
+  "Total {amount}": "Total {amount}",
+  "Acima do limite": "Over the limit",
+  "Saldo disponível": "Available balance",
+
+  // explore.tsx
+  Concluída: "Done", // also in ./en.ts
+  Prevista: "Upcoming",
+  "Detalhe a etapa “{item}” do bloco “{block}”.":
+    "Give more detail on the step “{item}” of the block “{block}”.",
+  "Detalhe a seção “{item}” do bloco “{block}”.":
+    "Give more detail on the section “{item}” of the block “{block}”.",
+  "Explorar etapa no chat": "Explore step in chat",
+  "Explorar seção no chat": "Explore section in chat",
+
+  // series.tsx
+  "Área do gráfico": "Chart area",
+  "As séries visíveis estão sem dados.": "The visible series have no data.",
+  "{title}. {series}. Consulte os valores exatos em Tabela.":
+    "{title}. {series}. See the exact values under Table.",
+  "Analise as séries visíveis em “{title}” considerando os dados do canvas.":
+    "Analyse the visible series in “{title}” using the data in the canvas.",
+  "Unidade · {unit}": "Unit · {unit}",
+  "Visualização dos dados": "Data view",
+  Gráfico: "Chart",
+  Tabela: "Table",
+  "Séries visíveis": "Visible series",
+  "Selecione uma série para visualizar os dados.": "Select a series to view the data.",
+  "Valores das séries visíveis": "Values of the visible series",
+  Data: "Date",
+  "Analisar séries no chat": "Analyse series in chat",
+
+  // spatial.tsx
+  "Tentar carregar novamente": "Try loading again",
+  "Traçado esquemático das paradas · norte acima": "Schematic layout of the stops · north is up",
+  Parada: "Stop",
+  Parte: "Part",
+  "Em “{block}”, quero saber mais sobre {item}.": "In “{block}”, I want to know more about {item}.",
+  "Perguntar sobre a parada": "Ask about the stop",
+  "Perguntar sobre esta parte": "Ask about this part",
+
+  // study.tsx
+  "Ocultar resposta": "Hide answer",
+  "Revelar resposta": "Reveal answer",
+  "Voltar a praticar": "Back to practice",
+  "Marcar como conhecido": "Mark as known",
+  "Ajude-me a entender esta pergunta.": "Help me understand this question.",
+  "Resposta do cartão:": "Card answer:",
+  "Explorar no chat": "Explore in chat",
+  "{n} de {total} conhecidos": "{n} of {total} known",
+  "Cartões conhecidos": "Known cards",
+  "Apenas pendentes": "Pending only",
+  "Cartão {n} de {total}": "Card {n} of {total}",
+  Conhecido: "Known",
+  "Cartão anterior": "Previous card",
+  "Próximo cartão": "Next card",
+  "Todos os cartões estão marcados como conhecidos.": "All cards are marked as known.",
+  "Rever todos os cartões": "Review all cards",
+};
