@@ -1,5 +1,13 @@
 * text=auto eol=lf
 *.jpg binary
+*.png binary
 *.webp binary
 *.mp3 binary
 *.mp4 binary
+# Build outputs (npm run build): collapsed in diffs, left out of language statistics.
+dashboard/dist/** linguist-generated
+desktop/plugin.js linguist-generated
+hermes_atlas/static/** linguist-generated
+hermes_atlas/assets/viewer.html linguist-generated
+hermes_atlas/catalog.json linguist-generated
+package-lock.json linguist-generated

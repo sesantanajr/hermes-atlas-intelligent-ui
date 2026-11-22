@@ -3,12 +3,12 @@ node_modules/
 __pycache__/
 *.pyc
 .pytest_cache/
+.ruff_cache/
 *.egg-info/
 .env
 *.db
 *.db-*
-/atlas/static/
-/atlas/plugin/
 /build/
-work/
-# dist, dashboard/dist and desktop are committed for installs without Node.
+/work/
+# Committed on purpose, so installing the plugin from Git needs no Node:
+#   dashboard/dist/, desktop/plugin.js, hermes_atlas/static/, hermes_atlas/assets/viewer.html

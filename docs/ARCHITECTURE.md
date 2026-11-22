@@ -1,42 +1,150 @@
-# Arquitetura 0.4
+# Arquitetura do Hermes Atlas 1.0
 
-## Superfícies
+O Atlas é um **pacote unificado** do Hermes Agent: uma pasta com a metade do agente
+(`plugin.yaml` + `__init__.py`), uma skill, a aba do dashboard (`dashboard/`) e a extensão do
+Desktop (`desktop/plugin.js`). Uma única instalação liga tudo; cada metade tem sua chave em
+**Capacidades → Plugins**.
 
-O mesmo App React atende o standalone (Vite), o dashboard (IIFE com React do host) e o Desktop/Webapp (ESM usando apenas imports oficiais do SDK). O Desktop usa `ctx.rest` autenticado; o dashboard usa seu cliente SDK. A API local tem restrição de Host, origem, JSON e CSP.
+```mermaid
+flowchart LR
+  subgraph Hermes["Processo do Hermes"]
+    M[Modelo] -- chama --> T["Ferramentas atlas_*"]
+    H["Gancho pre_llm_call"] -- "[Atlas] o usuário mudou…" --> M
+    T --> S[("atlas.db<br/>SQLite")]
+    H --> S
+  end
+  subgraph Hosts["Interfaces"]
+    D["Extensão do Desktop<br/>desktop/plugin.js"]
+    B["Aba do dashboard<br/>dashboard/dist"]
+    A["App independente<br/>hermes atlas serve"]
+    V["Página exportada<br/>viewer.html"]
+  end
+  R["API do plugin<br/>/api/plugins/hermes-atlas"] --> S
+  D -- ctx.rest --> R
+  B -- SDK do dashboard --> R
+  A -- fetch --> R
+  T -- "MEDIA:…html" --> V
+```
 
-`plugin.yaml` e o registro Python expõem `atlas_render`, `atlas_list` e `atlas_get`. `dashboard/plugin_api.py` monta o mesmo router do standalone com imports relativos isolados. O wheel contém `atlas/static` e `atlas/plugin`; a compilação recusa publicar pacote sem esses assets.
+## A pasta do plugin
 
-## Execução durável
+| Caminho | O que é |
+| --- | --- |
+| `plugin.yaml` | Manifesto v2: ferramentas e gancho declarados, `config_schema`, `requires_hermes: ">=0.21.0"`. Nenhuma `python_dependencies`. |
+| `__init__.py` | `register(ctx)`: delega para `hermes_atlas/agent/plugin.py` com import relativo, como o Hermes exige. |
+| `skills/canvas/SKILL.md` | A skill `hermes-atlas:canvas`: quando usar um canvas, como montar, mostrar e atualizar. |
+| `hermes_atlas/` | O pacote Python (abaixo). |
+| `dashboard/manifest.json`, `dashboard/plugin_api.py`, `dashboard/dist/` | A aba **Atlas** do dashboard e as rotas `/api/plugins/hermes-atlas/…`, que servem também o Desktop. |
+| `desktop/plugin.js` | A extensão do Desktop e do Webapp: um único módulo ES. |
+| `src/` | O código TypeScript/React de todas as interfaces. Os bundles gerados ficam versionados, então instalar pelo Git não exige Node. |
 
-1. O cliente cria um UUID de pedido e envia texto, anexos e canvas ativo.
-2. A API verifica capacidades oficiais, valida tamanhos e reserva a conversa/execução no SQLite em uma transação.
-3. Um observador envia `POST /v1/runs` com chave de idempotência estável. O histórico continua no Hermes; cada turno envia só o novo conteúdo e instruções compactas.
-4. SSE acumula deltas, sequência, progresso e controles. Consultas de status confirmam o resultado. O observador verifica o estado aproximadamente a cada 500 ms e grava quando detecta mudanças.
-5. A tela consulta o snapshot, adaptando a frequência à visibilidade. Reabrir a tela recupera a execução persistida.
-6. Conclusão, mensagem de resposta e desbloqueio da conversa são transacionais. Artefatos possuem deduplicação por execução e revisão fixada na mensagem.
+### O pacote `hermes_atlas`
 
-Se o POST perder a resposta, a recuperação usa a mesma chave dentro de uma janela conservadora baseada na retenção anunciada pelo Hermes. Quando a janela expira sem confirmação, o Atlas apresenta o resultado como desconhecido. O usuário pode reconhecer o encerramento local de um pedido sem ID remoto. Consultar uma execução confirmada reativa o observador do mesmo ID.
+| Módulo | Responsabilidade |
+| --- | --- |
+| `schema/` | Os 73 tipos de bloco e o `Canvas`, em pydantic. Só é importado quando um canvas é validado. |
+| `catalog.py`, `catalog.json` | O catálogo (rótulos pt/en, categoria, resumo, exemplo) gerado de `src/blocks/catalogData.ts`. |
+| `storage/` | `Store`: revisões imutáveis, rascunhos, vínculos canvas–sessão, conversas do chat do Atlas. Só biblioteca padrão (`sqlite3`). |
+| `render/` | Canvas → Markdown (73 tipos, com e sem tabelas) e canvas → página HTML autossuficiente. |
+| `agent/` | A integração com o agente: `plugin.py` (registro), `tool_schemas.py`, `tools.py`, `surfaces.py`, `hooks.py`, `commands.py` (`/atlas`), `cli.py` (`hermes atlas`), `settings.py`. |
+| `server/` | A API HTTP (`api.py`), o chat do Atlas pela Runs API (`runs.py`, `gateway.py`, `protocol.py`) e o app independente (`app.py`). |
+| `runtime.py` | Onde ficam os dados, qual perfil e qual gateway, lidos do jeito do Hermes (`get_hermes_home`, secret scope, `plugin_data_dir`). |
+| `doctor.py` | O diagnóstico de `hermes atlas doctor`, só leitura. |
 
-## Perfis e propriedade
+## Custo na inicialização
 
-O SQLite associa o diretório do perfil Hermes e o endereço do gateway a um identificador persistente de workspace. A UI envia esse identificador ao backend. Conversas, sessões, rascunhos e revisões de canvas continuam no mesmo workspace após a rotação da chave. Perfis ou gateways distintos têm bibliotecas independentes, inclusive quando compartilham `ATLAS_DATA_DIR`.
+O Hermes importa todo plugin habilitado ao iniciar cada processo (CLI, gateway, dashboard).
+`register()` importa apenas a biblioteca padrão e módulos leves do próprio Atlas: pydantic,
+FastAPI e httpx ficam para a primeira chamada de ferramenta ou de rota. Medido com
+`scripts/benchmark.py` num processo que já tem a biblioteca padrão carregada: cerca de 19 ms, sem
+nenhuma dessas bibliotecas importada. A 0.6 levava cerca de 650 ms e carregava FastAPI, Starlette,
+httpx e pydantic em todo processo, inclusive nos que nunca usariam o Atlas.
 
-Ao atualizar a v0.2, abra o Atlas pela primeira vez com o perfil, o endpoint e a chave anteriores para conservar os IDs de sessão e de idempotência no Hermes. O Atlas recupera as revisões referenciadas pelo histórico ou pelo workspace. No diretório padrão do perfil, um único proprietário verificado também recupera as revisões manuais. Se o perfil usava apenas `atlas_render` e o banco contém somente canvases, o primeiro acesso pelo gateway local padrão recupera a biblioteca.
+## Como um canvas chega ao usuário
 
-Em um diretório compartilhado ou com histórico de proprietário desconhecido, as revisões sem vínculo permanecem na tabela original. Para recuperar uma delas, abra uma cópia do `atlas.db` em SQLite e consulte `SELECT id,revision,title,payload FROM canvases ORDER BY id,revision`. Revise o JSON de `payload` e use a ferramenta `atlas_render` no perfil de destino com esse canvas e um novo ID. Isso inicia um novo histórico de revisões no destino.
+`atlas_render` e `atlas_update` validam o canvas, gravam uma revisão e respondem ao modelo com
+`show` e `present`, a instrução de como mostrá-lo **naquela** superfície
+(`agent/surfaces.py`):
 
-Sessões API Atlas não se fazem passar por sessões Desktop/CLI. O envio explícito ao chat nativo usa o RPC `prompt.submit`, verifica a sessão focada/perfil e mantém ID de submissão estável durante uma tentativa de reenvio.
+| `show` | Quando | O que o modelo escreve |
+| --- | --- | --- |
+| `file` | Desktop/Webapp com a extensão num Desktop que tem *tool media renderers*, ou Desktop sem a extensão. | A linha `MEDIA:<caminho>.html` no fim da resposta. A extensão troca o cartão do arquivo pelo canvas vivo; sem a extensão, o Desktop mostra o cartão com pré-visualização da página. |
+| `directive` | Extensão num Desktop que tem diretivas de transcrição, mas não *tool media renderers*; e sempre no chat do próprio Atlas. | A linha `::atlas{id="…" rev="…"}` como parágrafo próprio. |
+| `text` | Terminal, apps de mensagem, outros clientes da API. | Um resumo em texto; `atlas_export` envia a página se o usuário pedir. |
+| `either` | Superfície desconhecida (Hermes antigo). | `present` explica as duas opções. |
 
-## Protocolo e estado
+A superfície vem de `ctx.session_surface()` (ou de `HERMES_SESSION_PLATFORM` em versões
+anteriores). O que o Desktop consegue desenhar vem de um aperto de mão: ao carregar, a extensão
+chama `POST /clients/desktop` com `features: ["directive", "tool_media"]`, conforme o que o SDK
+daquele Desktop exporta. A opção `reply_style` força um dos modos.
 
-O protocolo aceita apenas os tipos de bloco declarados em `models.py`. JSON é extraído com `JSONDecoder.raw_decode`, preservando cercas dentro de strings. Conteúdo inválido permanece texto com aviso. Resposta vazia produz erro; nenhum canvas demonstrativo substitui uma falha do modelo.
+A linha `MEDIA:` é o caminho que a documentação do Desktop recomenda para plugins com ferramentas
+próprias: toda superfície do Hermes entende `MEDIA:`, e o Desktop só deixa o plugin dono da
+ferramenta trocar o cartão do arquivo (`TOOL_MEDIA_RENDERER_AREA`, ferramentas `atlas_render` e
+`atlas_update`). A diretiva continua para Desktops anteriores a essa área.
 
-O canvas contém a definição dos blocos, o estado dos controles e fontes opcionais. A coleção guarda IDs estáveis da seleção. A prévia decodifica um prefixo limitado e valida os blocos concluídos. O rascunho é salvo com debounce e fila serial. O cliente 0.3 envia o token da última gravação e oferece resolução explícita de conflito entre abas. As revisões da biblioteca exigem a revisão-base. Uma nova criação recebe ID único.
+## A volta: o que o usuário fez
 
-Formulários geram texto no editor para revisão humana. Fórmulas são operações enumeradas, sem eval. Markdown não executa HTML; imagens remotas não são buscadas automaticamente. Links de fontes são explícitos. O renderer não aceita código gerado.
+1. No canvas embutido (`src/host/InlineCanvas.tsx`), cada interação é salva, depois de 700 ms sem
+   mudanças, como **rascunho** da revisão exibida (`PUT /canvases/{id}/draft`), com um token de
+   concorrência. Nenhuma revisão nova é criada até o usuário pedir **Salvar versão**.
+2. `atlas_get` devolve o rascunho como `unsaved_user_changes` e o estado de cada bloco (itens
+   marcados, respostas de formulário, seleções, texto editado).
+3. No turno seguinte, o gancho `pre_llm_call` acrescenta, uma única vez, a nota
+   `[Atlas] The user changed canvases you created…` para os canvases daquela sessão. O gancho não
+   cria arquivos: sem biblioteca, ele não faz nada.
+4. Para mudar o canvas, o modelo chama `atlas_update` com `expected_revision`. Uma revisão
+   desatualizada é recusada com a orientação de ler de novo.
 
-## Custos e operação
+Quando a revisão muda, o backend avisa as interfaces (`broadcast_plugin_event` →
+`plugin.hermes-atlas.canvas.saved`) e os canvases abertos se atualizam sem consultas periódicas.
 
-Pool HTTPX por event loop, cache curto de capabilities, limites de resposta/frame/payload e escrita agrupada evitam uma conexão ou transação por token. A UI recebe até 60 eventos recentes; não é um log de auditoria integral. As medidas locais e do provedor estão em VALIDATION.md e não são um benchmark entre modelos.
+## Interfaces
 
-O standalone é uma aplicação pessoal loopback. O host Hermes fornece autenticação e isolamento de perfis na instalação nativa. Não há serviço de autenticação multiusuário implementado pelo Atlas.
+Um único código React, quatro compilações (`scripts/build.mjs` e Vite):
+
+| Alvo | Arquivo | Particularidades |
+| --- | --- | --- |
+| Aba do dashboard | `dashboard/dist/index.js` + `index.css` | Script clássico registrado em `window.__HERMES_PLUGINS__`. Usa o React do dashboard (via `__HERMES_PLUGIN_SDK__`) e `authedFetch`. Segue `useI18n()`. |
+| Extensão do Desktop | `desktop/plugin.js` | Módulo ES que importa só `react`, `react/jsx-runtime` e `@hermes/plugin-sdk` (por namespace, com detecção de recursos). CSS embutido, removido ao descarregar. Registra a página `/atlas`, o item da barra lateral, o renderizador de mídia e a diretiva. |
+| App independente | `hermes_atlas/static/` | Vite. Servido por `hermes atlas serve` em `127.0.0.1:7331`. |
+| Página exportada | `hermes_atlas/assets/viewer.html` | Um arquivo com o canvas embutido; CSP fixa o script por hash e proíbe rede. |
+
+`scripts/check-bundles.mjs` aplica, a cada compilação, as regras que o Hermes impõe: imports
+permitidos e ausência de `eval`, `import()` dinâmico, injeção de `<script>` e acesso ao DOM do
+aplicativo no `plugin.js` (a mesma análise do `hermes plugins validate`); nenhum React próprio
+nos bundles; arquivos abaixo de 1 MiB (limite da varredura de instalação); versões coerentes.
+
+**Tema.** As cores vêm de tokens (`src/theme/tokens.css`). Dentro do Hermes, os tokens apontam
+para as variáveis do tema do host (`--color-card`, `--ui-bg-card`…), então qualquer tema do
+Hermes, inclusive personalizado, se aplica. Claro ou escuro é medido do fundo realmente pintado
+atrás do Atlas, para escolher cores de gráfico com contraste.
+
+**Idioma.** O texto da interface é escrito em português e traduzido para inglês
+(`src/i18n/`): `t("Salvar versão")`. Testes garantem que todo texto tem tradução e que nenhuma
+tradução sobra. O idioma segue, nesta ordem: a escolha feita nas configurações do Atlas; a
+opção `locale` do plugin ou o `display.language` do Hermes; o idioma da página do host.
+
+**Altura.** Embutido, o Atlas ocupa do seu topo até o fim da caixa que tem altura própria (o
+painel do Desktop) ou da janela, descontando o espaçamento do host. Caixas que crescem com o
+conteúdo, como a seção de uma página do dashboard, não limitam a altura.
+
+## O chat do próprio Atlas
+
+O dashboard e o app independente têm uma conversa própria que usa a **Runs API** do Hermes
+(`/v1/runs`), com execuções duráveis: chave de idempotência por pedido, recuperação da mesma
+execução depois de uma queda, cancelamento confirmado e controles de aprovação e esclarecimento.
+Nessa conversa, o servidor do Atlas resolve as linhas `::atlas{…}` da resposta e mostra o canvas
+ao lado. Na extensão do Desktop, a conversa é a do próprio Desktop.
+
+## Dados
+
+`<HERMES_HOME>/plugin-data/hermes-atlas/atlas.db`, um SQLite por perfil:
+
+- `owned_canvases`: cada revisão de cada canvas, imutável, limitada a 256 KB.
+- `documents`: rascunhos (`canvas_draft`), vínculos canvas–sessão (`canvas_link`), o que cada
+  interface consegue desenhar (`client`), conversas e execuções do chat do Atlas.
+- O espaço de trabalho é identificado pelo perfil e pelo gateway; perfis diferentes não
+  compartilham bibliotecas, mesmo com `ATLAS_DATA_DIR` em comum.
+
+As exportações ficam em `exports/` (as 60 mais recentes, cerca de 0,8 MB cada página HTML).

@@ -1,24 +1,82 @@
-name: Atlas checks
-on: [push, pull_request]
+name: Checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
 permissions:
   contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  verify:
+  test:
+    name: Tests and build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
           cache: npm
+
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
-      - run: git diff --exit-code -- dist dashboard/dist desktop
-      - run: python -m pip install -e '.[test]'
-      - run: python -m pytest -q
-      - run: python -m pip wheel --no-deps --wheel-dir work/wheels .
-      - run: python scripts/verify-wheel.py work/wheels
+          # The oldest Python Hermes Agent supports.
+          python-version: "3.11"
+
+      - name: Install
+        run: |
+          npm ci
+          python -m pip install --upgrade pip
+          python -m pip install "pydantic>=2.10,<3" "fastapi>=0.104" "httpx>=0.27" "uvicorn>=0.31" "pytest>=8"
+
+      - name: Front-end tests
+        run: npm test
+
+      - name: Build every interface and check the bundles
+        run: npm run build
+
+      - name: Committed bundles match the source
+        # `hermes plugins install` clones the repository and builds nothing.
+        run: |
+          git status --porcelain -- dashboard/dist desktop hermes_atlas/static hermes_atlas/assets hermes_atlas/catalog.json
+          git diff --exit-code -- dashboard/dist desktop hermes_atlas/static hermes_atlas/assets hermes_atlas/catalog.json
+          test -z "$(git status --porcelain --untracked-files=all -- dashboard/dist desktop hermes_atlas/static hermes_atlas/assets)"
+
+      - name: Python tests
+        run: python -m pytest
+
+      - name: Standalone wheel
+        run: |
+          python scripts/build_wheel.py
+          python scripts/verify-wheel.py work/wheels
+
+  hermes:
+    name: Hermes Agent validates the plugin
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      HERMES_HOME: ${{ github.workspace }}/hermes-home
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: hermes-atlas
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Hermes Agent
+        run: python -m pip install "hermes-agent @ git+https://github.com/NousResearch/hermes-agent.git"
+
+      - name: hermes plugins validate
+        run: hermes plugins validate hermes-atlas
+
+      - name: hermes plugins doctor
+        run: hermes plugins doctor hermes-atlas --ci

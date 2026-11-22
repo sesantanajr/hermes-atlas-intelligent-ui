@@ -1,26 +1,37 @@
 {
   "environment": {
-    "python": "3.14.7",
+    "python": "3.14.10",
     "os": "Windows",
-    "scope": "local synthetic microbenchmark, not a provider comparison"
+    "scope": "local synthetic measurements, not a model or provider comparison"
   },
-  "sqlite": {
+  "startup": {
+    "register_warm_median_ms": 19.0,
+    "heavy_libraries_imported": [],
+    "tools_registered": 7,
+    "register_cold_median_ms": 118.7,
+    "runs": 7
+  },
+  "tools": {
+    "definitions": 7,
+    "bytes": 6324,
+    "approx_tokens": 1757
+  },
+  "library": {
     "writes": 100,
     "workers": 4,
     "unique_revisions": 100,
-    "seconds": 0.6379,
-    "write_median_ms": 4.836,
-    "write_p95_ms": 12.807,
-    "read_median_ms": 0.861
-  },
-  "protocol": {
-    "instruction_bytes": 1509,
-    "full_schema_bytes": 18810,
-    "history_resent": false
+    "seconds": 0.715,
+    "write_median_ms": 4.94,
+    "write_p95_ms": 121.5,
+    "read_median_ms": 0.588
   },
   "bundles": {
-    "dist\\assets\\index-OW81ZL8_.js": 474362,
-    "dashboard\\dist\\index.js": 314219,
-    "desktop\\plugin.js": 422457
+    "bytes": {
+      "dashboard/dist/index.js": 538912,
+      "dashboard/dist/index.css": 132288,
+      "desktop/plugin.js": 682266,
+      "hermes_atlas/assets/viewer.html": 783057
+    },
+    "largest_vs_scan_limit": 0.75
   }
 }

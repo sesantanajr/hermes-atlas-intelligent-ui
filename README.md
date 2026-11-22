@@ -2,115 +2,155 @@
 
 # Hermes Atlas · Intelligent UI
 
-Interface conversacional e visual para o **Hermes Agent**, com canvases interativos, histórico persistente e execuções recuperáveis.
+[![Verificações](https://github.com/sesantanajr/hermes-atlas-intelligent-ui/actions/workflows/ci.yml/badge.svg)](https://github.com/sesantanajr/hermes-atlas-intelligent-ui/actions/workflows/ci.yml)
+![Versão](https://img.shields.io/badge/vers%C3%A3o-1.0.0-0b7a5c)
+![Hermes Agent](https://img.shields.io/badge/Hermes%20Agent-%E2%89%A5%200.21-1f2937)
+![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-informational)
 
-**Versão 0.6.0.** A conversa mostra o resultado de cada etapa, inclusive quando uma ferramenta falha e o Hermes consegue entregar a resposta. Para medir disco, RAM, swap e carga, o agente pode consultar os contadores do sistema com `atlas_resources`. [Notas da versão 0.6](docs/0.6.md)
+[English](README.en.md)
 
-Abra **Catálogo de blocos** para experimentar 73 tipos em oito categorias. Combine até 32 blocos em um canvas. Um roteiro, por exemplo, pode reunir mapa, intervalo de datas, checklist de bagagem e orçamento ajustável. [Guia do catálogo](docs/0.5.md)
+**Canvases interativos para o [Hermes Agent](https://github.com/NousResearch/hermes-agent).** Peça
+uma comparação, um plano, um orçamento ou um painel, e o agente responde com um canvas que você
+marca, filtra, ajusta e preenche: dentro da própria conversa no Hermes Desktop, numa aba do
+dashboard web ou como uma página HTML. Na mensagem seguinte, o agente já sabe o que você mudou.
 
-![Catálogo do Atlas com o painel de fevereiro, indicadores e empréstimos por seção](docs/catalog-0.5.jpg)
+![Um canvas "Lisboa em 6 dias" dentro de uma resposta no Hermes Desktop, com orçamento, checklist e gastos ajustáveis](docs/screenshots/desktop-conversation.png)
 
-## Recursos
+**Versão 1.0.0**: reconstrução completa para o contrato atual de plugins do Hermes Agent.
+[O que mudou](CHANGELOG.md) · [Migrar da 0.6](docs/MIGRATION.md)
 
-- O **Catálogo de blocos** funciona com exemplos locais. Filtre por categoria, explore os controles e use **Adicionar ao canvas** para incluir o componente. O agente consulta o mesmo catálogo pela ferramenta `atlas_components`.
-- Um mapa permite selecionar locais e aproximar a vista. Um questionário corrige respostas e explica o resultado. Um orçamento recalcula o saldo quando as quantidades mudam. Um documento editável conserva o texto na revisão.
-- **Por dentro da câmera**, em **Descobrir**, combina um diagrama com pontos interativos, abas navegáveis por teclado e cartões de estudo que guardam seu progresso.
-- **Caderno de campo** reúne um gráfico multissérie com tabela acessível, um roteiro por coordenadas, etapas e um formulário com data, pergunta aberta, escolha única e caixa de seleção.
+## Destaques
 
-- Chat com Markdown, resposta progressiva, progresso de ferramentas, cancelamento remoto e recuperação da mesma execução após reconectar.
-- Histórico no servidor, busca, paginação, renomeação, exclusão da cópia Atlas e exportação JSON. Reutilização de mensagens pelo editor.
-- Coleções de até 24 itens com ordenação por nota ou título, comparação de até quatro opções, fontes por item e uma ação que prepara a próxima mensagem. Para experimentar com dados fictícios, abra **Descobrir → Catálogo com seleção**.
-- Canvases com texto, indicadores, barras positivas/negativas, tabelas, checklists, comparações, calculadoras e formulários. Blocos completos aparecem em prévia durante a geração.
-- Estado dos controles preservado ao alternar visualizações, salvar, exportar e reabrir. Rascunho automático, desfazer/refazer e revisões imutáveis com proteção contra alterações concorrentes.
-- Canvas ativo enviado como contexto, inclusive quando aberto pela biblioteca. Mensagens apontam para a revisão produzida naquela resposta.
-- Até quatro anexos de texto/Markdown/CSV/JSON/log por mensagem, até 200 KB cada e 450 KB no pedido total.
-- Formulários preparam uma mensagem revisável. Aprovações e esclarecimentos do agente usam os controles reais do Hermes.
-- Temas claro, escuro e do sistema, canvas ampliável e alternância entre conversa e canvas em telas estreitas.
-- Ferramentas nativas `atlas_resources`, `atlas_components`, `atlas_render`, `atlas_list` e `atlas_get`. O dashboard usa IIFE e o Desktop usa ESM com o React do host.
-- Credenciais apenas no backend; armazenamento por perfil; verificação de capacidades antes de admitir execuções.
+- **73 tipos de bloco** em oito categorias: gráficos, tabelas filtráveis, formulários,
+  checklists, mapas, rotas, kanban, calculadoras, quizzes, flashcards, orçamentos e mais.
+  Tudo é JSON declarativo validado: o modelo não escreve HTML nem JavaScript.
+- **Ida e volta com o agente.** O que você faz no canvas vira um rascunho que o agente lê com
+  `atlas_get`, e o Hermes o avisa, uma única vez, quando você mexe num canvas que ele criou.
+  Para mudar uma parte, o agente edita só aquela parte (`atlas_update`), sem reenviar o canvas.
+- **Nativo em cada superfície do Hermes**: canvas vivo na conversa do Desktop e do Webapp,
+  aba no dashboard, resumo em texto no terminal e nos apps de mensagem, e a página interativa
+  como anexo quando você pedir.
+- **Leve**: nenhuma dependência Python ou Node para instalar. O `register()` acrescenta cerca de
+  19 ms à inicialização do Hermes; a 0.6 levava cerca de 650 ms
+  ([medição](docs/benchmark.json)).
+- **Seguro por construção**: ações de um canvas só preparam mensagens que você revisa; a página
+  exportada não acessa a rede; credenciais ficam no servidor. [Detalhes](docs/SECURITY.md)
+- **Português e inglês**, seguindo o idioma do Hermes, e as cores do tema do Hermes, claro,
+  escuro ou personalizado.
 
-## Instalar no Hermes
+## Instalar
+
+Requer **Hermes Agent 0.21.0** ou mais recente. Não é preciso Node nem pacotes Python extras:
+os bundles da interface já vêm no repositório.
 
 ```sh
-hermes plugins install sesantanajr/hermes-atlas-intelligent-ui
-hermes plugins enable hermes-atlas
-hermes plugins doctor hermes-atlas --ci
+hermes plugins install sesantanajr/hermes-atlas-intelligent-ui --enable
 ```
 
-Para atualizar uma instalação feita pelo Git e conferir o resultado, execute no mesmo perfil do Hermes:
+Sem `--enable`, o Hermes instala o plugin desligado; ligue com `hermes plugins enable hermes-atlas`.
+
+- **Hermes Desktop e Webapp**: em **Capacidades → Plugins**, o Hermes Atlas ocupa uma linha com
+  duas chaves. **Agente** liga as ferramentas, o comando `/atlas` e a skill; **Desktop** liga o
+  canvas na conversa e a página **Atlas** na barra lateral. Ligue as duas. Você também pode
+  instalar por ali: **Capacidades → Plugins → Instalar** com
+  `sesantanajr/hermes-atlas-intelligent-ui`.
+- **Dashboard web**: a aba **Atlas** aparece ao recarregar o dashboard. Se a sua versão não
+  recarrega plugins sozinha, reinicie `hermes dashboard`.
+- **Lista explícita de toolsets**: se a sua configuração usa uma, inclua `atlas`.
+
+Conferir, atualizar e remover:
 
 ```sh
+hermes plugins doctor hermes-atlas
+hermes atlas doctor
 hermes plugins update hermes-atlas
-hermes plugins list
-hermes plugins doctor hermes-atlas --ci
+hermes plugins remove hermes-atlas   # a biblioteca em plugin-data/hermes-atlas é mantida
 ```
 
-No Desktop/Webapp, abra **Capacidades → Plugins → Verificar novamente** e habilite também a extensão **Hermes Atlas Intelligent UI**. A extensão visual e a parte do agente têm ativação independente no Hermes. Para Desktop local conectado a um gateway remoto, instale a parte Desktop também na máquina do Desktop usando **Instalar do Git**. Os bundles já estão no repositório; Node não é necessário para instalar o plugin.
+## Usar
 
-No dashboard clássico, abra a aba **Atlas**. Se a versão do host não recarregar plugins automaticamente, reinicie esse host. Habilite o toolset `atlas` caso sua configuração use uma lista explícita de ferramentas.
+Peça como pediria a uma pessoa:
 
-Peça ao agente “Consulte a definição de `budget_planner` com atlas_components e use atlas_render para montar um orçamento de viagem em reais com três despesas de exemplo”. Abra **Atlas → Minha biblioteca** para ajustar as quantidades. Para alterar uma revisão, o agente consulta `atlas_get` e informa a revisão lida em `expected_revision`.
+- “Compare três notebooks de até R$ 6 mil num canvas, com uma tabela e uma nota para cada um.”
+- “Monte um orçamento de viagem para Lisboa que eu possa ajustar.”
+- “Crie flashcards e um quiz sobre a Revolução Francesa.”
+- “Transforme este CSV num gráfico de linhas por mês.” (com o arquivo anexado)
 
-## Conexão com o agente
+A skill `hermes-atlas:canvas` ensina o agente a decidir quando um canvas ajuda, a escolher os
+blocos e a atualizá-los. A forma de apresentar o canvas depende de onde você conversa:
 
-O chat Atlas usa a **Runs API oficial**. No ambiente do Hermes habilite `API_SERVER_ENABLED=true`, configure `API_SERVER_KEY` e inicie o gateway. O padrão é `http://127.0.0.1:8642/v1`; perfis nativos usam a rota `/p/<perfil>/v1`. O Atlas utiliza o secret scope do perfil quando executado dentro do Hermes.
+| Onde você conversa | O que aparece |
+| --- | --- |
+| **Hermes Desktop / Webapp** com a extensão ligada | O canvas vivo dentro da resposta. Marque, ajuste e preencha ali mesmo; botões do canvas colocam o texto no seu campo de mensagem, nunca enviam sozinhos. |
+| Hermes Desktop sem a extensão | Um cartão com a página interativa do canvas, que abre na pré-visualização. |
+| **Dashboard web** | A aba **Atlas**: biblioteca, catálogo de blocos e uma conversa própria com o Hermes. |
+| Terminal (CLI e TUI) | Um resumo em texto. `/atlas show <id>` mostra o canvas inteiro em Markdown. |
+| Telegram, Discord, WhatsApp e outros | Um resumo em texto. Peça “me mande o canvas” e o agente anexa a página HTML. |
 
-Para um endpoint explícito, configure no backend `ATLAS_HERMES_URL` e `ATLAS_HERMES_API_KEY`. Fora do loopback, o endpoint deve usar HTTPS. `.env.example` documenta as variáveis, mas não é carregado automaticamente. Nunca coloque chaves no frontend ou no Git.
+![A aba Atlas no dashboard web do Hermes, com o tema escuro do dashboard e o canvas aberto ao lado](docs/screenshots/dashboard.png)
 
-O chat Atlas usa sessões persistentes da Runs API. Na extensão Desktop, **Enviar à sessão nativa** envia o texto do editor, o conteúdo dos anexos textuais e o canvas à sessão focada por `prompt.submit`. A resposta aparece no chat nativo. Trocar de perfil ou gateway invalida respostas pendentes da tela anterior.
+### Comandos
 
-## Aplicativo independente / wheel
+Em qualquer conversa:
 
-O wheel inclui o aplicativo compilado e todo o plugin, sem depender do checkout:
+```text
+/atlas                                  resumo e canvases recentes
+/atlas list [texto]                     buscar por título
+/atlas show <id ou título> [versão]     ver o canvas em texto
+/atlas export <id ou título> [html|md|json]
+```
+
+No terminal: `hermes atlas status`, `list`, `show`, `export`, `doctor` e `serve`. Este último abre o
+Atlas como aplicativo independente em `http://127.0.0.1:7331`, sem login próprio e só em loopback.
+
+## Configurar
 
 ```sh
-pip install ./hermes_atlas_intelligent_ui-0.6.0-py3-none-any.whl
-hermes-atlas serve
-# Opcional: copiar o plugin para uma instalação Hermes nova
-hermes-atlas install-plugin --home /caminho/do/hermes
+hermes plugins config hermes-atlas
 ```
 
-Acesse `http://127.0.0.1:7331`. A cópia recusa substituir um plugin existente. Para atualização de instalação Git, use o gerenciador do Hermes.
+| Opção | Padrão | O que faz |
+| --- | --- | --- |
+| `reply_style` | `auto` | Como o canvas entra na resposta. `auto` escolhe pela superfície (tabela acima); `file` sempre anexa a página interativa; `directive` sempre usa a linha `::atlas{…}`; `text` nunca mostra o canvas na conversa. |
+| `context_hints` | `true` | Avisa o agente, uma vez, quando você muda um canvas que ele criou. |
+| `resources_tool` | `true` | Oferece `atlas_resources` (disco, memória e carga da máquina do Hermes). |
+| `locale` | `auto` | Idioma de `/atlas`, `hermes atlas` e das exportações: `auto` (o do Hermes), `pt-BR` ou `en`. |
 
-Para desenvolver a partir do código (Python 3.11+, Node 22+):
+O chat próprio do Atlas (dashboard e aplicativo independente) usa o servidor de API do Hermes.
+Habilite-o no perfil com `API_SERVER_ENABLED=true` e `API_SERVER_KEY`; o endereço padrão é
+`http://127.0.0.1:8642/v1`, e perfis secundários usam `/p/<perfil>/v1`. Canvases, biblioteca,
+ferramentas e o canvas na conversa do Desktop funcionam sem ele.
 
-```sh
-npm ci
-npm run build
-python -m pip install -e '.[test]'
-python -m atlas.cli serve
-```
+## Ferramentas do agente
 
-Use o Python do seu ambiente virtual. No PowerShell, configure variáveis com `$env:ATLAS_HERMES_URL = 'http://127.0.0.1:8642/v1'`; no Linux/macOS, use `export`. O standalone escuta apenas em loopback; para acesso remoto utilize o host autenticado do Hermes ou um túnel SSH.
+| Ferramenta | Para quê |
+| --- | --- |
+| `atlas_components` | Lista os 73 tipos de bloco ou devolve o schema e um exemplo de cada tipo pedido. |
+| `atlas_render` | Cria um canvas, valida e salva na biblioteca; diz ao modelo como mostrá-lo naquela superfície. |
+| `atlas_update` | Muda partes de um canvas (acrescentar, trocar, remover, mover blocos, título, fontes, estado). |
+| `atlas_get` | Lê um canvas com o estado atual do usuário, inteiro, em esboço ou em texto. |
+| `atlas_list` | Busca na biblioteca por título. |
+| `atlas_export` | Grava o canvas em HTML interativo, Markdown ou JSON e devolve a linha `MEDIA:` para anexar. |
+| `atlas_resources` | Mede disco, memória, swap e carga da máquina do Hermes, só leitura. |
 
-## Dados e recuperação
+Parâmetros, resultados e exemplos: [docs/TOOLS.md](docs/TOOLS.md).
 
-O arquivo `<HERMES_HOME>/plugin-data/hermes-atlas/atlas.db` guarda conversas, execuções, revisões e o canvas de trabalho. `ATLAS_DATA_DIR` permite um diretório explícito no standalone. O texto e os anexos ainda no editor ficam na aba do navegador, separados por conversa e perfil. Para dados antigos em localStorage da v0.1, exporte o histórico antes da atualização.
+## Seus dados
 
-Canvases existentes continuam legíveis; os novos campos de estado têm valores padrão. Faça backup do SQLite antes de atualizar. Excluir uma conversa na interface remove sua cópia Atlas; não apaga registros mantidos pelo Hermes ou pelo provedor.
+Tudo fica em `<HERMES_HOME>/plugin-data/hermes-atlas/`: a biblioteca (`atlas.db`, SQLite, com cada
+versão de cada canvas, conversas do chat do Atlas e rascunhos) e as exportações (`exports/`, as
+60 mais recentes). Cada perfil do Hermes tem a sua. Nada é enviado a terceiros: o Atlas só fala
+com o próprio Hermes. Faça backup desse diretório como faria com o resto do perfil.
 
-Fechar a página não cancela o agente. O botão **Parar** solicita cancelamento remoto e aguarda o estado confirmado. Após falha de conexão, o Atlas recupera o ID existente. Se o Hermes declarar resultado desconhecido, a interface exige reconhecimento explícito; não inicia uma tarefa duplicada automaticamente.
+## Documentação
 
-## Verificar
+- [Arquitetura](docs/ARCHITECTURE.md): como as peças se encaixam no Hermes.
+- [Compatibilidade](docs/COMPATIBILITY.md): o que o Atlas usa do Hermes, desde qual versão e como foi verificado.
+- [Ferramentas](docs/TOOLS.md) · [Segurança](docs/SECURITY.md) · [Migrar da 0.6](docs/MIGRATION.md)
+- [Desenvolvimento](docs/DEVELOPMENT.md): compilar, testar e ver os três hosts no navegador.
+- [Histórico de versões](CHANGELOG.md)
 
-```sh
-npm test
-npm run build
-npm audit
-python -m pytest -q
-python scripts/benchmark.py --output docs/benchmark.json
-python -m pip wheel --no-deps --wheel-dir work/wheels .
-python scripts/verify-wheel.py work/wheels
-# Opt-in: envia três pedidos sintéticos ao Hermes configurado e consome o provedor
-python scripts/verify-live.py --base http://127.0.0.1:7331 --output work/live.json
-```
+## Licença
 
-[Arquitetura](docs/ARCHITECTURE.md) · [Validação e medidas](docs/VALIDATION.md) · [Escolha do renderer](docs/GENERATIVE-UI.md)
-
-## Limites explícitos
-
-Esta versão não implementa toda a superfície do Hermes nem paridade com ChatGPT/OpenUI. Não há voz, OCR/PDF/imagens como anexos, colaboração multiusuário, edição/fork do histórico nativo, importação OpenUI Lang/A2UI, HTML/JS arbitrário ou ações externas executadas diretamente por componentes. O modelo e suas ferramentas continuam sujeitos às capacidades e configurações do Hermes.
-
-O backend consome eventos SSE. A tela consulta o estado a cada aproximadamente 450 ms enquanto visível e a cada 3 s quando oculta, inclusive pelo transporte JSON do host. A prévia exibe blocos já validados. Ao concluir, o Atlas valida o documento inteiro e habilita a edição. A galeria com dados de exemplo também funciona offline.
-
-O histórico da versão 0.4 registra o teste em Hermes **0.23.2**. A matriz de compatibilidade depende da versão do host, do perfil e das capacidades ativas no gateway. [Validação histórica da 0.4](docs/0.4.md)
+[MIT](LICENSE) © 2026 sesantanajr. Hermes Agent é um projeto da Nous Research; o Atlas é um
+plugin da comunidade, sem vínculo oficial.
