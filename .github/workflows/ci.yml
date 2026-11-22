@@ -79,7 +79,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          path: hermes-atlas
+          path: atlas-intelligent-ui
 
       - name: Install Hermes Agent
         # The official installer and its latest stable release, as users get it. Hermes refuses to
@@ -92,7 +92,20 @@ jobs:
           hermes --version
 
       - name: hermes plugins validate
-        run: hermes plugins validate ./hermes-atlas
+        run: hermes plugins validate ./atlas-intelligent-ui
 
       - name: hermes plugins doctor
-        run: hermes plugins doctor ./hermes-atlas --ci
+        run: hermes plugins doctor ./atlas-intelligent-ui --ci
+
+      - name: Install, enable and use the plugin as a user does
+        # From this checkout, through Hermes's own install path (clone, install scan, publication),
+        # then the plugin's terminal commands and Hermes's checks by plugin id.
+        run: |
+          hermes plugins install "file://$GITHUB_WORKSPACE/atlas-intelligent-ui" </dev/null
+          hermes plugins enable atlas-intelligent-ui </dev/null
+          hermes plugins list </dev/null | grep -F atlas-intelligent-ui
+          test -d "$HERMES_HOME/plugins/atlas-intelligent-ui"
+          hermes atlas migrate
+          hermes atlas doctor
+          hermes atlas status
+          hermes plugins doctor atlas-intelligent-ui --ci
