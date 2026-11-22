@@ -51,6 +51,8 @@ opções vêm junto sozinhas. [Como migrar](docs/MIGRATION.md#da-10-para-a-11).
 - Bibliotecas novas ficam só com o dono (arquivo 0600, pasta 0700) em sistemas POSIX.
 - O comando de terminal não é mais registrado dentro do processo isolado de plugins, onde o Hermes o
   ignora e registrava um aviso a cada início.
+- O exemplo de variáveis do app independente saiu da raiz (`docs/standalone.env.example`): o Hermes
+  copia todo `*.example` da raiz de um plugin e criava um `.env` solto dentro da pasta dele.
 
 **Nas interfaces (Desktop, Webapp e dashboard):**
 

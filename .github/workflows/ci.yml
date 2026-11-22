@@ -103,8 +103,9 @@ jobs:
         run: |
           hermes plugins install "file://$GITHUB_WORKSPACE/atlas-intelligent-ui" </dev/null
           hermes plugins enable atlas-intelligent-ui </dev/null
-          hermes plugins list </dev/null | grep -F atlas-intelligent-ui
+          COLUMNS=200 hermes plugins list </dev/null | grep -F atlas-intelligent-ui   # wide enough not to truncate the name
           test -d "$HERMES_HOME/plugins/atlas-intelligent-ui"
+          test ! -e "$HERMES_HOME/plugins/atlas-intelligent-ui/.env"   # Hermes copies root *.example files
           hermes atlas migrate
           hermes atlas doctor
           hermes atlas status

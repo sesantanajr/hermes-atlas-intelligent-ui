@@ -86,7 +86,8 @@ WantedBy=multi-user.target
 
 Use o Python do Hermes (ele já tem pydantic, FastAPI e uvicorn) e a pasta do plugin como
 diretório de trabalho. Para abrir de outra máquina, use um túnel SSH até a porta: o app não tem
-login próprio.
+login próprio. As variáveis que o app independente entende estão em
+[`standalone.env.example`](standalone.env.example).
 
 ## Outras ferramentas
 
