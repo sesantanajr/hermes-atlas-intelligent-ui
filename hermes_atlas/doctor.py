@@ -158,7 +158,7 @@ def legacy_findings():
     marker = read_marker(data_dir(create=False))
     if marker.get("error"):
         findings.append(f"copying the library from {marker.get('from')} failed ({marker['error']}); "
-                        "the earlier library is untouched there")
+                        "the earlier library is still there")
     return findings
 
 

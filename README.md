@@ -3,7 +3,7 @@
 # Atlas Intelligent UI
 
 [![Verificações](https://github.com/sesantanajr/hermes-atlas-intelligent-ui/actions/workflows/ci.yml/badge.svg)](https://github.com/sesantanajr/hermes-atlas-intelligent-ui/actions/workflows/ci.yml)
-![Versão](https://img.shields.io/badge/vers%C3%A3o-1.1.0-0b7a5c)
+![Versão](https://img.shields.io/badge/vers%C3%A3o-1.1.1-0b7a5c)
 ![Hermes Agent](https://img.shields.io/badge/Hermes%20Agent-%E2%89%A5%200.21-1f2937)
 ![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-informational)
 
@@ -16,7 +16,7 @@ dashboard web ou como uma página HTML. Na mensagem seguinte, o agente já sabe 
 
 ![Um canvas "Lisboa em 6 dias" dentro de uma resposta no Hermes Desktop, com orçamento, checklist e gastos ajustáveis](docs/screenshots/desktop-conversation.png)
 
-**Versão 1.1.0**: o plugin agora se chama **`atlas-intelligent-ui`** no Hermes. Quem tem a 1.0
+**Versão 1.1.1**: o plugin agora se chama **`atlas-intelligent-ui`** no Hermes. Quem tem a 1.0
 (`hermes-atlas`) reinstala uma vez, e a biblioteca e as opções vêm junto:
 [atualizar da 1.0](#atualizar-da-10). [O que mudou](CHANGELOG.md)
 

@@ -3,6 +3,19 @@
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem
 [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.1.1] - 2026-11-22
+
+### Corrigido
+
+- **App independente com o Python do Hermes.** Quando os pacotes do Hermes eram importáveis mas os
+  módulos de nível superior não (um serviço que roda o Python do Hermes sem o checkout no
+  `sys.path`, como a unidade de exemplo de [Desenvolvimento](docs/DEVELOPMENT.md)), toda chamada à
+  API respondia erro 500. Nesse caso o Atlas usa as variáveis de ambiente; a recusa do Hermes em ler
+  um segredo sem escopo, sob multiplexação, continua valendo.
+- `hermes atlas migrate` e a documentação descreviam a pasta antiga como intocada. Ela não é
+  apagada, mas uma biblioteca ainda no formato da 0.6 recebe antes, no lugar, a mesma atualização de
+  formato que a 1.0 faria, que é o que mantém o dono dos canvases e das conversas.
+
 ## [1.1.0] - 2026-11-22
 
 O plugin passa a se chamar **`atlas-intelligent-ui`**: `hermes plugins doctor atlas-intelligent-ui`,
@@ -18,7 +31,8 @@ opções vêm junto sozinhas. [Como migrar](docs/MIGRATION.md#da-10-para-a-11).
   toolset `atlas`, `/atlas` e `hermes atlas` não mudaram.
 - **Migração automática da biblioteca.** Na primeira vez que a 1.1 abre a biblioteca num perfil,
   ela copia `plugin-data/hermes-atlas/atlas.db` com a cópia nativa do SQLite, sob uma trava entre
-  processos e com troca atômica. A pasta antiga nunca é alterada nem apagada. Até a cópia,
+  processos e com troca atômica. A pasta antiga não é apagada; uma biblioteca ainda no formato
+  da 0.6 recebe antes, no lugar, a mesma atualização de formato que a 1.0 faria. Até a cópia,
   gancho e diagnóstico leem a biblioteca antiga.
 - **Opções herdadas.** Uma opção que só existe na entrada `hermes-atlas` vale na 1.1 e é gravada
   uma vez na entrada nova, para sobreviver a `hermes plugins remove hermes-atlas`.

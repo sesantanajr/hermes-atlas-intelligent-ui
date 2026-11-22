@@ -99,7 +99,7 @@ def test_an_unreadable_earlier_library_starts_empty_and_is_reported(isolated_her
     assert ctx.call("atlas_list")["canvases"] == []
     current = plugin_data(isolated_hermes_home) / PLUGIN_NAME
     assert "error" in migration.read_marker(current)
-    assert any("failed" in finding and "untouched" in finding for finding in doctor.legacy_findings())
+    assert any("failed" in finding and "still there" in finding for finding in doctor.legacy_findings())
 
 
 def test_a_lock_left_by_a_crashed_copy_does_not_block_forever(isolated_hermes_home, monkeypatch):
@@ -271,6 +271,40 @@ def test_pruning_exports_tolerates_files_removed_meanwhile(tmp_path, monkeypatch
         patch.setattr(type(tmp_path), "stat", vanishing)
         tools._prune(tmp_path)
     assert len([p for p in tmp_path.iterdir() if p.suffix == ".html"]) == 2
+
+
+def secret_scope(monkeypatch, get_secret):
+    agent = types.ModuleType("agent")
+    module = types.ModuleType("agent.secret_scope")
+    module.get_secret = get_secret
+    agent.secret_scope = module
+    monkeypatch.setitem(sys.modules, "agent", agent)
+    monkeypatch.setitem(sys.modules, "agent.secret_scope", module)
+
+
+def test_settings_survive_a_partly_importable_hermes(monkeypatch):
+    """Hermes's Python with its packages but not its top-level modules (a service started without
+    the checkout on sys.path): get_secret itself fails to import hermes_scope."""
+    def broken(name, default=None):
+        raise ModuleNotFoundError("No module named 'hermes_scope'")
+    secret_scope(monkeypatch, broken)
+    monkeypatch.setenv("ATLAS_HERMES_URL", "http://127.0.0.1:9999/v1")
+    assert runtime.setting("ATLAS_HERMES_URL") == "http://127.0.0.1:9999/v1"
+    assert runtime.gateway_url().endswith(":9999/v1")
+
+
+def test_the_secret_scope_refusal_is_never_bypassed(monkeypatch):
+    """Under multiplexing Hermes refuses to read a secret without a scope; falling back to the
+    process environment there could read another profile's key."""
+    class UnscopedSecretError(RuntimeError):
+        pass
+
+    def refuse(name, default=None):
+        raise UnscopedSecretError(name)
+    secret_scope(monkeypatch, refuse)
+    monkeypatch.setenv("API_SERVER_KEY", "another-profile")
+    with pytest.raises(UnscopedSecretError):
+        runtime.setting("API_SERVER_KEY")
 
 
 def test_the_standalone_app_reads_the_api_key_where_hermes_keeps_it(isolated_hermes_home, monkeypatch):

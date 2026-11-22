@@ -17,7 +17,9 @@ O que vem junto sozinho:
 - **A biblioteca.** `hermes plugins remove` não apaga `plugin-data/`. Na primeira vez que a 1.1 abre
   a biblioteca num perfil, ela copia `plugin-data/hermes-atlas/atlas.db` para
   `plugin-data/atlas-intelligent-ui/` (cópia nativa do SQLite, com trava entre processos). A pasta
-  antiga nunca é alterada nem apagada; apague-a quando quiser.
+  antiga não é apagada (apague-a quando quiser). Se a biblioteca ainda estiver no formato da
+  0.6, ela recebe antes, no lugar, a mesma atualização de formato que a 1.0 faria na primeira
+  abertura: é isso que mantém seus canvases e conversas com o mesmo dono.
 - **As opções**, enquanto a entrada `hermes-atlas` existir em `config.yaml`: valem na 1.1 e são
   gravadas na entrada nova. `hermes plugins remove hermes-atlas` apaga essa entrada, então a ordem
   importa se você mudou alguma opção (veja abaixo).

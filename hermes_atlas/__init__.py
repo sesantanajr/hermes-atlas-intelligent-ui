@@ -12,7 +12,7 @@ Layers, from the inside out:
 Importing this package has no side effects and pulls in nothing beyond the standard library.
 """
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 # The plugin id Hermes knows Atlas by: plugin directory, config entry, data folder, API route,
 # Desktop extension and skill namespace all use it.

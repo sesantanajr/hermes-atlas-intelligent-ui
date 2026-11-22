@@ -1,7 +1,7 @@
 ---
 name: canvas
 description: "Answer with an interactive Atlas canvas (charts, tables, forms, checklists, maps, boards, calculators) when a reply is easier to explore than to read. Covers when to use one, how to build, show and update it."
-version: 1.1.0
+version: 1.1.1
 author: sesantanajr
 license: MIT
 metadata:

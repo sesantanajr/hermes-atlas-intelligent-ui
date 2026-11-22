@@ -3,7 +3,7 @@
 # Atlas Intelligent UI
 
 [![Checks](https://github.com/sesantanajr/hermes-atlas-intelligent-ui/actions/workflows/ci.yml/badge.svg)](https://github.com/sesantanajr/hermes-atlas-intelligent-ui/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/version-1.1.0-0b7a5c)
+![Version](https://img.shields.io/badge/version-1.1.1-0b7a5c)
 ![Hermes Agent](https://img.shields.io/badge/Hermes%20Agent-%E2%89%A5%200.21-1f2937)
 ![MIT licence](https://img.shields.io/badge/licence-MIT-informational)
 
@@ -16,7 +16,7 @@ web dashboard, or as an HTML page. On your next message, the agent already knows
 
 ![A "Lisbon in 6 days" canvas inside a Hermes Desktop reply, with a budget, a checklist and adjustable spending](docs/screenshots/desktop-conversation-en.png)
 
-**Version 1.1.0**: in Hermes the plugin is now called **`atlas-intelligent-ui`**. If you have 1.0
+**Version 1.1.1**: in Hermes the plugin is now called **`atlas-intelligent-ui`**. If you have 1.0
 (`hermes-atlas`), reinstall once; your library and settings come along:
 [upgrading from 1.0](#upgrading-from-10). [What changed](CHANGELOG.md)
 

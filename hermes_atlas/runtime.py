@@ -39,7 +39,13 @@ def setting(name: str, default: str = "") -> str:
         from agent.secret_scope import get_secret
     except ImportError:
         return os.environ.get(name, default)
-    return get_secret(name) or default
+    try:
+        return get_secret(name) or default
+    except ImportError:
+        # Hermes's packages are importable but not its top-level modules (a service running Hermes's
+        # Python without its checkout on sys.path): not a Hermes process, so no secret scope applies.
+        # Any other error, such as the refusal to read without a scope under multiplexing, propagates.
+        return os.environ.get(name, default)
 
 
 def profile_home() -> Path:
