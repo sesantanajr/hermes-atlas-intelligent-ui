@@ -1,6 +1,6 @@
 {
   "name": "hermes-atlas-intelligent-ui",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Front end of Hermes Atlas: the canvas renderer and its hosts (Hermes dashboard, Hermes Desktop, standalone app, exported page)",
   "license": "MIT",

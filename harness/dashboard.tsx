@@ -27,7 +27,7 @@ window.__HERMES_PLUGIN_SDK__ = {
 
 window.__HERMES_PLUGINS__ = {
   register(name, Component) {
-    if (name !== "hermes-atlas") throw new Error(`registered as ${name}, expected hermes-atlas`);
+    if (name !== "atlas-intelligent-ui") throw new Error(`registered as ${name}, expected atlas-intelligent-ui`);
     createRoot(document.getElementById("root")!).render(
       <div className="dashboard-page">
         <header>Hermes · Atlas</header>

@@ -14,19 +14,19 @@
  * release that has the plugin loader and simply offers less on older ones.
  */
 import * as sdk from "@hermes/plugin-sdk";
-import React, { useMemo } from "react";
+import React, { useMemo, useReducer } from "react";
 import "../theme";
 import { App } from "../app/App";
-import { detectLocale, serverText, setLocale, t } from "../i18n";
+import { detectLocale, setLocale, t } from "../i18n";
 import type { Transport } from "../types";
-import { ApiError, type Api, createClient } from "./client";
+import { type Api, createClient, hostError } from "./client";
 import { requestCanvas, type Host } from "./context";
 import { declareFeatures, sayHello } from "./hello";
 import { InlineCanvas, announceCanvasChange } from "./InlineCanvas";
 
 declare const ATLAS_STYLES: string;
 
-const PLUGIN_ID = "hermes-atlas";
+const PLUGIN_ID = "atlas-intelligent-ui";
 /** The Atlas tools whose result names a canvas page: their files become the live canvas. */
 const CANVAS_TOOLS = ["atlas_render", "atlas_update"];
 const ROUTE = "/atlas";
@@ -42,19 +42,27 @@ function useAtom<T>(atom: sdk.Atom<T> | undefined, fallback: T): T {
 
 const epoch = () => sdk.gatewayActivationEpoch?.() ?? 0;
 
-function asApiError(error: unknown): ApiError {
-  const message = error instanceof Error ? error.message : String(error);
-  const known = (error as { status?: unknown })?.status;
-  const status =
-    typeof known === "number" ? known : Number(/\b([45]\d\d)\b/.exec(message)?.[1] ?? 0);
-  return new ApiError(serverText(message), status);
+/**
+ * Re-render on every activation of a gateway route, same-profile source swaps included, on hosts
+ * that export the hook. It either exists for the life of the page or never does, so the hook order
+ * is stable.
+ */
+function useActivation() {
+  sdk.useGatewayActivationEpoch?.();
 }
 
-/** `ctx.rest` as an Atlas transport, refusing answers that belong to a connection since replaced. */
-function restTransport(ctx: Context, startedAt: number): Transport {
+/**
+ * `ctx.rest` as an Atlas transport, refusing answers that belong to a connection since replaced.
+ * `onStale` hears of the replacement, for a page that can rebuild itself on the new connection.
+ */
+function restTransport(ctx: Context, startedAt: number, onStale?: () => void): Transport {
+  const replaced = () => {
+    if (epoch() === startedAt) return false;
+    onStale?.();
+    return true;
+  };
   return async (path, init) => {
-    if (epoch() !== startedAt)
-      throw new Error(t("A conexão do Desktop mudou. Reabra o Atlas."));
+    if (replaced()) throw new Error(t("A conexão do Desktop mudou. Reabra o Atlas."));
     // ctx.rest sets no headers: the workspace check travels as a query parameter instead.
     const scope = new Headers(init?.headers).get("X-Atlas-Workspace");
     const query = scope
@@ -68,16 +76,33 @@ function restTransport(ctx: Context, startedAt: number): Transport {
         timeoutMs: 30000,
       });
     } catch (error) {
-      throw asApiError(error);
+      throw hostError(error);
     }
-    if (epoch() !== startedAt)
-      throw new Error(t("Resposta descartada porque a conexão mudou."));
+    if (replaced()) throw new Error(t("Resposta descartada porque a conexão mudou."));
     return result;
   };
 }
 
-function desktopHost(sessionId: string | null): Host {
+/** Send `text` to a chat session as the person's turn. */
+async function submitTo(sessionId: string, text: string) {
+  // The chat's composer, when it is on screen: the turn then follows its steer and queue rules.
+  // Desktop answers only through a visible composer, and on the Atlas page the chat is not one.
+  let sent = false;
+  try {
+    sent = !!sdk.host?.composer?.submit?.(sessionId, text);
+  } catch {
+    sent = false;
+  }
+  if (sent) return;
+  // The gateway call the composer wraps, which needs no composer on screen.
+  if (!sdk.host?.request) throw new Error(t("Ative a sessão e o perfil de destino antes de enviar."));
+  await sdk.host.request("prompt.submit", { session_id: sessionId, text });
+}
+
+function desktopHost(ctx: Context, sessionId: string | null): Host {
   const composer = sdk.host?.composer;
+  const clipboard = ctx.os?.writeClipboard;
+  const canSend = !!(composer?.submit || sdk.host?.request);
   return {
     kind: "desktop",
     insertIntoChat: async (text, target) => {
@@ -87,40 +112,43 @@ function desktopHost(sessionId: string | null): Host {
       if (taken) composer.focus?.(address);
       return !!taken;
     },
-    native: {
-      sessionId,
-      send: async (text) => {
-        if (!sessionId) throw new Error(t("Abra uma conversa no Hermes antes de enviar."));
-        if (composer?.submit) {
-          if (!composer.submit(sessionId, text))
-            throw new Error(t("Ative a sessão e o perfil de destino antes de enviar."));
-          return;
+    native: canSend
+      ? {
+          sessionId,
+          send: async (text) => {
+            if (!sessionId) throw new Error(t("Abra uma conversa no Hermes antes de enviar."));
+            await submitTo(sessionId, text);
+          },
         }
-        // Desktop releases before the composer API: the gateway call it wraps.
-        if (!sdk.host?.request) throw new Error(t("Este Desktop não permite enviar à sessão."));
-        await sdk.host.request("prompt.submit", { session_id: sessionId, text });
-      },
-    },
+      : undefined,
     openWorkspace: (id, revision) => {
       requestCanvas({ id, revision });
       sdk.host?.navigate?.(ROUTE);
     },
     notify: (message, kind = "info") => sdk.host?.notify?.({ kind, message }),
+    writeClipboard: clipboard ? (text) => clipboard(text) : undefined,
   };
 }
 
 function DesktopAtlas({ ctx }: { ctx: Context }) {
   const profile = useAtom(sdk.host?.state?.profile, "");
-  const connection = useAtom(sdk.host?.state?.gateway, "");
+  // Which backend: the registry source of the active route (newer hosts). `state.gateway` is the
+  // WebSocket's state ('connecting', 'open', …): a reconnect is still the same library.
+  const connection = useAtom(sdk.host?.state?.connectionId, null);
   const sessionId = useAtom(sdk.host?.state?.focusedSessionId, null);
+  useActivation();
+  // Hosts without the activation hook: rebuild as soon as a request notices the replacement.
+  const [, rebuild] = useReducer((n: number) => n + 1, 0);
   const startedAt = epoch();
   const transport = useMemo(
-    () => restTransport(ctx, startedAt),
-    // A new profile or gateway is a different library: rebuild the transport with it.
+    () => restTransport(ctx, startedAt, rebuild),
+    // A new profile, source or route activation is a different library: rebuild the transport.
     [ctx, startedAt, profile, connection],
   );
-  const host = useMemo(() => desktopHost(sessionId), [sessionId]);
-  return <App key={`${profile}:${startedAt}`} transport={transport} host={host} />;
+  const host = useMemo(() => desktopHost(ctx, sessionId), [ctx, sessionId]);
+  return (
+    <App key={`${connection ?? ""}|${profile}|${startedAt}`} transport={transport} host={host} />
+  );
 }
 
 const clients = new WeakMap<Context, { api: Api; startedAt: number }>();
@@ -139,9 +167,10 @@ function DirectiveCanvas({
   sessionId,
   streaming,
 }: sdk.TranscriptDirectiveProps & { ctx: Context }) {
+  useActivation(); // a new route activation hands the card a client on the new connection
   const id = attrs.id ?? "";
   const api = inlineApi(ctx);
-  const host = useMemo(() => desktopHost(sessionId ?? null), [sessionId]);
+  const host = useMemo(() => desktopHost(ctx, sessionId ?? null), [ctx, sessionId]);
   // Attributes are model output: draw nothing rather than guess at a malformed reference.
   if (!CANVAS_ID.test(id)) return null;
   const revision = /^[1-9]\d{0,8}$/.test(attrs.rev ?? "") ? Number(attrs.rev) : undefined;
@@ -184,9 +213,10 @@ function FileCanvas({
   sessionId,
   fallback,
 }: sdk.ToolMediaRendererProps & { ctx: Context }) {
+  useActivation();
   const target = canvasOfResult(result);
   const api = inlineApi(ctx);
-  const host = useMemo(() => desktopHost(sessionId ?? null), [sessionId]);
+  const host = useMemo(() => desktopHost(ctx, sessionId ?? null), [ctx, sessionId]);
   // Anything this is not sure about keeps Desktop's own file card.
   if (!target) return <>{fallback}</>;
   sayHello(api, "desktop");
@@ -198,20 +228,27 @@ function FileCanvas({
       api={api}
       host={host}
       sessionId={sessionId}
+      // The page itself still opens from Desktop's card when the Atlas backend cannot answer.
+      fallback={fallback}
     />
   );
 }
 
+/** The revision a backend event names, when it names a valid one. */
+const savedRevision = (value: unknown) =>
+  typeof value === "number" && Number.isInteger(value) && value > 0 ? value : undefined;
+
 export default {
-  // Must equal the folder Hermes Desktop loads it from (desktop-plugins/hermes-atlas).
-  id: "hermes-atlas",
+  // Equal to the dashboard manifest's `name` (the backend route `ctx.rest` reaches) and to the
+  // folder Hermes installs the package in (desktop-plugins/atlas-intelligent-ui).
+  id: PLUGIN_ID,
   name: "Hermes Atlas",
   description:
     "Interactive canvases from your agent: inline in the conversation, plus a library and block catalogue.",
   register(ctx: Context) {
     setLocale(detectLocale());
     const style = document.createElement("style");
-    style.dataset.hermesAtlas = "true";
+    style.dataset.atlasIntelligentUi = "true";
     style.textContent = ATLAS_STYLES;
     document.head.appendChild(style);
     ctx.onDispose(() => style.remove());
@@ -259,7 +296,8 @@ export default {
     // The backend announces saves and deletions; inline canvases refresh without polling.
     for (const event of ["canvas.saved", "canvas.deleted"])
       ctx.onEvent?.(`plugin.${PLUGIN_ID}.${event}`, ({ payload }) => {
-        if (typeof payload?.id === "string") announceCanvasChange(payload.id);
+        if (typeof payload?.id === "string")
+          announceCanvasChange(payload.id, savedRevision(payload.revision));
       });
     // Desktop keeps <html lang> in step with its language setting: follow a switch at runtime.
     if (typeof MutationObserver !== "undefined") {

@@ -68,7 +68,7 @@ def test_shared_data_dir_isolates_profiles_and_gateways(tmp_path, monkeypatch):
 
 def test_v02_owner_survives_migration_and_key_change(tmp_path, monkeypatch):
     home = tmp_path / "home"
-    path = home / "plugin-data" / "hermes-atlas" / "atlas.db"
+    path = home / "plugin-data" / "atlas-intelligent-ui" / "atlas.db"
     monkeypatch.setenv("HERMES_HOME", str(home))
     monkeypatch.delenv("ATLAS_DATA_DIR", raising=False)
     monkeypatch.delenv("ATLAS_HERMES_URL", raising=False)
@@ -90,7 +90,7 @@ def test_v02_owner_survives_migration_and_key_change(tmp_path, monkeypatch):
 ])
 def test_v02_plugin_tool_only_library(tmp_path, monkeypatch, override_dir, explicit_gateway, visible):
     home = tmp_path / "profiles" / "native"
-    path = home / "plugin-data" / "hermes-atlas" / "atlas.db"
+    path = home / "plugin-data" / "atlas-intelligent-ui" / "atlas.db"
     monkeypatch.setenv("HERMES_HOME", str(home))
     monkeypatch.delenv("ATLAS_DATA_DIR", raising=False)
     monkeypatch.delenv("ATLAS_HERMES_URL", raising=False)

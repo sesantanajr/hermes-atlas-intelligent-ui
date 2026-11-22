@@ -16,6 +16,13 @@ from .messages import text
 NAME = "atlas"
 HELP = "Atlas canvases: library, export, standalone app and diagnostics"
 DEFAULT_PORT = 7331
+# The PluginContext of the running Hermes, bound by register(ctx); None for ``python -m hermes_atlas``.
+_context = None
+
+
+def bind(ctx):
+    global _context
+    _context = ctx
 
 
 def setup(parser):
@@ -38,13 +45,39 @@ def setup(parser):
     doctor = commands.add_parser("doctor", help="Check this Atlas installation")
     doctor.add_argument("--live", action="store_true", help="Also contact the Hermes API server")
     doctor.add_argument("--json", action="store_true", help="Machine-readable report")
+    commands.add_parser("migrate", help="Copy the library and settings of the earlier hermes-atlas install now")
     parser.set_defaults(func=handle)
     return parser
 
 
+def _migrate(locale):
+    """Do now what 1.1 otherwise does on first use, and say what is left of the earlier install."""
+    from .. import doctor
+    from ..runtime import data_dir
+    from ..storage.migration import read_marker
+    from ..storage.store import Store
+    from .settings import carry_over
+    store = Store()  # opening the library copies the earlier one when this profile has none yet
+    folder = data_dir()
+    marker = read_marker(folder)
+    if marker.get("error"):
+        print(text(locale, "migrate_failed", path=marker.get("from", ""), error=marker["error"]))
+    elif marker:
+        print(text(locale, "migrate_copied", path=marker.get("from", ""), canvases=store.stats()["canvases"]))
+    else:
+        print(text(locale, "migrate_nothing", path=folder))
+    keys = carry_over(_context)
+    print(text(locale, "migrate_settings", keys=", ".join(keys)) if keys else text(locale, "migrate_no_settings"))
+    left = doctor.legacy_findings()
+    for finding in left:
+        print(f"  - {finding}")
+    print(text(locale, "migrate_next") if left else text(locale, "migrate_done"))
+    return 1 if marker.get("error") else 0
+
+
 def _locale():
     from .settings import Settings
-    return resolve_locale(Settings().locale)
+    return resolve_locale(Settings(_context).locale)
 
 
 def _serve(port, locale):
@@ -108,6 +141,8 @@ def dispatch(args):
         return _doctor(args, locale)
     if command == "export":
         return _export(args, locale)
+    if command == "migrate":
+        return _migrate(locale)
     from . import commands
     if command == "list":
         print(commands.run("list " + " ".join(args.query), platform="cli", locale=locale))
@@ -127,12 +162,13 @@ def handle(args):
 
 
 def main(argv=None):
-    """``python -m hermes_atlas`` and the ``hermes-atlas`` console script."""
+    """``python -m hermes_atlas`` and the ``atlas-intelligent-ui`` console script of the standalone wheel."""
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             try:
                 stream.reconfigure(encoding="utf-8", errors="replace")  # canvas text is not always in the console's codepage
             except (OSError, ValueError):
                 pass
-    parser = setup(argparse.ArgumentParser(prog="hermes-atlas", description=f"Hermes Atlas {__version__}. " + HELP))
+    parser = setup(argparse.ArgumentParser(prog="atlas-intelligent-ui",
+                                           description=f"Atlas Intelligent UI {__version__}. " + HELP))
     return dispatch(parser.parse_args(argv))

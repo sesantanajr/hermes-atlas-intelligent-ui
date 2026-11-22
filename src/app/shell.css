@@ -462,6 +462,28 @@
   display: flex;
   gap: 2px;
 }
+.atlas-shell .chat-rename {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.atlas-shell .chat-rename input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 9px;
+  border: 1px solid var(--atlas-line-strong);
+  border-radius: var(--atlas-radius-sm);
+  background: var(--atlas-surface);
+  color: inherit;
+  font: inherit;
+  font-size: 15px;
+}
+.atlas-shell .chat-rename input:focus-visible {
+  outline: 2px solid var(--atlas-focus);
+  outline-offset: 1px;
+}
 .atlas-shell .message {
   display: flex;
   gap: 12px;

@@ -391,6 +391,36 @@ it("includes selected attachments in submissions to the focused Desktop chat", a
   expect(screen.queryByRole("button", { name: "teste.txt" })).toBeNull();
 });
 
+it("renames a conversation in place, without the browser's prompt (Hermes Desktop has none)", async () => {
+  const patches: unknown[] = [];
+  const transport = gateway(async (path, init) => {
+    if (path === "/conversations/A" && init?.method === "PATCH") {
+      patches.push(JSON.parse(String(init.body)));
+      return { id: "A", title: "Viagem a Lisboa", messages: [] };
+    }
+  });
+  const prompt = vi.spyOn(window, "prompt");
+  render(<App transport={transport} />);
+  await screen.findByRole("button", { name: "Conversa A" });
+  await click("Conversa A");
+  await click("Renomear conversa");
+  const field = screen.getByRole("textbox", { name: "Nome da conversa" }) as HTMLInputElement;
+  expect(field.value).toBe("Aberta");
+  fireEvent.change(field, { target: { value: "  Viagem a Lisboa  " } });
+  await act(async () => {
+    fireEvent.submit(field.closest("form")!);
+  });
+  expect(patches).toEqual([{ title: "Viagem a Lisboa" }]);
+  expect(screen.getByText("Viagem a Lisboa")).toBeTruthy();
+  // Escape keeps the name.
+  await click("Renomear conversa");
+  fireEvent.keyDown(screen.getByRole("textbox", { name: "Nome da conversa" }), { key: "Escape" });
+  expect(screen.queryByRole("textbox", { name: "Nome da conversa" })).toBeNull();
+  expect(patches).toHaveLength(1);
+  expect(prompt).not.toHaveBeenCalled();
+  prompt.mockRestore();
+});
+
 it("queries the server for titles beyond the first page and ends pagination on the last match", async () => {
   const calls: string[] = [];
   const transport = gateway(async (path) => {

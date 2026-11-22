@@ -10,9 +10,18 @@ import sys
 from pathlib import Path
 from urllib.parse import quote
 
-from . import PLUGIN_NAME
+from . import LEGACY_PLUGIN_NAMES, PLUGIN_NAME
 
 DEFAULT_GATEWAY = "http://127.0.0.1:8642"
+
+# Set by ``hermes atlas serve``. Only that process may read the API server key from the profile's
+# dotenv file: inside Hermes the key comes through the profile's secret scope instead.
+_standalone = False
+
+
+def mark_standalone() -> None:
+    global _standalone
+    _standalone = True
 
 
 def inside_hermes() -> bool:
@@ -61,25 +70,76 @@ def gateway_url(home: Path | None = None) -> str:
     return setting("ATLAS_HERMES_URL", DEFAULT_GATEWAY + prefix + "/v1").rstrip("/")
 
 
-def data_dir(create: bool = True) -> Path:
-    """``<hermes home>/plugin-data/hermes-atlas`` (or ``ATLAS_DATA_DIR``), created on first use.
+def api_server_key() -> str:
+    """Bearer key for the Hermes API server: ``ATLAS_HERMES_API_KEY``, else Hermes's own
+    ``API_SERVER_KEY``. The standalone app also looks in the profile's dotenv file, where Hermes
+    keeps it, so a service needs no copy of the secret in its own environment."""
+    key = setting("ATLAS_HERMES_API_KEY") or setting("API_SERVER_KEY")
+    if key or not _standalone:
+        return key
+    return profile_dotenv_value("API_SERVER_KEY")
 
-    ``create=False`` only computes the path: hooks that run on every turn use it to stay out of
-    the file system for people who have never opened Atlas.
+
+def profile_dotenv_value(name: str) -> str:
+    """One value of the profile's dotenv file: ``NAME=value``, quoted or not, optionally ``export``-ed."""
+    path = profile_home() / ".env"
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError):
+        return ""
+    prefix = name + "="
+    for line in lines:
+        line = line.strip()
+        if line.startswith("export "):
+            line = line[len("export "):].lstrip()
+        if not line.startswith(prefix):
+            continue
+        value = line[len(prefix):].strip()
+        if value[:1] in ("'", '"'):
+            end = value.find(value[0], 1)
+            return value[1:end] if end > 0 else value[1:]
+        return value.split(" #", 1)[0].strip()
+    return ""
+
+
+def legacy_library(root: Path) -> Path | None:
+    """The ``atlas.db`` that an install under an earlier plugin name left beside *root*, if any."""
+    for name in LEGACY_PLUGIN_NAMES:
+        candidate = root.parent / name / "atlas.db"
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def data_dir(create: bool = True) -> Path:
+    """``<hermes home>/plugin-data/atlas-intelligent-ui`` (or ``ATLAS_DATA_DIR``), created on first use.
+
+    The first call with ``create=True`` in a profile copies the library an earlier release left in
+    ``plugin-data/hermes-atlas`` (see ``storage/migration.py``). ``create=False`` only computes the
+    path and never writes: hooks that run on every turn and the doctor use it. Until that copy has
+    happened it answers with the earlier folder, so they read the canvases the user actually has.
     """
     explicit = os.environ.get("ATLAS_DATA_DIR", "").strip()
     if explicit:
         root = Path(explicit).expanduser()
-    elif create:
-        try:
-            from plugins.plugin_storage import plugin_data_dir
-            return Path(plugin_data_dir(PLUGIN_NAME))
-        except ImportError:
-            root = profile_home() / "plugin-data" / PLUGIN_NAME
-    else:
+        if create:
+            root.mkdir(parents=True, exist_ok=True)
+        return root
+    if not create:
         root = profile_home() / "plugin-data" / PLUGIN_NAME
-    if create:
+        if not (root / "atlas.db").exists():
+            earlier = legacy_library(root)
+            if earlier is not None:
+                return earlier.parent
+        return root
+    try:
+        from plugins.plugin_storage import plugin_data_dir
+        root = Path(plugin_data_dir(PLUGIN_NAME))
+    except ImportError:
+        root = profile_home() / "plugin-data" / PLUGIN_NAME
         root.mkdir(parents=True, exist_ok=True)
+    from .storage.migration import adopt_legacy_library
+    adopt_legacy_library(root)
     return root
 
 

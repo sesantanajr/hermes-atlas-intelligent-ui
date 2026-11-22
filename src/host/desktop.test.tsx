@@ -6,7 +6,7 @@ import type { Contribution, GatewayEvent, PluginContext, TranscriptDirectiveProp
 import { setLocale } from "../i18n";
 import type { Canvas } from "../types";
 import plugin from "./desktop";
-import { composerCalls, resetHost, setHost } from "./testing/plugin-sdk";
+import { composerCalls, resetHost, setHost, state } from "./testing/plugin-sdk";
 
 const form: Canvas = {
   id: "canvas-plan",
@@ -54,34 +54,58 @@ function desktop(rest: (path: string, options?: { method?: string; body?: unknow
   return { ctx, contributions, disposers, listeners, requests };
 }
 
+/** How Hermes Desktop rejects a `ctx.rest` call the backend answered with an HTTP error. */
+const httpError = (status: number, detail: string) =>
+  new Error(`Error invoking remote method 'hermes:api': Error: ${status}: ${JSON.stringify({ detail })}`);
+
 const library = (path: string) => {
   if (path.startsWith("/clients/")) return { kind: "desktop", locale: "auto" };
   if (path.startsWith("/canvases/canvas-plan/draft")) return null;
   if (path.startsWith("/canvases/canvas-plan"))
     return { id: "canvas-plan", revision: 2, updated: "x", canvas: form };
-  return new Error("HTTP 404 Not Found");
+  return httpError(404, "Canvas não encontrado.");
+};
+
+/** The backend the Atlas page boots against, on top of the library. */
+const workspace = (path: string) => {
+  if (path.startsWith("/status")) return { connected: true, scope: "profile-A", features: {} };
+  if (path.startsWith("/workspace")) return { theme: "light", chat_id: null, canvas: null, revision: 0 };
+  if (path.startsWith("/conversations?") || path.startsWith("/canvases?")) return [];
+  return library(path);
 };
 
 function directive(contributions: Contribution[]) {
-  const entry = contributions.find((c) => c.area === "transcript.directive");
+  const entry = contributions.find((c) => c.area === "transcript.directives");
   return entry?.data as { name: string; render: (props: TranscriptDirectiveProps) => React.ReactNode } | undefined;
+}
+
+/** Mount the Atlas page the way Desktop mounts a route contribution. */
+async function openPage(rest: Parameters<typeof desktop>[0] = workspace) {
+  const harness = desktop(rest);
+  plugin.register(harness.ctx);
+  const page = harness.contributions.find((c) => c.id === "page")!;
+  render(<>{page.render!()}</>);
+  const boots = () => harness.requests.filter((r) => r.path.startsWith("/workspace")).length;
+  await waitFor(() => expect(boots()).toBe(1));
+  return { ...harness, boots };
 }
 
 beforeEach(() => {
   resetHost();
   document.documentElement.lang = "pt-BR";
+  window.matchMedia = vi.fn().mockReturnValue({ matches: false }) as unknown as typeof window.matchMedia;
 });
 afterEach(() => {
   cleanup();
   registrations.splice(0).forEach((disposers) => disposers.splice(0).forEach((fn) => fn()));
   setLocale("pt-BR");
   document.documentElement.lang = "";
-  document.head.querySelectorAll("style[data-hermes-atlas]").forEach((node) => node.remove());
+  document.head.querySelectorAll("style[data-atlas-intelligent-ui]").forEach((node) => node.remove());
 });
 
 describe("Hermes Desktop extension", () => {
   it("is the module the Desktop loader expects", () => {
-    expect(plugin.id).toBe("hermes-atlas"); // the folder name under desktop-plugins/
+    expect(plugin.id).toBe("atlas-intelligent-ui"); // the folder name under desktop-plugins/
     expect(plugin.name).toBe("Hermes Atlas");
     expect(typeof plugin.register).toBe("function");
   });
@@ -93,7 +117,7 @@ describe("Hermes Desktop extension", () => {
       ["page", "routes"],
       ["navigation", "sidebar.nav"],
       ["canvas-file", "transcript.toolMedia"],
-      ["canvas", "transcript.directive"],
+      ["canvas", "transcript.directives"],
     ]);
     // Only the tools whose result names a canvas page; Desktop refuses claims on other tools.
     expect((contributions[2].data as { tools: string[] }).tools).toEqual(["atlas_render", "atlas_update"]);
@@ -101,17 +125,17 @@ describe("Hermes Desktop extension", () => {
     expect(contributions[1].data).toMatchObject({ path: "/atlas", label: "Atlas" });
     expect(directive(contributions)?.name).toBe("atlas");
     expect([...listeners.keys()]).toEqual([
-      "plugin.hermes-atlas.canvas.saved",
-      "plugin.hermes-atlas.canvas.deleted",
+      "plugin.atlas-intelligent-ui.canvas.saved",
+      "plugin.atlas-intelligent-ui.canvas.deleted",
     ]);
     // The backend learns what this Desktop can draw, so the tools pick the best way to show a canvas.
     await waitFor(() => expect(requests.some((r) => r.path === "/clients/desktop" && r.method === "POST")).toBe(true));
     const hello = requests.find((r) => r.path === "/clients/desktop")!;
     expect(hello.body).toMatchObject({ features: ["directive", "tool_media"] });
     // The stylesheet is injected (the host loads no CSS file) and removed on dispose.
-    expect(document.head.querySelectorAll("style[data-hermes-atlas]").length).toBe(1);
+    expect(document.head.querySelectorAll("style[data-atlas-intelligent-ui]").length).toBe(1);
     disposers.splice(0).forEach((fn) => fn());
-    expect(document.head.querySelectorAll("style[data-hermes-atlas]").length).toBe(0);
+    expect(document.head.querySelectorAll("style[data-atlas-intelligent-ui]").length).toBe(0);
   });
 
   it("still loads on a Desktop without transcript directives or media renderers", () => {
@@ -134,7 +158,7 @@ describe("Hermes Desktop extension", () => {
     const media = contributions.find((c) => c.area === "transcript.toolMedia")!.data as {
       render: (props: unknown) => React.ReactNode;
     };
-    const file = { path: "/home/u/.hermes/plugin-data/hermes-atlas/exports/plano-v2.html", name: "plano-v2.html",
+    const file = { path: "/home/u/.hermes/plugin-data/atlas-intelligent-ui/exports/plano-v2.html", name: "plano-v2.html",
       kind: "file", mime: "text/html", resolveUrl: async () => "data:text/html," };
     const props = (result: unknown) => ({ file, toolName: "atlas_render", toolCallId: "call-1", args: {}, result,
       sessionId: "session-1", fallback: <p>Desktop file card</p> });
@@ -198,17 +222,109 @@ describe("Hermes Desktop extension", () => {
     await screen.findByRole("heading", { name: "Plano da semana" });
     const loads = () => requests.filter((r) => r.path === "/canvases/canvas-plan").length;
     const before = loads();
-    act(() => listeners.get("plugin.hermes-atlas.canvas.saved")!({ type: "x", payload: { id: "canvas-plan" } }));
+    act(() => listeners.get("plugin.atlas-intelligent-ui.canvas.saved")!({ type: "x", payload: { id: "canvas-plan" } }));
     await waitFor(() => expect(loads()).toBe(before + 1));
   });
 
-  it("reports a missing canvas from the HTTP status in the host's error", async () => {
-    const { ctx, contributions } = desktop((path) =>
-      path.startsWith("/clients/") ? {} : new Error("Request failed with HTTP 404"),
-    );
+  it("calls a canvas deleted only when the Atlas server says so", async () => {
+    let answer = httpError(404, "Canvas não encontrado.");
+    const { ctx, contributions } = desktop((path) => (path.startsWith("/clients/") ? {} : answer));
     plugin.register(ctx);
-    render(<>{directive(contributions)!.render({ attrs: { id: "canvas-gone" }, source: "", streaming: false })}</>);
+    const draw = () =>
+      render(<>{directive(contributions)!.render({ attrs: { id: "canvas-gone" }, source: "", streaming: false })}</>);
+    draw();
     await screen.findByText("Este canvas não está mais na biblioteca do Atlas.");
+    expect(screen.queryByRole("button", { name: "Tentar novamente" })).toBeNull();
+    cleanup();
+
+    // Hermes answers 404 too while the plugin's backend is not enabled: that is worth a retry.
+    answer = httpError(404, "Plugin not found");
+    draw();
+    await screen.findByText("Não foi possível carregar o canvas. Plugin not found");
+    expect(screen.getByRole("button", { name: "Tentar novamente" })).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain("Plugin not found"); // not an alert on arrival
+    cleanup();
+
+    // A page an Atlas tool wrote then keeps Desktop's own file card, which can still open it.
+    const media = contributions.find((c) => c.area === "transcript.toolMedia")!.data as {
+      render: (props: unknown) => React.ReactNode;
+    };
+    render(<>{media.render({ file: {}, toolName: "atlas_render", toolCallId: "c", args: {},
+      result: { success: true, id: "canvas-gone", revision: 3 }, sessionId: "s", fallback: <p>Desktop file card</p> })}</>);
+    await screen.findByText("Desktop file card");
+  });
+
+  it("shows the server's own explanation of a refused write, not the transport's wording", async () => {
+    const { ctx, contributions } = desktop((path, options) => {
+      if (options?.method === "POST" && path.startsWith("/canvases?"))
+        return httpError(409, "Este canvas mudou em outra janela. Abra a última versão antes de salvar.");
+      return library(path);
+    });
+    plugin.register(ctx);
+    render(<>{directive(contributions)!.render({ attrs: { id: "canvas-plan", rev: "2" }, source: "", streaming: false })}</>);
+    await screen.findByRole("heading", { name: "Plano da semana" });
+    fireEvent.change(screen.getByRole("textbox", { name: /Nome/ }), { target: { value: "Outro" } });
+    fireEvent.click(screen.getByRole("button", { name: /Salvar versão/ }));
+    await screen.findByText("Este canvas mudou em outra janela. Abra a última versão antes de salvar.");
+    expect(document.body.textContent).not.toContain("Error invoking remote method");
+    expect(document.body.textContent).not.toContain('{"detail"');
+  });
+
+  it("keeps a pinned canvas when the backend announces the version on screen or a newer one", async () => {
+    const { ctx, contributions, listeners, requests } = desktop(library);
+    plugin.register(ctx);
+    render(<>{directive(contributions)!.render({ attrs: { id: "canvas-plan", rev: "2" }, source: "", streaming: false })}</>);
+    await screen.findByRole("heading", { name: "Plano da semana" });
+    const reads = () => requests.filter((r) => r.path === "/canvases/canvas-plan?revision=2").length;
+    const before = reads();
+    const saved = listeners.get("plugin.atlas-intelligent-ui.canvas.saved")!;
+    act(() => saved({ type: "x", payload: { id: "canvas-plan", revision: 2 } }));
+    act(() => saved({ type: "x", payload: { id: "canvas-plan", revision: 3 } }));
+    await screen.findByRole("button", { name: "Existe a versão 3" });
+    expect(reads()).toBe(before);
+  });
+
+  it("keeps the Atlas page through a gateway reconnect, and rebuilds it for another connection", async () => {
+    const { boots } = await openPage();
+    // The WebSocket reconnecting is the same library: nothing reloads.
+    act(() => state.gateway.set("connecting"));
+    act(() => state.gateway.set("open"));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(boots()).toBe(1);
+    // A new route activation (a same-profile source swap included) or another source does.
+    act(() => setHost({ epoch: 1 }));
+    await waitFor(() => expect(boots()).toBe(2));
+    act(() => state.connectionId.set("vps"));
+    await waitFor(() => expect(boots()).toBe(3));
+  });
+
+  it("rebuilds the Atlas page on a host without the activation hook once a request notices", async () => {
+    setHost({ epochHook: false });
+    const { boots } = await openPage();
+    setHost({ epoch: 4 }); // no hook: nothing re-renders the page by itself
+    fireEvent.click(await screen.findByRole("button", { name: "Minha biblioteca" })); // any request will do
+    await waitFor(() => expect(boots()).toBe(2));
+  });
+
+  it("sends to the Desktop session from the Atlas page even when the chat's composer is not on screen", async () => {
+    setHost({ submit: false }); // the Atlas page covers the chat: Desktop's composer cannot take it
+    await openPage();
+    fireEvent.change(screen.getByRole("textbox", { name: "Mensagem para o Hermes" }), {
+      target: { value: "Resuma o plano" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar à sessão ativa do Desktop" }));
+    await screen.findByText(/Mensagem enviada à sessão ativa do Desktop/);
+    expect(composerCalls.find((call) => call.method === "submit")?.args[0]).toBe("session-1");
+    expect(composerCalls.find((call) => call.method === "request")?.args).toEqual([
+      "prompt.submit",
+      { session_id: "session-1", text: "Resuma o plano" },
+    ]);
+  });
+
+  it("offers sending to the Desktop session only where the host has a way to send", async () => {
+    setHost({ submitApi: false, request: false });
+    await openPage();
+    expect(screen.queryByRole("button", { name: "Enviar à sessão ativa do Desktop" })).toBeNull();
   });
 
   it("follows a language switch in Desktop", async () => {

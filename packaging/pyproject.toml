@@ -28,6 +28,8 @@ dependencies = [
 Homepage = "https://github.com/sesantanajr/hermes-atlas-intelligent-ui"
 
 [project.scripts]
+atlas-intelligent-ui = "hermes_atlas.agent.cli:main"
+# The 1.0 name of the same command, kept so existing scripts and services keep working.
 hermes-atlas = "hermes_atlas.agent.cli:main"
 
 [tool.setuptools]

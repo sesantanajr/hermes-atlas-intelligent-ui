@@ -1,8 +1,9 @@
-"""Hermes Atlas: plugin entry point.
+"""Atlas Intelligent UI: plugin entry point.
 
-Hermes imports this file as ``hermes_plugins.hermes_atlas`` and calls ``register(ctx)`` once.
-The implementation lives in ``hermes_atlas/agent/plugin.py``; importing this module has no side
-effects and loads only the standard library.
+Hermes installs the plugin as ``plugins/atlas-intelligent-ui``, imports this file as
+``hermes_plugins.atlas_intelligent_ui`` and calls ``register(ctx)`` once. The implementation
+lives in ``hermes_atlas/agent/plugin.py``; importing this module has no side effects and loads
+only the standard library.
 """
 
 

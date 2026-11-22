@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Check, Copy, Download, LayoutGrid, Pencil, Trash2 } from "lucide-react";
 import { LiveCanvasPreview } from "../blocks/LiveCanvasPreview";
 import { intlLocale, serverText, t } from "../i18n";
@@ -140,7 +140,8 @@ export function ChatView({
   busy: boolean;
   scroller: React.RefObject<HTMLDivElement | null>;
   onScroll: () => void;
-  rename: () => void;
+  /** Give the conversation a new name (already trimmed, never empty). */
+  rename: (title: string) => void;
   exportChat: () => void;
   remove: () => void;
   copy: (text: string) => void;
@@ -149,17 +150,49 @@ export function ChatView({
   control: (action: string, body?: unknown) => Promise<boolean>;
 }) {
   const live = run && !terminal.has(run.status);
+  // The new name being typed, in place of the title (Hermes Desktop has no `window.prompt`).
+  const [naming, setNaming] = useState<string | null>(null);
+  const editing = naming !== null && !!conversation;
+  const typed = (naming ?? "").trim();
   return (
     <div className="messages" ref={scroller} onScroll={onScroll}>
       <div className="chat-heading">
-        <span>{conversation?.title || t("Conversa")}</span>
+        {editing ? (
+          <form
+            className="chat-rename"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (typed && typed !== conversation?.title) rename(typed);
+              setNaming(null);
+            }}
+          >
+            <input
+              aria-label={t("Nome da conversa")}
+              value={naming ?? ""}
+              maxLength={160}
+              autoFocus
+              onChange={(e) => setNaming(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setNaming(null);
+              }}
+            />
+            <button type="submit" className="btn small" disabled={!typed}>
+              {t("Salvar")}
+            </button>
+            <button type="button" className="btn small ghost" onClick={() => setNaming(null)}>
+              {t("Cancelar")}
+            </button>
+          </form>
+        ) : (
+          <span>{conversation?.title || t("Conversa")}</span>
+        )}
         <div>
-          {conversation && (
+          {conversation && !editing && (
             <>
               <button
                 className="icon-button"
                 aria-label={t("Renomear conversa")}
-                onClick={rename}
+                onClick={() => setNaming(conversation.title || "")}
               >
                 <Pencil size={16} />
               </button>

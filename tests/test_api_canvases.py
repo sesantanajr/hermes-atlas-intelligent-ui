@@ -13,7 +13,7 @@ from hermes_atlas.render import html as html_export
 from hermes_atlas.server import gateway
 from hermes_atlas.storage.store import Store
 
-BASE = "/api/plugins/hermes-atlas"
+BASE = "/api/plugins/atlas-intelligent-ui"
 CAPS = {"object": "hermes.api_server.capabilities", "platform": "hermes-agent", "model": "test-hermes",
         "features": {"run_submission": True, "run_status": True, "run_events_sse": True, "run_stop": True,
                      "runs_idempotency": {"supported": True, "durable": True, "retention_seconds": 86400}}}

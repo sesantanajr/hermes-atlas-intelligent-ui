@@ -13,7 +13,7 @@ def main():
     parser.add_argument('--base',default='http://127.0.0.1:7331')
     parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args()
-    base=args.base.rstrip('/')+'/api/plugins/hermes-atlas'
+    base=args.base.rstrip('/')+'/api/plugins/atlas-intelligent-ui'
     def request(path,body=None):
         req=urllib.request.Request(base+path,data=json.dumps(body).encode() if body is not None else None,headers={'Content-Type':'application/json'})
         with urllib.request.urlopen(req,timeout=30) as response:return json.load(response)

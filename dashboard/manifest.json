@@ -1,9 +1,9 @@
 {
-  "name": "hermes-atlas",
+  "name": "atlas-intelligent-ui",
   "label": "Atlas",
   "description": "Interactive canvases made by your agent: library, block catalogue and chat",
   "icon": "Sparkles",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "tab": {
     "path": "/atlas",
     "position": "after:chat"

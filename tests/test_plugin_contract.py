@@ -31,6 +31,7 @@ PUBLIC_HERMES_IMPORTS = {
     ("agent.secret_scope", "get_secret"), ("hermes_constants", "get_hermes_home"),
     ("plugins.plugin_storage", "plugin_data_dir"), ("hermes_cli.config", "load_config_readonly"),
     ("gateway.session_context", "get_session_env"), ("hermes_cli.plugin_events", "broadcast_plugin_event"),
+    ("hermes_yaml", "safe_load"),
 }
 HERMES_TOP_LEVEL = {"agent", "gateway", "hermes_cli", "hermes_constants", "hermes_state", "plugins", "tools", "pm",
                     "persistence", "persistence_assembly", "providers", "cron", "hermes_platform", "hermes_yaml",
@@ -56,7 +57,7 @@ def host():
 
 def test_plugin_is_imported_under_the_hermes_namespace_with_relative_imports_only():
     module = load_plugin()
-    assert module.__name__ == module_name_for("hermes-atlas") == f"{NS_PARENT}.hermes_atlas"
+    assert module.__name__ == module_name_for("atlas-intelligent-ui") == f"{NS_PARENT}.atlas_intelligent_ui"
     assert callable(module.register)
     for path in runtime_sources():
         tree = ast.parse(path.read_text(encoding="utf-8"))
@@ -80,7 +81,7 @@ def test_registration_matches_the_manifest_exactly(host):
 def test_manifest_has_what_hermes_validate_requires():
     for field in ("name", "version", "description"):
         assert re.search(rf"(?m)^{field}:\s*\S", MANIFEST), field
-    assert re.search(r'(?m)^name:\s*hermes-atlas\s*$', MANIFEST)
+    assert re.search(r'(?m)^name:\s*atlas-intelligent-ui\s*$', MANIFEST)
     assert re.search(r'(?m)^manifest_version:\s*2\s*$', MANIFEST)
     assert re.search(r'(?m)^requires_hermes:\s*">=\d+\.\d+\.\d+"\s*$', MANIFEST)
     # Atlas ships no Python requirements of its own: Hermes core provides everything it imports.
@@ -191,7 +192,7 @@ def test_a_host_with_only_tools_and_hooks_loads_the_plugin():
 
 
 def test_registration_is_cheap_and_free_of_side_effects(isolated_hermes_home):
-    prefix = module_name_for("hermes-atlas") + ".hermes_atlas."
+    prefix = module_name_for("atlas-intelligent-ui") + ".hermes_atlas."
     registered()
     loaded = {name[len(prefix):] for name in sys.modules if name.startswith(prefix)}
     heavy = {name for name in loaded if name.split(".")[0] in {"schema", "storage", "server", "render", "catalog", "doctor"}}

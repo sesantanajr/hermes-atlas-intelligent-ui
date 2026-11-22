@@ -8,7 +8,7 @@ from weakref import WeakKeyDictionary
 import httpx
 from fastapi import HTTPException
 
-from ..runtime import gateway_url, profile_home, setting  # noqa: F401  (re-exported for callers)
+from ..runtime import api_server_key, gateway_url, profile_home, setting  # noqa: F401  (re-exported for callers)
 
 _clients = WeakKeyDictionary()
 _capabilities = {}
@@ -22,7 +22,7 @@ def upstream():
         raise HTTPException(503, 'ATLAS_HERMES_URL inválida.')
     if p.scheme == 'http' and p.hostname not in {'localhost', '127.0.0.1', '::1'}:
         raise HTTPException(503, 'Use HTTPS ou um túnel local para o Hermes remoto.')
-    key = setting('ATLAS_HERMES_API_KEY') or setting('API_SERVER_KEY')
+    key = api_server_key()
     return url, {'Authorization': f'Bearer {key}'} if key else {}
 
 

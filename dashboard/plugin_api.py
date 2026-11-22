@@ -1,8 +1,8 @@
 """Backend of the Atlas dashboard tab and of the Hermes Desktop extension.
 
-Hermes imports this file by path as a top-level module (``hermes_dashboard_plugin_hermes-atlas``),
+Hermes imports this file by path as a top-level module (``hermes_dashboard_plugin_atlas-intelligent-ui``),
 with no package around it and nothing added to ``sys.path``, then mounts ``router`` under
-``/api/plugins/hermes-atlas/``. Under ``plugins.isolation: host`` the same happens inside the
+``/api/plugins/atlas-intelligent-ui/``. Under ``plugins.isolation: host`` the same happens inside the
 profile's plugin host process.
 
 The routes live in ``hermes_atlas/server/api.py``, which uses relative imports, so the sibling

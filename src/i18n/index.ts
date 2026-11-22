@@ -27,10 +27,14 @@ const patterns: Record<string, [RegExp, string][]> = { en: enServerPatterns };
 const listeners = new Set<() => void>();
 let current: Locale = "pt-BR";
 
+/**
+ * The supported locale for a language tag: Portuguese (any `pt*`) is pt-BR, every other language
+ * English, the closest Atlas has to German, Japanese or Chinese hosts. No tag at all keeps the
+ * source language.
+ */
 export function normalizeLocale(value: unknown): Locale {
-  return typeof value === "string" && value.trim().toLowerCase().startsWith("en")
-    ? "en"
-    : "pt-BR";
+  if (typeof value !== "string" || !value.trim()) return "pt-BR";
+  return value.trim().toLowerCase().startsWith("pt") ? "pt-BR" : "en";
 }
 
 /** The language to start in: an explicit choice, else the host page's, else the browser's. */

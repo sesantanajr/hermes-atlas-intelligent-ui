@@ -1,7 +1,7 @@
 """What the model reads to decide when and how to call Atlas.
 
 Every description is sent with each request, so they are kept short: the full field list of a
-block lives in ``atlas_components``, and the workflow lives in the bundled ``hermes-atlas:canvas``
+block lives in ``atlas_components``, and the workflow lives in the bundled ``atlas-intelligent-ui:canvas``
 skill. Standard library only.
 """
 

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from hermes_atlas import directive
+from hermes_atlas import __version__, directive
 from hermes_atlas.schema.canvas import Canvas
 from hermes_atlas.storage.store import Store
 from hermes_host import HostContext, module_name_for, registered
@@ -100,7 +100,7 @@ def test_presentation_follows_the_surface(surface, desktop, style, expected):
 def test_without_the_export_viewer_the_file_style_falls_back(isolated_hermes_home, monkeypatch):
     ctx = host("desktop")
     # The plugin's own copy of the module, as Hermes imported it.
-    html_module = importlib.import_module(module_name_for("hermes-atlas") + ".hermes_atlas.render.html")
+    html_module = importlib.import_module(module_name_for("atlas-intelligent-ui") + ".hermes_atlas.render.html")
     monkeypatch.setattr(html_module, "TEMPLATE", isolated_hermes_home / "absent.html")
     assert ctx.call("atlas_render", {"canvas": TRIP})["show"] == "text"
     Store().touch_client("desktop", MEDIA_DESKTOP)
@@ -233,7 +233,7 @@ def test_list_searches_titles():
 def test_export_writes_files_under_the_data_directory(isolated_hermes_home, monkeypatch):
     ctx = host()
     created = ctx.call("atlas_render", {"canvas": {**TRIP, "title": 'Relatório </script> "ação"'}})
-    exports = isolated_hermes_home / "plugin-data" / "hermes-atlas" / "exports"
+    exports = isolated_hermes_home / "plugin-data" / "atlas-intelligent-ui" / "exports"
     markdown = ctx.call("atlas_export", {"id": created["id"], "format": "markdown"})
     assert markdown["success"] and markdown["path"].endswith("-v1.md") and markdown["media"] == "MEDIA:" + markdown["path"]
     assert exports in __import__("pathlib").Path(markdown["path"]).parents
@@ -241,7 +241,7 @@ def test_export_writes_files_under_the_data_directory(isolated_hermes_home, monk
     exported = json.load(open(ctx.call("atlas_export", {"id": created["id"], "format": "json"})["path"], encoding="utf-8"))
     assert exported["canvas"]["blocks"][1]["value"] == "R$ 4.200" and exported["revision"] == 1
     # The viewer template is a build artefact; without it the tool explains instead of failing.
-    html_module = importlib.import_module(module_name_for("hermes-atlas") + ".hermes_atlas.render.html")
+    html_module = importlib.import_module(module_name_for("atlas-intelligent-ui") + ".hermes_atlas.render.html")
     monkeypatch.setattr(html_module, "TEMPLATE", isolated_hermes_home / "absent.html")
     missing = ctx.call("atlas_export", {"id": created["id"]})
     assert not missing["success"] and "markdown" in missing["error"]
@@ -309,7 +309,7 @@ def test_slash_command_gives_text_everywhere(isolated_hermes_home):
     created = ctx.call("atlas_render", {"canvas": {**TRIP, "blocks": TRIP["blocks"] + [
         {"type": "table", "id": "t", "title": "Preços", "columns": ["Item", "Valor"], "rows": [["Voo", "R$ 2.800"]]}]}})
     status = ctx.slash("atlas", "", platform="cli")
-    assert "Hermes Atlas 1.0.0" in status and "1 canvas(es)" in status and created["id"] in status
+    assert f"Atlas Intelligent UI {__version__}" in status and "1 canvas(es)" in status and created["id"] in status
     assert "Viagem a Lisboa" in ctx.slash("atlas", "list lisboa")
     assert "Nenhum canvas encontrado" in ctx.slash("atlas", "list marte")
     desktop = ctx.slash("atlas", "show " + created["id"], platform="desktop")

@@ -33,6 +33,15 @@ def _rows(locale, canvases):
                      for c in canvases)
 
 
+def _earlier_install_left_something():
+    try:
+        from ..doctor import legacy_findings
+        return bool(legacy_findings())
+    except Exception as exc:  # the summary must answer even if the check cannot run
+        logger.debug("Atlas could not look for an earlier install: %s", exc)
+        return False
+
+
 def find_canvas(store, query, revision=None):
     """A canvas by exact id, else the most recently updated one whose title contains *query*."""
     if _ID.match(query):
@@ -58,6 +67,8 @@ def run(raw_args, *, platform="", locale="pt"):
         stats = store.stats()
         lines = [text(locale, "title", version=__version__), text(locale, "profile", profile=profile_name()),
                  text(locale, "library", **stats), text(locale, "data", path=data_dir())]
+        if _earlier_install_left_something():
+            lines.append(text(locale, "legacy"))
         recent = store.list(0, 5, "")
         lines += ["", text(locale, "recent"), _rows(locale, recent)] if recent else ["", text(locale, "empty")]
         return "\n".join(lines + ["", text(locale, "open_hint"), "/atlas help"])

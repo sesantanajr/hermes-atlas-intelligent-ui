@@ -20,9 +20,23 @@ export type Host = {
   openWorkspace?: (canvasId: string, revision?: number) => void;
   /** Show a brief message through the host's own notification surface. */
   notify?: (message: string, kind?: "info" | "warning" | "error") => void;
+  /** The host's clipboard door (Hermes Desktop's `ctx.os.writeClipboard`): resolves false when it
+   *  could not copy. Without one, the browser's Clipboard API is used. */
+  writeClipboard?: (text: string) => Promise<boolean>;
 };
 
 export const standaloneHost: Host = { kind: "standalone" };
+
+/** Copy `text` through the host when it offers a clipboard, else the browser's. */
+export async function copyText(host: Host, text: string): Promise<boolean> {
+  if (host.writeClipboard) return host.writeClipboard(text).catch(() => false);
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /** A canvas the workspace should open as soon as it has booted (deep link or inline card). */
 export type CanvasTarget = { id: string; revision?: number };

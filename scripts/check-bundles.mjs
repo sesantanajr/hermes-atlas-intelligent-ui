@@ -4,23 +4,32 @@
  *
  * Hermes Desktop loader and catalogue lint (hermes_cli/plugin_validate_desktop.py,
  * apps/desktop/src/contrib/runtime-loader.ts):
- *   - plugin.js may import only react, react/jsx-runtime, react/jsx-dev-runtime and
- *     @hermes/plugin-sdk; no dynamic import, eval, new Function, script injection or reach into
- *     the app's own DOM;
- *   - it is one file, read whole (16 MiB cap), and the host loads no stylesheet beside it.
+ *   - every .js under desktop/ (what the lint covers) uses no dynamic import, eval, new Function,
+ *     script injection or reach into the app's own DOM, in its comment-stripped text (the lint's
+ *     view) and in its raw text (the lint's stripper is not a lexer and blanks whole lines);
+ *   - plugin.js imports only react, react/jsx-runtime, react/jsx-dev-runtime and
+ *     @hermes/plugin-sdk, the SDK as a namespace;
+ *   - it is one file, read whole (16 MiB cap; shells without the readPluginSource bridge stop at
+ *     512 KiB, reported as a warning), and the host loads no stylesheet beside it.
  * Hermes dashboard: one classic script that registers under the manifest's name and brings no
  * React of its own.
+ * One plugin id everywhere Hermes reads it: plugin.yaml `name` (the install folder), the
+ * manifest `name` (backend route, dashboard tab, `plugins.enabled` gate), the Desktop extension's
+ * `id` (the namespace `ctx.rest` calls), `API_BASE` and the dashboard registration.
  * Install-time scanner (hermes_cli/plugins_install_scan.py): a file over 1 MiB is reported, so
  * every bundle stays under that.
  */
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 
 const failures = [];
 const fail = (message) => failures.push(message);
+const warnings = [];
+const warn = (message) => warnings.push(message);
 const read = (path) => (existsSync(path) ? readFileSync(path, "utf8") : (fail(`${path} is missing: run npm run build`), ""));
 const size = (path) => (existsSync(path) ? statSync(path).size : 0);
 const SCANNER_FILE_LIMIT = 1024 * 1024;
+const OLD_SHELL_READ_LIMIT = 512 * 1024;
 
 // ---- Desktop -------------------------------------------------------------------------------
 // The same expressions Hermes's admission lint applies to comment-stripped source.
@@ -41,17 +50,54 @@ const COMMENT = /("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`)|\/\
 const REGEX_LITERAL = /(?<![\w)\]])\/(?:[^/\\\n[]|\\.|\[(?:[^\]\\\n]|\\.)*\])+\/[a-z]*/g;
 const ALLOWED_IMPORTS = new Set(["react", "react/jsx-runtime", "react/jsx-dev-runtime", "@hermes/plugin-sdk"]);
 
-const desktop = read("desktop/plugin.js");
-if (desktop) {
-  const stripped = desktop.replace(COMMENT, (whole, literal) => literal ?? whole.replace(/[^\n]/g, ""));
-  const masked = stripped.replace(REGEX_LITERAL, (whole) => " ".repeat(whole.length));
-  for (const [rule, pattern] of FORBIDDEN) {
-    const haystack = rule === "script injection" ? masked : stripped;
-    for (const match of haystack.matchAll(pattern))
-      fail(`desktop/plugin.js: ${rule}: …${haystack.slice(Math.max(0, match.index - 40), match.index + 60)}…`);
+/** Every `.js` file under desktop/: the files Hermes's lint reads (`_desktop_surface_files`). */
+function desktopFiles(dir = "desktop") {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = `${dir}/${entry.name}`;
+    if (entry.isDirectory()) return desktopFiles(path);
+    return entry.name.endsWith(".js") ? [path] : [];
+  });
+}
+
+function lintDesktop(path, source) {
+  const stripped = source.replace(COMMENT, (whole, literal) => literal ?? whole.replace(/[^\n]/g, ""));
+  // The lint's comment stripper is not a JavaScript lexer: a `//` inside a regular expression or
+  // base64 text makes it drop the rest of the line (a tenth of plugin.js). The raw text is read
+  // as well, so nothing the lint would refuse can sit unseen in what it skipped.
+  for (const [view, text] of [["comment-stripped", stripped], ["raw", source]]) {
+    const masked = text.replace(REGEX_LITERAL, (whole) => " ".repeat(whole.length));
+    for (const [rule, pattern] of FORBIDDEN) {
+      const haystack = rule === "script injection" ? masked : text;
+      for (const match of haystack.matchAll(pattern))
+        fail(`${path} (${view}): ${rule}: …${haystack.slice(Math.max(0, match.index - 40), match.index + 60)}…`);
+    }
+    // `search` ignores the patterns' `g` state, which `test` would carry from one text to the next.
+    for (const [cue, pattern] of REVIEW)
+      if (text.search(pattern) !== -1) fail(`${path} (${view}): catalogue review cue "${cue}"`);
   }
-  for (const [cue, pattern] of REVIEW)
-    if (pattern.test(stripped)) fail(`desktop/plugin.js: catalogue review cue "${cue}"`);
+}
+
+/**
+ * The `id` of plugin.js's default export, as esbuild writes it: `export default {id:"…"}`, or
+ * `export{X as default}` with `X={id:"…"}`, or `X={id:Y}` and `Y="…"`.
+ */
+function defaultExportId(source) {
+  const named = (name) => name.replace(/\$/g, "\\$");
+  const value = (expression) =>
+    /^["']([^"']+)["']$/.exec(expression)?.[1] ??
+    new RegExp(`(?:^|[^\\w$])${named(expression)}\\s*=\\s*["']([^"']+)["']`).exec(source)?.[1];
+  const ID = `\\{\\s*id\\s*:\\s*("[^"]*"|'[^']*'|[\\w$]+)`;
+  const inline = new RegExp(`export\\s+default\\s*${ID}`).exec(source);
+  if (inline) return value(inline[1]);
+  const alias = /export\s*\{[^}]*?([\w$]+)\s+as\s+default\b/.exec(source)?.[1];
+  const object = alias && new RegExp(`(?:^|[^\\w$])${named(alias)}\\s*=\\s*${ID}`).exec(source);
+  return object ? value(object[1]) : undefined;
+}
+
+const desktop = read("desktop/plugin.js");
+for (const path of desktopFiles()) lintDesktop(path, path === "desktop/plugin.js" ? desktop : readFileSync(path, "utf8"));
+if (desktop) {
   const imports = [...desktop.matchAll(/\bfrom\s*["']([^"']+)["']|\bimport\s*["']([^"']+)["']/g)].map((m) => m[1] ?? m[2]);
   for (const specifier of new Set(imports))
     if (!ALLOWED_IMPORTS.has(specifier)) fail(`desktop/plugin.js imports "${specifier}", which the Desktop loader refuses`);
@@ -59,8 +105,13 @@ if (desktop) {
   if (/import\s*\{[^}]*\}\s*from\s*["']@hermes\/plugin-sdk["']/.test(desktop))
     fail("desktop/plugin.js uses named imports from @hermes/plugin-sdk: a name an older host lacks would fail the whole module; import the namespace");
   if (!/export\s*\{[^}]*\bas default\b|export default/.test(desktop)) fail("desktop/plugin.js has no default export");
-  if (!desktop.includes('id:"hermes-atlas"')) fail('desktop/plugin.js default export must carry id "hermes-atlas" (the folder name)');
   if (existsSync("desktop/plugin.css")) fail("desktop/plugin.css exists, but the Desktop host never loads it: styles must be inlined");
+  const bytes = size("desktop/plugin.js");
+  if (bytes > OLD_SHELL_READ_LIMIT)
+    warn(
+      `desktop/plugin.js is ${(bytes / 1024).toFixed(0)} KB: Hermes Desktop shells without the readPluginSource ` +
+        "bridge read at most 512 KB of a plugin and refuse to load a larger one (runtime-loader.ts readPluginSourceText)",
+    );
 }
 
 // ---- Dashboard -----------------------------------------------------------------------------
@@ -75,6 +126,32 @@ for (const key of ["entry", "css", "api"])
 for (const [name, bundle] of [["dashboard/dist/index.js", dashboard], ["desktop/plugin.js", desktop]])
   // Every copy of react, react-dom and React's JSX runtime registers its element symbols.
   if (/Symbol\.for\(["']react\./.test(bundle)) fail(`${name} bundles its own React; it must use the host's`);
+
+// ---- Plugin id -----------------------------------------------------------------------------
+// Hermes installs the package in plugins/<plugin.yaml name> and copies its Desktop half to
+// desktop-plugins/<that name>; it mounts the backend at /api/plugins/<manifest name>, only when
+// that name is in `plugins.enabled`; the Desktop extension calls /api/plugins/<its id>. A
+// mismatch is a 404 on every call, so all of them must be the same name.
+const pluginNames = {
+  "plugin.yaml name": /^name:\s*["']?([^"'\s#]+)/m.exec(read("plugin.yaml"))?.[1],
+  "dashboard/manifest.json name": manifest.name,
+  "desktop/plugin.js default export id": desktop ? defaultExportId(desktop) : undefined,
+  "API_BASE (src/host/client.ts)": /export const API_BASE = "\/api\/plugins\/([^"]+)"/.exec(read("src/host/client.ts"))?.[1],
+  "dashboard bundle register()": /__HERMES_PLUGINS__\?\.register\(\s*"([^"]+)"/.exec(dashboard)?.[1],
+};
+const distinctNames = new Set(Object.values(pluginNames));
+if (distinctNames.size !== 1 || distinctNames.has(undefined))
+  fail(
+    "the plugin id is not the same everywhere Hermes reads it: " +
+      Object.entries(pluginNames).map(([where, name]) => `${where} = ${name ?? "(not found)"}`).join("; "),
+  );
+else {
+  // The dashboard bundle calls the route of that name (a stale build still calls the old one);
+  // the Desktop extension reaches it through `ctx.rest` and its id, checked above.
+  const [name] = distinctNames;
+  if (dashboard && !dashboard.includes(`"/api/plugins/${name}"`))
+    fail(`dashboard/dist/index.js does not call /api/plugins/${name}: rebuild it`);
+}
 
 // ---- Export template -----------------------------------------------------------------------
 const viewer = read("hermes_atlas/assets/viewer.html");
@@ -104,6 +181,7 @@ for (const path of ["dashboard/dist/index.js", "dashboard/dist/index.css", "desk
   if (bytes >= SCANNER_FILE_LIMIT) fail(`${path} is ${(bytes / 1024).toFixed(0)} KB; Hermes's install scan reports files over 1024 KB`);
 }
 
+for (const message of warnings) console.warn("warning: " + message);
 if (failures.length) {
   console.error("Bundle check failed:\n- " + failures.join("\n- "));
   process.exit(1);

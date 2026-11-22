@@ -32,9 +32,10 @@ export type Contribution = {
   render?: () => unknown;
 };
 
+// The values Hermes Desktop exports (apps/desktop/src/sdk).
 export const ROUTES_AREA = "routes";
 export const SIDEBAR_NAV_AREA = "sidebar.nav";
-export const TRANSCRIPT_DIRECTIVE_AREA = "transcript.directive";
+export const TRANSCRIPT_DIRECTIVE_AREA = "transcript.directives";
 export const TOOL_MEDIA_RENDERER_AREA = "transcript.toolMedia";
 
 /** Harness state, shown by harness/desktop.tsx. */
@@ -47,17 +48,25 @@ const listeners = new Map<string, Set<(event: { type: string; payload?: unknown 
 export const host = {
   state: {
     profile: atom("default"),
-    gateway: atom("local"),
+    connectionId: atom<string | null>("local"),
+    // The WebSocket's state, as Desktop reports it.
+    gateway: atom("open"),
     focusedSessionId: atom<string | null>("harness-session"),
   },
   navigate: (path: string) => route.set(path),
   notify: ({ message }: { message: string }) => toasts.set([...toasts.get(), message].slice(-3)),
+  request: async (method: string, params?: { text?: string }) => {
+    toasts.set([...toasts.get(), `${method}: ${(params?.text ?? "").slice(0, 60)}`]);
+    return { ok: true };
+  },
   composer: {
     insertText: async (_sessionId: string | null, text: string) => {
       composer.set(composer.get() ? `${composer.get()}\n\n${text}` : text);
       return true;
     },
+    // Desktop submits only through a composer on screen: the harness's lives on the chat route.
     submit: (_sessionId: string | null, text: string) => {
+      if (route.get() !== "/chat") return false;
       toasts.set([...toasts.get(), `submit: ${text.slice(0, 60)}`]);
       return true;
     },
@@ -76,7 +85,7 @@ export function pluginContext() {
   return {
     rest: async (path: string, options: { method?: string; body?: unknown } = {}) => {
       const method = options.method ?? "GET";
-      const response = await fetch(`/api/plugins/hermes-atlas${path}`, {
+      const response = await fetch(`/api/plugins/atlas-intelligent-ui${path}`, {
         method,
         headers: method === "GET" ? undefined : { "Content-Type": "application/json" },
         body: method === "GET" ? undefined : JSON.stringify(options.body ?? {}),

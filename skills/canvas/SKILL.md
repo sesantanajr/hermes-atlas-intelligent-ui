@@ -1,10 +1,9 @@
 ---
 name: canvas
 description: "Answer with an interactive Atlas canvas (charts, tables, forms, checklists, maps, boards, calculators) when a reply is easier to explore than to read. Covers when to use one, how to build, show and update it."
-version: 1.0.0
+version: 1.1.0
 author: sesantanajr
 license: MIT
-platforms: [linux, macos, windows]
 metadata:
   hermes:
     tags: [UI, Canvas, Charts, Forms, Visualization]
@@ -41,7 +40,7 @@ A canvas complements your reply; it does not replace a direct answer to a direct
    `type`, `id` and `title`. Use short stable ids such as `budget` or `day-2`.
 4. **Show it.** The result has `show` and `present`. Follow `present`:
    - `show: "file"`: end your reply with the `media` line by itself, for example
-     `MEDIA:/home/me/.hermes/plugin-data/hermes-atlas/exports/trip-1f0c3a-v1.html`. Hermes
+     `MEDIA:/home/me/.hermes/plugin-data/atlas-intelligent-ui/exports/trip-1f0c3a-v1.html`. Hermes
      Desktop draws the live canvas there; other apps receive the page as a file. Copy the line
      exactly. Add a sentence or two of guidance and stop; do not restate the canvas in prose.
    - `show: "directive"`: write the `directive` line by itself in your reply, for example

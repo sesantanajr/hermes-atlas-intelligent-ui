@@ -17,11 +17,13 @@ import {
   emit,
   pluginContext,
   route,
+  TOOL_MEDIA_RENDERER_AREA,
   toasts,
+  TRANSCRIPT_DIRECTIVE_AREA,
   useValue,
 } from "./desktop-sdk";
 
-const API = "/api/plugins/hermes-atlas";
+const API = "/api/plugins/atlas-intelligent-ui";
 const TITLE = "Viagem a Lisboa (harness)";
 const params = new URLSearchParams(location.search);
 type Target = { id: string; revision: number; title: string };
@@ -61,7 +63,7 @@ const drawOf = (entry?: Contribution) => (entry?.data as { render?: Draw } | und
 function Transcript({ canvas, directive, media }: { canvas: Target; directive?: Contribution; media?: Contribution }) {
   const only = params.get("only");
   const english = document.documentElement.lang.startsWith("en");
-  const path = `/home/me/.hermes/plugin-data/hermes-atlas/exports/${canvas.id}-v${canvas.revision}.html`;
+  const path = `/home/me/.hermes/plugin-data/atlas-intelligent-ui/exports/${canvas.id}-v${canvas.revision}.html`;
   const fileCard = <pre className="file-card">MEDIA:{path}</pre>;
   const drawFile = drawOf(media);
   const drawDirective = drawOf(directive);
@@ -124,8 +126,8 @@ function Shell({ canvas }: { canvas: Target }) {
   }, [lang]);
   const page = items.find((item) => item.area === "routes" && (item.data as { path?: string })?.path === path);
   const nav = items.filter((item) => item.area === "sidebar.nav");
-  const directive = items.find((item) => item.area === "transcript.directive");
-  const media = items.find((item) => item.area === "transcript.toolMedia");
+  const directive = items.find((item) => item.area === TRANSCRIPT_DIRECTIVE_AREA);
+  const media = items.find((item) => item.area === TOOL_MEDIA_RENDERER_AREA);
   return (
     <div className="desktop">
       <aside>
@@ -147,7 +149,11 @@ function Shell({ canvas }: { canvas: Target }) {
             <button onClick={() => setLang(lang.startsWith("en") ? "pt-BR" : "en")}>
               {lang.startsWith("en") ? "Português" : "English"}
             </button>
-            <button onClick={() => emit("plugin.hermes-atlas.canvas.saved", { id: canvas.id })}>
+            <button
+              onClick={() =>
+                emit("plugin.atlas-intelligent-ui.canvas.saved", { id: canvas.id, revision: canvas.revision })
+              }
+            >
               Evento: canvas salvo
             </button>
           </>
@@ -183,7 +189,7 @@ async function boot() {
   const canvas = await harnessCanvas();
   const url = "/desktop/plugin.js";
   const plugin = (await import(/* @vite-ignore */ url)).default;
-  if (plugin.id !== "hermes-atlas") throw new Error(`unexpected plugin id ${plugin.id}`);
+  if (plugin.id !== "atlas-intelligent-ui") throw new Error(`unexpected plugin id ${plugin.id}`);
   plugin.register(pluginContext());
   createRoot(document.getElementById("root")!).render(<Shell canvas={canvas} />);
 }

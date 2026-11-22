@@ -35,7 +35,7 @@ loopback, recusa escritas de outra origem ou sem `Content-Type: application/json
 Hermes (dashboard ou Webapp) ou um túnel SSH. Um gateway remoto precisa de HTTPS.
 
 **Seus dados ficam no perfil.** A biblioteca é um SQLite em
-`<HERMES_HOME>/plugin-data/hermes-atlas/`. O Atlas não envia nada a terceiros; só conversa com
+`<HERMES_HOME>/plugin-data/atlas-intelligent-ui/`. O Atlas não envia nada a terceiros; só conversa com
 o próprio Hermes. O diagnóstico (`hermes atlas doctor`) abre a biblioteca só para leitura.
 
 **Instalação.** O repositório passa pela varredura de instalação do Hermes: nenhum binário,

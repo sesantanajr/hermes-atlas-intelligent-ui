@@ -1,6 +1,6 @@
 """The Atlas HTTP API: one router for the dashboard tab, the Desktop extension and the standalone app.
 
-Hermes mounts it under ``/api/plugins/hermes-atlas/`` behind its own authentication and profile
+Hermes mounts it under ``/api/plugins/atlas-intelligent-ui/`` behind its own authentication and profile
 scope; the standalone app mounts the same router on loopback. Every route answers with plain
 JSON and returns promptly: under ``plugins.isolation: host`` Hermes buffers plugin responses,
 so nothing here streams. Long agent runs are followed in the background and polled.
@@ -47,11 +47,17 @@ def component(kind: str):
         raise HTTPException(404, 'Tipo de bloco desconhecido.') from exc
 
 
+def _local_status(store):
+    return {'exports': {'html': html_export.available(), 'markdown': True, 'json': True},
+            'clients': {kind: bool(store.client(kind)) for kind in CLIENTS}}
+
+
 @router.get('/status')
 async def status(store: DB, force: bool = False):
+    # SQLite reads block; keep them off the event loop that also serves the dashboard.
+    local = await asyncio.to_thread(_local_status, store)
     result = {'connected': False, 'mode': 'offline', 'version': __version__, 'scope': store.scope, 'features': {},
-              'exports': {'html': html_export.available(), 'markdown': True, 'json': True},
-              'clients': {kind: bool(store.client(kind)) for kind in CLIENTS}}
+              **local}
     try:
         caps = await gateway.capabilities(force=force)
         result.update(connected=caps['atlas_compatible'], mode='hermes', features=caps['features'], model=caps.get('model', 'hermes-agent'))

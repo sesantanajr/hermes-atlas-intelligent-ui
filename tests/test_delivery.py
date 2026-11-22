@@ -67,7 +67,7 @@ def test_legacy_public_history_and_rename_preserve_human_input_and_artifacts(tmp
         {'role': 'assistant', 'content': '[SILENT]', 'status': 'failed', 'warning': 'Erro de validação.'},
     ]
     store.put('conversation', 'history', {'id': 'history', 'title': 'Anterior', 'messages': rows})
-    url = '/api/plugins/hermes-atlas/conversations/history'
+    url = '/api/plugins/atlas-intelligent-ui/conversations/history'
     with TestClient(app, base_url='http://localhost') as client:
         viewed = client.get(url).json()['messages']
         assert viewed == client.patch(url, json={'title': 'Renomeada'}).json()['messages']

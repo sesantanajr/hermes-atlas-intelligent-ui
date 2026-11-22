@@ -193,9 +193,16 @@ describe("InlineCanvas", () => {
   });
 
   it("explains a canvas that is gone, and offers a retry for other failures", async () => {
-    const missing = server({});
+    const gone = new ApiError("Canvas não encontrado.", 404, "Canvas não encontrado.");
+    const missing = server({ "GET /canvases/canvas-trip": () => gone });
     render(<InlineCanvas canvasId="canvas-trip" api={missing.api} host={host} />);
     await screen.findByText("Este canvas não está mais na biblioteca do Atlas.");
+    cleanup();
+
+    // Any other 404 (Hermes's own, while the plugin's backend is off) is not a deletion.
+    const unmounted = server({});
+    render(<InlineCanvas canvasId="canvas-trip" api={unmounted.api} host={host} />);
+    await screen.findByRole("button", { name: "Tentar novamente" });
     cleanup();
 
     let fail = true;
@@ -205,9 +212,140 @@ describe("InlineCanvas", () => {
     });
     render(<InlineCanvas canvasId="canvas-trip" api={flaky.api} host={host} />);
     await screen.findByText(/Não foi possível carregar o canvas\. Servidor indisponível\./);
+    expect(screen.queryByRole("alert")).toBeNull(); // nothing the person did: not an alert
+    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+    await screen.findByRole("alert"); // the retry they asked for failed: that is announced
     fail = false;
     fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
     await screen.findByRole("heading", { name: "Viagem a Lisboa" });
+  });
+
+  it("draws the fallback it was given when the canvas cannot be loaded", async () => {
+    const { api } = server({ "GET /canvases/canvas-trip": () => new ApiError("Servidor indisponível.", 503) });
+    render(<InlineCanvas canvasId="canvas-trip" api={api} host={host} fallback={<p>Cartão do Desktop</p>} />);
+    await screen.findByText("Cartão do Desktop");
+  });
+
+  it("keeps the version the person saved when the backend announces it back", async () => {
+    const { api, calls } = server({
+      "GET /canvases/canvas-trip\\?revision=1": () => record(1),
+      "GET /canvases/canvas-trip\\?revision=2": () => record(2, ticked(trip, 0)),
+      "GET /canvases/canvas-trip": () => record(2, ticked(trip, 0)),
+      "GET /canvases/canvas-trip/draft": () => null,
+      "POST /canvases\\?expected_revision=1": (call) => record(2, call.data as Canvas),
+    });
+    await show(api, { revision: 1 });
+    fireEvent.click(screen.getByRole("checkbox", { name: "Passaporte" }));
+    fireEvent.click(screen.getByRole("button", { name: /Salvar versão/ }));
+    await screen.findByText("Versão 2 salva com suas alterações.");
+    act(() => announceCanvasChange("canvas-trip", 2)); // the backend announces the save
+    await act(async () => void vi.advanceTimersByTime(50));
+    expect(screen.getByText("v2")).toBeTruthy();
+    expect((screen.getByRole("checkbox", { name: "Passaporte" }) as HTMLInputElement).checked).toBe(true);
+    expect(calls.filter((c) => c.path === "/canvases/canvas-trip?revision=1")).toHaveLength(1);
+    // From now on the card reloads the version the person saved, not the one the reply named.
+    act(() => announceCanvasChange("canvas-trip"));
+    await waitFor(() => expect(calls.some((c) => c.path === "/canvases/canvas-trip?revision=2")).toBe(true));
+    expect(screen.getByText("v2")).toBeTruthy();
+  });
+
+  it("writes one change at a time, each with the token the previous write left", async () => {
+    const puts: { token?: string; finish: (token: string) => void }[] = [];
+    const { api } = server({
+      "GET /canvases/canvas-trip": () => record(1),
+      "GET /canvases/canvas-trip/draft": () => null,
+      "PUT /canvases/canvas-trip/draft": (call) =>
+        new Promise((resolve) => {
+          const data = call.data as { canvas: Canvas; expected_token?: string };
+          puts.push({
+            token: data.expected_token,
+            finish: (token) => resolve({ id: "canvas-trip", base_revision: 1, canvas: data.canvas, updated: "now", token }),
+          });
+        }),
+    });
+    await show(api);
+    fireEvent.click(screen.getByRole("checkbox", { name: "Passaporte" }));
+    await act(async () => void vi.advanceTimersByTime(800));
+    await waitFor(() => expect(puts).toHaveLength(1));
+    // A slow connection: the next change is ready before the first write has come back.
+    fireEvent.click(screen.getByRole("checkbox", { name: "Seguro" }));
+    await act(async () => void vi.advanceTimersByTime(800));
+    expect(puts).toHaveLength(1);
+    await act(async () => puts[0].finish("t-1"));
+    await waitFor(() => expect(puts).toHaveLength(2));
+    expect(puts.map((put) => put.token)).toEqual([undefined, "t-1"]);
+    await act(async () => puts[1].finish("t-2"));
+    expect(screen.queryByText(/mudou em outra janela/)).toBeNull();
+  });
+
+  it("discards only after the write under way, and says so when the server keeps the draft", async () => {
+    let finish!: () => void;
+    const { api, writes } = server({
+      "GET /canvases/canvas-trip": () => record(1),
+      "GET /canvases/canvas-trip/draft": () => null,
+      "PUT /canvases/canvas-trip/draft": () =>
+        new Promise((resolve) => {
+          finish = () => resolve({ token: "t-1" });
+        }),
+      "DELETE /canvases/canvas-trip/draft": () => new ApiError("Servidor indisponível.", 503),
+    });
+    await show(api);
+    const passport = () => screen.getByRole("checkbox", { name: "Passaporte" }) as HTMLInputElement;
+    fireEvent.click(passport());
+    await act(async () => void vi.advanceTimersByTime(800));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    fireEvent.click(screen.getByRole("button", { name: "Descartar minhas alterações" }));
+    await act(async () => void vi.advanceTimersByTime(50));
+    expect(writes().map((c) => c.method)).toEqual(["PUT"]); // waits for the write under way
+    await act(async () => finish());
+    await waitFor(() => expect(writes().map((c) => c.method)).toEqual(["PUT", "DELETE"]));
+    await screen.findByText(/Não foi possível descartar suas alterações\. Servidor indisponível\./);
+    expect(passport().checked).toBe(true); // the server still has it, so the card still shows it
+  });
+
+  it("writes the last change after the one under way when the card unmounts", async () => {
+    const tokens: (string | undefined)[] = [];
+    let finish!: () => void;
+    const { api, writes } = server({
+      "GET /canvases/canvas-trip": () => record(1),
+      "GET /canvases/canvas-trip/draft": () => null,
+      "PUT /canvases/canvas-trip/draft": (call) => {
+        tokens.push((call.data as { expected_token?: string }).expected_token);
+        if (tokens.length > 1) return { token: "t-2" };
+        return new Promise((resolve) => {
+          finish = () => resolve({ token: "t-1" });
+        });
+      },
+    });
+    await show(api);
+    fireEvent.click(screen.getByRole("checkbox", { name: "Passaporte" }));
+    await act(async () => void vi.advanceTimersByTime(800));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Seguro" }));
+    cleanup(); // scrolled away before the delayed save, with a write still under way
+    expect(writes()).toHaveLength(1);
+    finish();
+    await waitFor(() => expect(writes()).toHaveLength(2));
+    expect(tokens).toEqual([undefined, "t-1"]);
+    expect(writes()[1].data).toMatchObject({
+      canvas: { state: { todo: { checked: expect.arrayContaining([0, 1]) } } },
+    });
+  });
+
+  it("copies an action through the host's clipboard when no composer takes it", async () => {
+    const form: Canvas = {
+      ...trip,
+      blocks: [{ id: "f", type: "form", title: "Dados", fields: [{ id: "n", label: "Nome", kind: "text" }] }],
+    };
+    const { api } = server({
+      "GET /canvases/canvas-trip": () => record(1, form),
+      "GET /canvases/canvas-trip/draft": () => null,
+    });
+    const writeClipboard = vi.fn(async () => true);
+    await show(api, { host: { kind: "desktop", writeClipboard } });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar ao Hermes" }));
+    await screen.findByText("Copiado. Cole na conversa para enviar ao Hermes.");
+    expect(writeClipboard).toHaveBeenCalledWith(expect.stringContaining("Dados"));
   });
 
   it("speaks English when the interface does", async () => {

@@ -110,6 +110,8 @@ export const en: Record<string, string> = {
   "Abrir canvas": "Open canvas",
   tokens: "tokens",
   "Renomear conversa": "Rename conversation",
+  Salvar: "Save",
+  Cancelar: "Cancel",
   "Exportar conversa": "Export conversation",
   "Excluir conversa": "Delete conversation",
   "Reconectando à mesma execução…": "Reconnecting to the same run…",
@@ -286,12 +288,12 @@ export const en: Record<string, string> = {
   "Abra uma conversa no Hermes antes de enviar.": "Open a conversation in Hermes before sending.",
   "Ative a sessão e o perfil de destino antes de enviar.":
     "Activate the target session and profile before sending.",
-  "Este Desktop não permite enviar à sessão.": "This Desktop version cannot send to the session.",
 
   // Inline canvas (inside a Hermes Desktop conversation)
   "Este canvas mudou em outra janela. Mostrando a versão atual.":
     "This canvas changed in another window. Showing the current version.",
   "Versão {n} salva com suas alterações.": "Version {n} saved with your changes.",
+  "Não foi possível descartar suas alterações. {detail}": "Could not discard your changes. {detail}",
   "Adicionado à sua mensagem. Revise e envie.": "Added to your message. Review and send.",
   "Copiado. Cole na conversa para enviar ao Hermes.":
     "Copied. Paste it in the conversation to send it to Hermes.",

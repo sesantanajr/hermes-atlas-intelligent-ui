@@ -1,4 +1,4 @@
-/** The standalone app: `hermes atlas serve` (or `hermes-atlas serve`) on http://127.0.0.1:7331. */
+/** The standalone app: `hermes atlas serve` (or `atlas-intelligent-ui serve`) on http://127.0.0.1:7331. */
 import React from "react";
 import { createRoot } from "react-dom/client";
 import "../theme";

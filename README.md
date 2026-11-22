@@ -1,9 +1,9 @@
-![Hermes Atlas · Intelligent UI. Um cartógrafo conecta um globo a cartões interativos.](docs/hermes-atlas-cover.jpg)
+![Atlas Intelligent UI. Um cartógrafo conecta um globo a cartões interativos.](docs/hermes-atlas-cover.jpg)
 
-# Hermes Atlas · Intelligent UI
+# Atlas Intelligent UI
 
 [![Verificações](https://github.com/sesantanajr/hermes-atlas-intelligent-ui/actions/workflows/ci.yml/badge.svg)](https://github.com/sesantanajr/hermes-atlas-intelligent-ui/actions/workflows/ci.yml)
-![Versão](https://img.shields.io/badge/vers%C3%A3o-1.0.0-0b7a5c)
+![Versão](https://img.shields.io/badge/vers%C3%A3o-1.1.0-0b7a5c)
 ![Hermes Agent](https://img.shields.io/badge/Hermes%20Agent-%E2%89%A5%200.21-1f2937)
 ![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-informational)
 
@@ -16,8 +16,9 @@ dashboard web ou como uma página HTML. Na mensagem seguinte, o agente já sabe 
 
 ![Um canvas "Lisboa em 6 dias" dentro de uma resposta no Hermes Desktop, com orçamento, checklist e gastos ajustáveis](docs/screenshots/desktop-conversation.png)
 
-**Versão 1.0.0**: reconstrução completa para o contrato atual de plugins do Hermes Agent.
-[O que mudou](CHANGELOG.md) · [Migrar da 0.6](docs/MIGRATION.md)
+**Versão 1.1.0**: o plugin agora se chama **`atlas-intelligent-ui`** no Hermes. Quem tem a 1.0
+(`hermes-atlas`) reinstala uma vez, e a biblioteca e as opções vêm junto:
+[atualizar da 1.0](#atualizar-da-10). [O que mudou](CHANGELOG.md)
 
 ## Destaques
 
@@ -47,13 +48,14 @@ os bundles da interface já vêm no repositório.
 hermes plugins install sesantanajr/hermes-atlas-intelligent-ui --enable
 ```
 
-Sem `--enable`, o Hermes instala o plugin desligado; ligue com `hermes plugins enable hermes-atlas`.
+Sem `--enable`, o Hermes instala o plugin desligado; ligue com
+`hermes plugins enable atlas-intelligent-ui`.
 
-- **Hermes Desktop e Webapp**: em **Capacidades → Plugins**, o Hermes Atlas ocupa uma linha com
-  duas chaves. **Agente** liga as ferramentas, o comando `/atlas` e a skill; **Desktop** liga o
-  canvas na conversa e a página **Atlas** na barra lateral. Ligue as duas. Você também pode
-  instalar por ali: **Capacidades → Plugins → Instalar** com
-  `sesantanajr/hermes-atlas-intelligent-ui`.
+- **Hermes Desktop e Webapp**: em **Capacidades → Plugins**, o Atlas Intelligent UI ocupa uma
+  linha com duas chaves. **Agente** liga as ferramentas, o comando `/atlas` e a skill; **Desktop**
+  liga o canvas na conversa e a página **Atlas** na barra lateral. A chave **Desktop** vem
+  desligada depois de uma instalação pelo terminal: ligue as duas. Você também pode instalar por
+  ali: **Capacidades → Plugins → Instalar** com `sesantanajr/hermes-atlas-intelligent-ui`.
 - **Dashboard web**: a aba **Atlas** aparece ao recarregar o dashboard. Se a sua versão não
   recarrega plugins sozinha, reinicie `hermes dashboard`.
 - **Lista explícita de toolsets**: se a sua configuração usa uma, inclua `atlas`.
@@ -61,11 +63,30 @@ Sem `--enable`, o Hermes instala o plugin desligado; ligue com `hermes plugins e
 Conferir, atualizar e remover:
 
 ```sh
-hermes plugins doctor hermes-atlas
+hermes plugins doctor atlas-intelligent-ui
 hermes atlas doctor
-hermes plugins update hermes-atlas
-hermes plugins remove hermes-atlas   # a biblioteca em plugin-data/hermes-atlas é mantida
+hermes plugins update atlas-intelligent-ui
+hermes plugins remove atlas-intelligent-ui   # a biblioteca em plugin-data/atlas-intelligent-ui é mantida
 ```
+
+### Atualizar da 1.0
+
+Até a 1.0 o plugin se chamava `hermes-atlas`, e o Hermes recusa atualizar uma instalação cujo
+nome mudou (`hermes plugins update hermes-atlas` mantém a 1.0 funcionando). Reinstale uma vez:
+
+```sh
+hermes plugins remove hermes-atlas
+hermes plugins install sesantanajr/hermes-atlas-intelligent-ui
+hermes plugins enable atlas-intelligent-ui
+hermes atlas migrate
+```
+
+`remove` não apaga `plugin-data/hermes-atlas`: na primeira vez que a 1.1 abre a biblioteca
+(`hermes atlas migrate` faz isso na hora), ela copia os seus canvases para
+`plugin-data/atlas-intelligent-ui`. Depois, no Desktop, use **Capacidades → Plugins → Reescanear**
+e ligue a chave **Desktop** do Atlas Intelligent UI. Se você tinha mudado opções do plugin e quer
+mantê-las, ou usa vários perfis, siga o [guia de migração](docs/MIGRATION.md#da-10-para-a-11).
+`hermes atlas doctor` aponta qualquer coisa que a 1.0 tenha deixado.
 
 ## Usar
 
@@ -76,8 +97,8 @@ Peça como pediria a uma pessoa:
 - “Crie flashcards e um quiz sobre a Revolução Francesa.”
 - “Transforme este CSV num gráfico de linhas por mês.” (com o arquivo anexado)
 
-A skill `hermes-atlas:canvas` ensina o agente a decidir quando um canvas ajuda, a escolher os
-blocos e a atualizá-los. A forma de apresentar o canvas depende de onde você conversa:
+A skill `atlas-intelligent-ui:canvas` ensina o agente a decidir quando um canvas ajuda, a escolher
+os blocos e a atualizá-los. A forma de apresentar o canvas depende de onde você conversa:
 
 | Onde você conversa | O que aparece |
 | --- | --- |
@@ -100,13 +121,15 @@ Em qualquer conversa:
 /atlas export <id ou título> [html|md|json]
 ```
 
-No terminal: `hermes atlas status`, `list`, `show`, `export`, `doctor` e `serve`. Este último abre o
-Atlas como aplicativo independente em `http://127.0.0.1:7331`, sem login próprio e só em loopback.
+No terminal: `hermes atlas status`, `list`, `show`, `export`, `doctor`, `migrate` e `serve`. Este
+último abre o Atlas como aplicativo independente em `http://127.0.0.1:7331`, sem login próprio e
+só em loopback; ele lê a chave do servidor de API do Hermes no `.env` do perfil, então também roda
+como serviço (veja [Desenvolvimento](docs/DEVELOPMENT.md#app-independente-como-serviço)).
 
 ## Configurar
 
 ```sh
-hermes plugins config hermes-atlas
+hermes plugins config atlas-intelligent-ui
 ```
 
 | Opção | Padrão | O que faz |
@@ -137,16 +160,18 @@ Parâmetros, resultados e exemplos: [docs/TOOLS.md](docs/TOOLS.md).
 
 ## Seus dados
 
-Tudo fica em `<HERMES_HOME>/plugin-data/hermes-atlas/`: a biblioteca (`atlas.db`, SQLite, com cada
-versão de cada canvas, conversas do chat do Atlas e rascunhos) e as exportações (`exports/`, as
-60 mais recentes). Cada perfil do Hermes tem a sua. Nada é enviado a terceiros: o Atlas só fala
-com o próprio Hermes. Faça backup desse diretório como faria com o resto do perfil.
+Tudo fica em `<HERMES_HOME>/plugin-data/atlas-intelligent-ui/`: a biblioteca (`atlas.db`, SQLite,
+com cada versão de cada canvas, conversas do chat do Atlas e rascunhos) e as exportações
+(`exports/`, as 60 mais recentes). Cada perfil do Hermes tem a sua, acessível só pelo seu usuário.
+Nada é enviado a terceiros: o Atlas só fala com o próprio Hermes. Faça backup desse diretório como
+faria com o resto do perfil. A pasta `plugin-data/hermes-atlas` de uma instalação 1.0 continua
+onde estava depois da cópia; apague-a quando não precisar mais dela.
 
 ## Documentação
 
 - [Arquitetura](docs/ARCHITECTURE.md): como as peças se encaixam no Hermes.
 - [Compatibilidade](docs/COMPATIBILITY.md): o que o Atlas usa do Hermes, desde qual versão e como foi verificado.
-- [Ferramentas](docs/TOOLS.md) · [Segurança](docs/SECURITY.md) · [Migrar da 0.6](docs/MIGRATION.md)
+- [Ferramentas](docs/TOOLS.md) · [Segurança](docs/SECURITY.md) · [Migrar da 1.0 e da 0.6](docs/MIGRATION.md)
 - [Desenvolvimento](docs/DEVELOPMENT.md): compilar, testar e ver os três hosts no navegador.
 - [Histórico de versões](CHANGELOG.md)
 

@@ -57,6 +57,37 @@ Use um `HERMES_HOME` (ou `ATLAS_DATA_DIR`) de teste para não mexer na sua bibli
 As páginas de `harness/` carregam os bundles compilados: rode `node scripts/build.mjs` depois de
 mudar o código para vê-lo ali.
 
+## App independente como serviço
+
+`hermes atlas serve` (ou `python -m hermes_atlas serve`) atende só em loopback e lê a chave do
+servidor de API do Hermes como o próprio Hermes: `ATLAS_HERMES_API_KEY`, depois `API_SERVER_KEY`
+do ambiente e, por último, `API_SERVER_KEY` no `.env` do perfil (`HERMES_HOME`). Uma unidade
+systemd não precisa de lançador próprio nem de uma cópia da chave:
+
+```ini
+[Unit]
+Description=Atlas Intelligent UI (app independente)
+After=network.target
+
+[Service]
+Type=simple
+UMask=0077
+WorkingDirectory=/root/.hermes/plugins/atlas-intelligent-ui
+Environment=HERMES_HOME=/root/.hermes
+# Opcional: outra biblioteca que não a do plugin, e outra porta.
+# Environment=ATLAS_DATA_DIR=/root/.hermes/plugin-data/atlas-standalone
+ExecStart=/usr/local/lib/hermes-agent/venv/bin/python -m hermes_atlas serve --port 7332
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Use o Python do Hermes (ele já tem pydantic, FastAPI e uvicorn) e a pasta do plugin como
+diretório de trabalho. Para abrir de outra máquina, use um túnel SSH até a porta: o app não tem
+login próprio.
+
 ## Outras ferramentas
 
 | Comando | Para quê |
@@ -73,4 +104,4 @@ mudar o código para vê-lo ali.
    `CHANGELOG.md` (um teste confere que todos dizem a mesma versão).
 2. `npm run build`, `python -m pytest`, `npm test`.
 3. Commit, tag `vX.Y.Z` e push. Quem instalou pelo Git atualiza com
-   `hermes plugins update hermes-atlas`.
+   `hermes plugins update atlas-intelligent-ui`.

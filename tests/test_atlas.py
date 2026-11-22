@@ -62,7 +62,7 @@ def test_revision_concurrency(tmp_path):
 
 
 def test_api_roundtrip(client):
-    base = "/api/plugins/hermes-atlas"
+    base = "/api/plugins/atlas-intelligent-ui"
     assert client.post(base + "/canvases", json=payload()).status_code == 200
     assert client.get(base + "/canvases/test").json()["canvas"]["blocks"][0]["text"].startswith("<script>")
     assert client.get(base + "/canvases/missing").status_code == 404
@@ -70,9 +70,9 @@ def test_api_roundtrip(client):
 
 
 def test_local_origin_guard(client):
-    assert client.post('/api/plugins/hermes-atlas/canvases', json=payload(), headers={"Origin": "https://evil.example"}).status_code == 403
-    assert client.post('/api/plugins/hermes-atlas/canvases', content='{}', headers={"Content-Type": "text/plain"}).status_code == 415
-    assert client.get('/api/plugins/hermes-atlas/status', headers={"Host": "evil.example"}).status_code == 400
+    assert client.post('/api/plugins/atlas-intelligent-ui/canvases', json=payload(), headers={"Origin": "https://evil.example"}).status_code == 403
+    assert client.post('/api/plugins/atlas-intelligent-ui/canvases', content='{}', headers={"Content-Type": "text/plain"}).status_code == 415
+    assert client.get('/api/plugins/atlas-intelligent-ui/status', headers={"Host": "evil.example"}).status_code == 400
 
 
 def test_plugin_registers_and_renders():
@@ -103,7 +103,7 @@ def load_dashboard_api(name):
 
 
 def test_dashboard_router_loads_as_hermes_imports_it():
-    module = load_dashboard_api("hermes_dashboard_plugin_hermes-atlas")
+    module = load_dashboard_api("hermes_dashboard_plugin_atlas-intelligent-ui")
     paths = {route.path for route in module.router.routes}
     assert {"/status", "/canvases", "/canvases/{id}/draft", "/canvases/{id}/export", "/runs", "/clients/{kind}"} <= paths
     # In this process the package is already imported, so the dashboard reuses that copy.
@@ -119,16 +119,16 @@ def test_dashboard_router_loads_in_a_process_that_never_imported_atlas():
         "import importlib.util, sys\n"
         f"path = {str(root / 'dashboard' / 'plugin_api.py')!r}\n"
         "assert not any(p and __import__('pathlib').Path(p).resolve() == __import__('pathlib').Path(path).parents[1] for p in sys.path)\n"
-        "name = 'hermes_dashboard_plugin_hermes-atlas'\n"
+        "name = 'hermes_dashboard_plugin_atlas-intelligent-ui'\n"
         "spec = importlib.util.spec_from_file_location(name, path)\n"
         "module = importlib.util.module_from_spec(spec); sys.modules[name] = module; spec.loader.exec_module(module)\n"
         "private = [n for n in sys.modules if n.startswith('_hermes_atlas_') and '.' not in n]\n"
         "assert len(private) == 1 and 'hermes_atlas' not in sys.modules, private\n"
         "from fastapi import FastAPI\n"
         "from fastapi.testclient import TestClient\n"
-        "app = FastAPI(); app.include_router(module.router, prefix='/api/plugins/hermes-atlas')\n"
+        "app = FastAPI(); app.include_router(module.router, prefix='/api/plugins/atlas-intelligent-ui')\n"
         "client = TestClient(app)\n"
-        "print(client.get('/api/plugins/hermes-atlas/components').status_code, len(module.router.routes))\n")
+        "print(client.get('/api/plugins/atlas-intelligent-ui/components').status_code, len(module.router.routes))\n")
     done = subprocess.run([sys.executable, "-I", "-c", code], capture_output=True, text=True, cwd=root.parent, timeout=120)
     assert done.returncode == 0, done.stderr[-2000:]
     status, routes = done.stdout.split()
@@ -137,6 +137,6 @@ def test_dashboard_router_loads_in_a_process_that_never_imported_atlas():
 
 def test_remote_http_rejected(client, monkeypatch):
     monkeypatch.setenv("ATLAS_HERMES_URL", "http://remote.example/v1")
-    result = client.get('/api/plugins/hermes-atlas/status').json()
+    result = client.get('/api/plugins/atlas-intelligent-ui/status').json()
     assert not result['connected']
     assert 'HTTPS' in result['detail']

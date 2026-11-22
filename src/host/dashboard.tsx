@@ -37,4 +37,4 @@ function DashboardAtlas() {
 }
 
 // The name must equal `name` in dashboard/manifest.json.
-window.__HERMES_PLUGINS__?.register("hermes-atlas", DashboardAtlas);
+window.__HERMES_PLUGINS__?.register("atlas-intelligent-ui", DashboardAtlas);

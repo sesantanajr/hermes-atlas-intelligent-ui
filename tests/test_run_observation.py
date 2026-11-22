@@ -19,7 +19,7 @@ def test_conditional_poll_replays_updates_and_recovers_after_restart(tmp_path, m
     run = store.reserve(run_id, chat_id, {'input': 'private attachment'}, 'short question')
     run.update(status='running', text='Progresso. ' * 4000, remote_id='run_example')
     assert store.checkpoint(run)
-    path = '/api/plugins/hermes-atlas/runs/' + run_id
+    path = '/api/plugins/atlas-intelligent-ui/runs/' + run_id
     with TestClient(app, base_url='http://localhost') as client:
         full = client.get(path)
         first = full.json()

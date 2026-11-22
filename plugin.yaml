@@ -1,11 +1,15 @@
-# Hermes Atlas — plugin manifest (manifest v2; older Hermes releases read it as v1 and ignore
-# the fields they do not know).
+# Atlas Intelligent UI — plugin manifest (manifest v2; older Hermes releases read it as v1 and
+# ignore the fields they do not know).
+#
+# `name` is the plugin id: Hermes installs the plugin in plugins/<name>, keys its settings, data
+# folder, dashboard routes and Desktop extension by it. Releases up to 1.0 were `hermes-atlas`;
+# Hermes refuses to update an install whose name changed, so 1.0 users reinstall once (MIGRATION).
 #
 # No python_dependencies on purpose: Atlas uses only what Hermes core already ships (pydantic for
 # the tools; FastAPI and httpx for the dashboard API), so enabling it never changes the shared
 # Python environment and needs no restart.
-name: hermes-atlas
-version: "1.0.0"
+name: atlas-intelligent-ui
+version: "1.1.0"
 description: "Interactive canvases for Hermes Agent: answers become charts, tables, forms, maps, boards and 70+ other validated UI blocks, inline in Hermes Desktop, in the dashboard, and as text or files everywhere else."
 author: sesantanajr
 license: MIT

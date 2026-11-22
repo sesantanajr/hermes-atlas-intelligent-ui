@@ -111,7 +111,9 @@ class Toolbox:
         if mode == "file":
             try:
                 path = write_export(record, "html", resolve_locale(self.settings.locale))
-            except ToolError:  # no viewer in this installation: the next best way
+            except Exception as exc:  # no viewer, a full disk, a broken asset: the next best way
+                if not isinstance(exc, ToolError):
+                    logger.warning("Atlas could not write the page of canvas %s: %s", record["id"], exc)
                 mode = "directive" if desktop else "text"
             else:
                 extra = {"file": str(path), "media": f"MEDIA:{path}"}
@@ -134,30 +136,41 @@ class Toolbox:
     def _announce(self, session_id, record):
         """Tell open front ends that a canvas changed, so they refresh without polling.
 
-        Hermes Desktop windows get a broadcast where Hermes offers one; otherwise the viewers of
-        this session get a session event. Older releases have neither and the front ends poll.
+        The viewers of this session always get a session event (the one path that also works
+        under ``plugins.isolation: host``); Desktop windows connected to this process also get a
+        broadcast where Hermes can deliver one. Older releases have neither and the front ends poll.
         """
         from .. import events
-        if events.canvas_saved(record, "agent"):
-            return
+        events.canvas_saved(record, "agent")
         emit = getattr(self.ctx, "emit_to_session", None)
         if not callable(emit) or not session_id:
             return
         try:
-            emit(session_id, events.CANVAS_SAVED, {"id": record["id"], "revision": record["revision"],
-                                                   "title": record["canvas"].get("title", "")})
+            emit(session_id, events.CANVAS_SAVED, events.canvas_payload(record))
         except Exception as exc:
             logger.debug("Atlas could not announce canvas %s: %s", record["id"], exc)
 
     def _saved(self, store, record, kwargs, verb):
+        """Everything after the canvas is stored. It is saved at this point, so nothing here may turn
+        the call into a failure: the model would retry and create a duplicate canvas."""
         session_id = str(kwargs.get("session_id") or "")
-        store.link_canvas(record["id"], record["revision"], session_id=session_id,
-                          conversation_id=str(kwargs.get("conversation_id") or ""))
+        try:
+            store.link_canvas(record["id"], record["revision"], session_id=session_id,
+                              conversation_id=str(kwargs.get("conversation_id") or ""))
+        except Exception as exc:  # the link only drives "the user changed it" hints
+            logger.warning("Atlas saved canvas %s but could not link it to the session: %s", record["id"], exc)
         self._announce(session_id, record)
         canvas = record["canvas"]
-        return {"id": record["id"], "revision": record["revision"], "title": canvas.get("title", ""),
-                "blocks": len(canvas.get("blocks", [])), "status": verb,
-                **self._presentation(store, record, session_id)}
+        result = {"id": record["id"], "revision": record["revision"], "title": canvas.get("title", ""),
+                  "blocks": len(canvas.get("blocks", [])), "status": verb}
+        try:
+            return {**result, **self._presentation(store, record, session_id)}
+        except Exception as exc:
+            logger.warning("Atlas saved canvas %s but could not prepare its presentation: %s", record["id"], exc)
+            line = inline.directive(record["id"], record["revision"])
+            return {**result, "show": "either", "directive": line,
+                    "present": (f"The canvas is saved. If the user is in Hermes Desktop or the Atlas chat, write this "
+                                f"line by itself to show it: {line} Otherwise summarise it in plain text.")}
 
     # -- handlers ------------------------------------------------------------------------------
     def components(self, args, **kwargs):
@@ -347,9 +360,19 @@ def write_export(record, kind, locale="pt"):
 
 
 def _prune(folder):
-    files = sorted((f for f in folder.iterdir() if f.is_file() and f.suffix in {".html", ".md", ".json"}),
-                   key=lambda f: f.stat().st_mtime, reverse=True)
-    for stale in files[EXPORTS_KEPT:]:
+    """Keep the newest EXPORTS_KEPT files. Another process may be pruning the same folder: a file
+    that disappears between listing and stat or unlink is simply skipped."""
+    dated = []
+    for item in folder.iterdir():
+        if item.suffix not in {".html", ".md", ".json"}:
+            continue
+        try:
+            if item.is_file():
+                dated.append((item.stat().st_mtime, item))
+        except OSError:
+            continue
+    dated.sort(key=lambda pair: pair[0], reverse=True)
+    for _, stale in dated[EXPORTS_KEPT:]:
         try:
             stale.unlink()
         except OSError:

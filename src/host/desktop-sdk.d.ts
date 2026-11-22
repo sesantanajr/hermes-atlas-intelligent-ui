@@ -36,6 +36,8 @@ declare module "@hermes/plugin-sdk" {
     register: (entry: Contribution) => () => void;
     onDispose: (fn: () => void) => void;
     onEvent?: (type: string, listener: (event: GatewayEvent) => void) => () => void;
+    /** The curated OS door; each member resolves false instead of throwing when it cannot act. */
+    os?: { writeClipboard?: (text: string) => Promise<boolean> };
   }
   export type TranscriptDirectiveProps = {
     attrs: Readonly<{ [key: string]: string }>;
@@ -47,8 +49,14 @@ declare module "@hermes/plugin-sdk" {
   export const host:
     | {
         state?: {
+          /** The profile the active gateway route serves. */
           profile?: Atom<string>;
+          /** The registry source of the active route (newer hosts); null for the local pool. */
+          connectionId?: Atom<string | null>;
+          /** The gateway WebSocket's state ('idle' | 'connecting' | 'open' | 'closed' | 'error'),
+           *  not which gateway: never an identity. */
           gateway?: Atom<string>;
+          /** Runtime id of the focused chat session (tile-aware). */
           focusedSessionId?: Atom<string | null>;
           focusedSessionProfile?: Atom<string>;
         };
@@ -89,7 +97,10 @@ declare module "@hermes/plugin-sdk" {
   };
 
   export const useValue: (<T>(atom: Atom<T>) => T) | undefined;
+  /** Bumped on every active route selection, same-profile source swaps included. */
   export const gatewayActivationEpoch: (() => number) | undefined;
+  /** The same counter as a hook: the component re-renders when it moves (newer hosts). */
+  export const useGatewayActivationEpoch: (() => number) | undefined;
   export const ROUTES_AREA: string | undefined;
   export const SIDEBAR_NAV_AREA: string | undefined;
   export const TRANSCRIPT_DIRECTIVE_AREA: string | undefined;

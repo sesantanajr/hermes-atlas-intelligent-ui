@@ -13,6 +13,7 @@ import "./shell.css";
 import { examples } from "../blocks/examples";
 import {
   canvasFromLocation,
+  copyText,
   onCanvasRequested,
   standaloneHost,
   takeRequestedCanvas,
@@ -505,21 +506,13 @@ export function App({
     }
   };
   const copy = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setNotice(t("Copiado."));
-    } catch {
-      setError(t("Não foi possível copiar. Use a opção de exportação."));
-    }
+    if (await copyText(host, text)) setNotice(t("Copiado."));
+    else setError(t("Não foi possível copiar. Use a opção de exportação."));
   };
-  const rename = async () => {
+  const rename = async (title: string) => {
     if (!current) return;
-    const title = window.prompt(t("Nome da conversa"), current.title);
-    if (!title?.trim()) return;
     try {
-      setCurrent(
-        await api<Conversation>(`/conversations/${current.id}`, { title: title.trim() }, "PATCH"),
-      );
+      setCurrent(await api<Conversation>(`/conversations/${current.id}`, { title }, "PATCH"));
       await refreshLists();
     } catch (e) {
       fail(e);
@@ -788,7 +781,7 @@ export function App({
                   if (el)
                     followBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
                 }}
-                rename={() => void rename()}
+                rename={(title) => void rename(title)}
                 exportChat={() =>
                   current && download("atlas-conversa.json", { ...current, messages })
                 }

@@ -43,8 +43,8 @@ Cria um canvas, valida, salva a revisão 1 e diz ao modelo como mostrá-lo.
   "surface": "desktop",
   "show": "file",
   "directive": "::atlas{id=\"canvas-81f797341c87494abb49a38b16f4cc4a\" rev=\"1\"}",
-  "file": "/home/ana/.hermes/plugin-data/hermes-atlas/exports/viagem-a-lisboa-f4cc4a-v1.html",
-  "media": "MEDIA:/home/ana/.hermes/plugin-data/hermes-atlas/exports/viagem-a-lisboa-f4cc4a-v1.html",
+  "file": "/home/ana/.hermes/plugin-data/atlas-intelligent-ui/exports/viagem-a-lisboa-f4cc4a-v1.html",
+  "media": "MEDIA:/home/ana/.hermes/plugin-data/atlas-intelligent-ui/exports/viagem-a-lisboa-f4cc4a-v1.html",
   "present": "Show it by ending your reply with this line, by itself: MEDIA:… Hermes Desktop draws the interactive canvas there, and other apps receive it as a page to open. Do not repeat the canvas content; one or two sentences of guidance at most."
 }
 ```
@@ -124,7 +124,7 @@ Busca na biblioteca, do mais recente ao mais antigo.
 
 ## `atlas_export`
 
-Grava um canvas em `<HERMES_HOME>/plugin-data/hermes-atlas/exports/`.
+Grava um canvas em `<HERMES_HOME>/plugin-data/atlas-intelligent-ui/exports/`.
 
 | Parâmetro | Tipo | |
 | --- | --- | --- |
@@ -134,8 +134,8 @@ Grava um canvas em `<HERMES_HOME>/plugin-data/hermes-atlas/exports/`.
 
 ```json
 { "success": true, "id": "canvas-81f7…", "revision": 2, "format": "markdown",
-  "path": "/home/ana/.hermes/plugin-data/hermes-atlas/exports/viagem-a-lisboa-f4cc4a-v2.md",
-  "bytes": 94, "media": "MEDIA:/home/ana/.hermes/plugin-data/hermes-atlas/exports/viagem-a-lisboa-f4cc4a-v2.md",
+  "path": "/home/ana/.hermes/plugin-data/atlas-intelligent-ui/exports/viagem-a-lisboa-f4cc4a-v2.md",
+  "bytes": 94, "media": "MEDIA:/home/ana/.hermes/plugin-data/atlas-intelligent-ui/exports/viagem-a-lisboa-f4cc4a-v2.md",
   "present": "To deliver the file, write the `media` line by itself in your reply: …" }
 ```
 

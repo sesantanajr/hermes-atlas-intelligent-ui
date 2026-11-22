@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from uuid import uuid4
 
-from .. import runtime
+from .. import LEGACY_PLUGIN_NAMES, PLUGIN_NAME, runtime
 
 
 def _upgrade_canvases(db):
@@ -64,9 +64,9 @@ def bind_workspace(db, path):
     """, (old_owner, old_owner)).fetchone()
     owner = old_owner if can_adopt else uuid4().hex[:24]
     db.execute("INSERT INTO workspace_bindings VALUES (?,?)", (identity, owner))
-    private_path = not os.environ.get('ATLAS_DATA_DIR') and resolved == (
-        home / 'plugin-data' / 'hermes-atlas' / 'atlas.db'
-    ).resolve()
+    private_path = not os.environ.get('ATLAS_DATA_DIR') and resolved in {
+        (home / 'plugin-data' / name / 'atlas.db').resolve() for name in (PLUGIN_NAME, *LEGACY_PLUGIN_NAMES)
+    }
     if private_path and (can_adopt or not runtime.setting('ATLAS_HERMES_URL')):
         # A v0.2 installation used exclusively through atlas_render contains
         # canvases but no documents at all. Only its first default local

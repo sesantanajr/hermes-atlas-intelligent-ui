@@ -11,7 +11,7 @@ from hermes_atlas.catalog import detail, entries, search
 from hermes_atlas.schema.canvas import Canvas, Component
 from hermes_atlas.server.preview import decorate_live
 
-BASE = "/api/plugins/hermes-atlas"
+BASE = "/api/plugins/atlas-intelligent-ui"
 
 
 @pytest.fixture

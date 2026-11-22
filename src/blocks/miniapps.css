@@ -27,7 +27,7 @@
 .atlas-media details {
   margin-top: 0.6rem;
 }
-.mini-toolbar {
+.atlas-mini-toolbar {
   display: flex;
   align-items: center;
   gap: 0.55rem;

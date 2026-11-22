@@ -1,10 +1,12 @@
 """SQLite library of canvases, conversations and runs, scoped to one Hermes profile and gateway."""
 import hashlib
 import json
+import os
 import sqlite3
 from contextlib import closing
 from datetime import datetime, timedelta, timezone
 
+from .. import LEGACY_PLUGIN_NAMES, PLUGIN_NAME
 from ..chat.activity import summarize
 from ..chat.delivery import present_conversation, present_reply
 from ..runtime import data_dir
@@ -26,13 +28,30 @@ def _next_run_stamp(previous):
     return now.isoformat()
 
 
+def keep_private(path):
+    """Owner-only access to a new library (it holds Atlas chats and their attachments), and to its
+    folder when that is Atlas's own ``plugin-data`` folder. POSIX only; failures are ignored."""
+    if os.name != "posix":
+        return
+    try:
+        os.chmod(path, 0o600)
+        folder = os.path.dirname(os.path.abspath(path))
+        if os.path.basename(folder) in (PLUGIN_NAME, *LEGACY_PLUGIN_NAMES):
+            os.chmod(folder, 0o700)
+    except OSError:
+        pass
+
+
 class Store:
     def __init__(self, path=None):
         self.path = path or data_dir() / "atlas.db"
+        fresh = not os.path.exists(self.path)
         with closing(self.connect()) as db, db:
             if db.execute("PRAGMA user_version").fetchone()[0] < 1:
                 self._upgrade_documents()
             self._scope = bind_workspace(db, self.path)
+        if fresh:
+            keep_private(self.path)
 
     def _upgrade_documents(self):
         with closing(self.connect()) as db, db:
@@ -356,40 +375,52 @@ class Store:
         wanted = [s for s in dict.fromkeys(session_ids) if s]
         if not wanted:
             return []
+        with closing(self.connect()) as db:
+            # Runs before every agent turn: plain reads first, so the common case (nothing changed)
+            # never takes the write lock that the dashboard and the Atlas chat also need.
+            pending = self._pending_changes(db, wanted, limit)
+            if not pending or not acknowledge:
+                return [change for change, _ in pending]
+            with db:
+                db.execute("BEGIN IMMEDIATE")
+                # Again under the lock: another process may have reported the same change meanwhile.
+                pending = self._pending_changes(db, wanted, limit)
+                noted = datetime.now(timezone.utc).isoformat()
+                for change, link in pending:
+                    link["noted"] = noted
+                    self.put('canvas_link', change["id"], link, db)
+        return [change for change, _ in pending]
+
+    def _pending_changes(self, db, wanted, limit):
         marks = ",".join("?" * len(wanted))
-        found = []
-        with closing(self.connect()) as db, db:
-            db.execute("BEGIN IMMEDIATE")
-            rows = db.execute(
-                "SELECT id, payload FROM documents WHERE kind='canvas_link' AND owner=?"
-                " AND (json_extract(payload,'$.conversation_id') IN (" + marks + ")"
-                " OR json_extract(payload,'$.session_id') IN (" + marks + "))"
-                " ORDER BY updated DESC LIMIT 50", (self.scope, *wanted, *wanted)).fetchall()
-            for canvas_id, raw in rows:
-                link = json.loads(raw)
-                latest = db.execute(
-                    "SELECT revision, title, updated FROM owned_canvases WHERE owner=? AND id=?"
-                    " ORDER BY revision DESC LIMIT 1", (self.scope, canvas_id)).fetchone()
-                if latest is None:
-                    continue
-                noted = link.get("noted", "")
-                draft = db.execute("SELECT updated FROM documents WHERE kind='canvas_draft' AND id=? AND owner=?",
-                                   (canvas_id, self.scope)).fetchone()
-                kind = None
-                if latest["revision"] > link.get("agent_revision", 0) and latest["updated"] > noted:
-                    kind = "revision"
-                elif draft and draft[0] > noted:
-                    kind = "draft"
-                if not kind:
-                    continue
-                found.append({"id": canvas_id, "title": latest["title"], "revision": latest["revision"],
-                              "agent_revision": link.get("agent_revision", 0), "kind": kind})
-                if acknowledge:
-                    link["noted"] = datetime.now(timezone.utc).isoformat()
-                    self.put('canvas_link', canvas_id, link, db)
-                if len(found) >= limit:
-                    break
-        return found
+        rows = db.execute(
+            "SELECT id, payload FROM documents WHERE kind='canvas_link' AND owner=?"
+            " AND (json_extract(payload,'$.conversation_id') IN (" + marks + ")"
+            " OR json_extract(payload,'$.session_id') IN (" + marks + "))"
+            " ORDER BY updated DESC LIMIT 50", (self.scope, *wanted, *wanted)).fetchall()
+        pending = []
+        for canvas_id, raw in rows:
+            link = json.loads(raw)
+            latest = db.execute(
+                "SELECT revision, title, updated FROM owned_canvases WHERE owner=? AND id=?"
+                " ORDER BY revision DESC LIMIT 1", (self.scope, canvas_id)).fetchone()
+            if latest is None:
+                continue
+            noted = link.get("noted", "")
+            draft = db.execute("SELECT updated FROM documents WHERE kind='canvas_draft' AND id=? AND owner=?",
+                               (canvas_id, self.scope)).fetchone()
+            kind = None
+            if latest["revision"] > link.get("agent_revision", 0) and latest["updated"] > noted:
+                kind = "revision"
+            elif draft and draft[0] > noted:
+                kind = "draft"
+            if not kind:
+                continue
+            pending.append(({"id": canvas_id, "title": latest["title"], "revision": latest["revision"],
+                             "agent_revision": link.get("agent_revision", 0), "kind": kind}, link))
+            if len(pending) >= limit:
+                break
+        return pending
 
     # -- unsaved interaction state of one canvas (inline canvases autosave here) ----------------
     def draft(self, canvas_id):

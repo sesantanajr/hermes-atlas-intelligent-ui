@@ -25,7 +25,7 @@ from hermes_atlas.schema.canvas import Canvas
 from hermes_atlas.server.app import app
 
 assert Path(hermes_atlas.__file__).is_relative_to(Path(sys.prefix)), hermes_atlas.__file__
-base = "/api/plugins/hermes-atlas"
+base = "/api/plugins/atlas-intelligent-ui"
 with TestClient(app, base_url="http://127.0.0.1") as client:
     page = client.get("/")
     assert page.status_code == 200 and "<html" in page.text, page.status_code
@@ -58,7 +58,7 @@ def main():
         python = bin_dir / ("python.exe" if sys.platform == "win32" else "python")
         env = {**os.environ, "HERMES_HOME": str(root / "home"), "ATLAS_DATA_DIR": str(root / "data")}
         subprocess.run([str(python), "-m", "pip", "install", "--quiet", str(wheel), "httpx"], check=True, cwd=root)
-        command = bin_dir / ("hermes-atlas.exe" if sys.platform == "win32" else "hermes-atlas")
+        command = bin_dir / ("atlas-intelligent-ui.exe" if sys.platform == "win32" else "atlas-intelligent-ui")
         status = subprocess.run([str(command), "status"], check=True, cwd=root, env=env, capture_output=True, text=True)
         assert "Atlas" in status.stdout, status.stdout
         doctor = subprocess.run([str(command), "doctor", "--json"], cwd=root, env=env, capture_output=True, text=True)

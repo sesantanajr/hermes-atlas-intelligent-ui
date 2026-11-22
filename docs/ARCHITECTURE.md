@@ -1,4 +1,4 @@
-# Arquitetura do Hermes Atlas 1.0
+# Arquitetura do Atlas Intelligent UI 1.1
 
 O Atlas é um **pacote unificado** do Hermes Agent: uma pasta com a metade do agente
 (`plugin.yaml` + `__init__.py`), uma skill, a aba do dashboard (`dashboard/`) e a extensão do
@@ -19,7 +19,7 @@ flowchart LR
     A["App independente<br/>hermes atlas serve"]
     V["Página exportada<br/>viewer.html"]
   end
-  R["API do plugin<br/>/api/plugins/hermes-atlas"] --> S
+  R["API do plugin<br/>/api/plugins/atlas-intelligent-ui"] --> S
   D -- ctx.rest --> R
   B -- SDK do dashboard --> R
   A -- fetch --> R
@@ -32,9 +32,9 @@ flowchart LR
 | --- | --- |
 | `plugin.yaml` | Manifesto v2: ferramentas e gancho declarados, `config_schema`, `requires_hermes: ">=0.21.0"`. Nenhuma `python_dependencies`. |
 | `__init__.py` | `register(ctx)`: delega para `hermes_atlas/agent/plugin.py` com import relativo, como o Hermes exige. |
-| `skills/canvas/SKILL.md` | A skill `hermes-atlas:canvas`: quando usar um canvas, como montar, mostrar e atualizar. |
+| `skills/canvas/SKILL.md` | A skill `atlas-intelligent-ui:canvas`: quando usar um canvas, como montar, mostrar e atualizar. |
 | `hermes_atlas/` | O pacote Python (abaixo). |
-| `dashboard/manifest.json`, `dashboard/plugin_api.py`, `dashboard/dist/` | A aba **Atlas** do dashboard e as rotas `/api/plugins/hermes-atlas/…`, que servem também o Desktop. |
+| `dashboard/manifest.json`, `dashboard/plugin_api.py`, `dashboard/dist/` | A aba **Atlas** do dashboard e as rotas `/api/plugins/atlas-intelligent-ui/…`, que servem também o Desktop. |
 | `desktop/plugin.js` | A extensão do Desktop e do Webapp: um único módulo ES. |
 | `src/` | O código TypeScript/React de todas as interfaces. Os bundles gerados ficam versionados, então instalar pelo Git não exige Node. |
 
@@ -97,7 +97,7 @@ ferramenta trocar o cartão do arquivo (`TOOL_MEDIA_RENDERER_AREA`, ferramentas 
    desatualizada é recusada com a orientação de ler de novo.
 
 Quando a revisão muda, o backend avisa as interfaces (`broadcast_plugin_event` →
-`plugin.hermes-atlas.canvas.saved`) e os canvases abertos se atualizam sem consultas periódicas.
+`plugin.atlas-intelligent-ui.canvas.saved`) e os canvases abertos se atualizam sem consultas periódicas.
 
 ## Interfaces
 
@@ -139,7 +139,7 @@ ao lado. Na extensão do Desktop, a conversa é a do próprio Desktop.
 
 ## Dados
 
-`<HERMES_HOME>/plugin-data/hermes-atlas/atlas.db`, um SQLite por perfil:
+`<HERMES_HOME>/plugin-data/atlas-intelligent-ui/atlas.db`, um SQLite por perfil:
 
 - `owned_canvases`: cada revisão de cada canvas, imutável, limitada a 256 KB.
 - `documents`: rascunhos (`canvas_draft`), vínculos canvas–sessão (`canvas_link`), o que cada

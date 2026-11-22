@@ -101,15 +101,21 @@ describe("locale detection", () => {
     expect(normalizeLocale("en-GB")).toBe("en");
     expect(normalizeLocale("EN")).toBe("en");
     expect(normalizeLocale("pt-PT")).toBe("pt-BR");
+    expect(normalizeLocale("pt")).toBe("pt-BR");
     expect(normalizeLocale(undefined)).toBe("pt-BR");
+    // Hermes Desktop and the dashboard speak more languages than Atlas: English is the closer one.
+    for (const tag of ["de", "es", "fr", "ja", "zh", "zh-hant", "ar"]) expect(normalizeLocale(tag), tag).toBe("en");
   });
 
   it("prefers an explicit choice, then the page language", () => {
     expect(detectLocale("en")).toBe("en");
+    expect(detectLocale("de")).toBe("en"); // the dashboard's own language code
     const previous = document.documentElement.lang;
     document.documentElement.lang = "en-US";
     expect(detectLocale("auto")).toBe("en");
     expect(detectLocale("pt-BR")).toBe("pt-BR");
+    document.documentElement.lang = "ja";
+    expect(detectLocale()).toBe("en");
     document.documentElement.lang = previous;
   });
 });

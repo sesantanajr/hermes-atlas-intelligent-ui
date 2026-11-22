@@ -35,7 +35,7 @@ def evict(module_name):
         del sys.modules[name]
 
 
-def load_plugin(plugin_dir=PLUGIN_DIR, key="hermes-atlas"):
+def load_plugin(plugin_dir=PLUGIN_DIR, key="atlas-intelligent-ui"):
     """Import a directory plugin exactly the way Hermes does and return the module."""
     plugin_dir = Path(plugin_dir)
     init_file = plugin_dir / "__init__.py"
@@ -78,7 +78,7 @@ class LegacyHostContext:
         self.settings = dict(settings or {})
         self.session_id = session_id
         self.conversation_id = conversation_id or session_id
-        self.plugin_id = "hermes-atlas"
+        self.plugin_id = "atlas-intelligent-ui"
         self.profile_name = "default"
 
     # -- registration (signatures copied from PluginContext) -----------------------------------
@@ -155,9 +155,15 @@ class HostContext(LegacyHostContext):
         super().__init__(*args, **kwargs)
         self.surface = surface
         self.session_events = []
+        self.config_writes = []
 
     def register_hook(self, hook_name: str, callback, *, hold_stream: bool = False):
         self.hooks.setdefault(hook_name, []).append(callback)
+
+    def set_config(self, key: str, value) -> None:
+        """``plugins.entries.<plugin_id>.settings.<key>`` (PluginContext.set_config, Hermes 0.23)."""
+        self.settings[key] = value
+        self.config_writes.append((key, value))
 
     def session_surface(self) -> str:
         return self.surface

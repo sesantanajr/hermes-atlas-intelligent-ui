@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from .. import PLUGIN_NAME, runtime
 from .api import router
 from . import gateway, runs
 
@@ -14,7 +15,7 @@ async def lifespan(app):
     await runs.shutdown()
     await gateway.close()
 
-app = FastAPI(title="Hermes Atlas", docs_url=None, redoc_url=None, lifespan=lifespan)
+app = FastAPI(title="Atlas Intelligent UI", docs_url=None, redoc_url=None, lifespan=lifespan)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "[::1]"])
 
 
@@ -33,7 +34,7 @@ async def local_guard(request: Request, call_next):
     response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; media-src 'self' data: https:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'"
     return response
 
-app.include_router(router, prefix="/api/plugins/hermes-atlas")
+app.include_router(router, prefix=f"/api/plugins/{PLUGIN_NAME}")
 dist = Path(__file__).resolve().parent.parent / "static"
 if dist.is_dir():
     app.mount("/", StaticFiles(directory=dist, html=True), name="ui")
@@ -42,6 +43,7 @@ if dist.is_dir():
 def serve(port=7331):
     """Run the standalone app. It binds to loopback only: there is no login of its own."""
     import uvicorn
+    runtime.mark_standalone()
     uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")
 
 

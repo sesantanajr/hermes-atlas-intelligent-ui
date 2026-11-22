@@ -1,14 +1,18 @@
 """Self-check of an Atlas installation: ``hermes atlas doctor`` and ``python -m hermes_atlas doctor``.
 
-``hermes plugins doctor hermes-atlas`` proves that Hermes can discover, import and register the
-plugin. This check looks at what that one cannot see: that the shipped bundles are present and
-belong to this version, that every catalogue example still validates, and that the library opens.
+``hermes plugins doctor atlas-intelligent-ui`` proves that Hermes can discover, import and
+register the plugin. This check looks at what that one cannot see: that the shipped bundles are
+present and belong to this version, that every catalogue example still validates, that the
+library opens, and what an install under the earlier name (``hermes-atlas``) left behind.
+Every check only reads: a diagnostic never creates, copies or migrates anything.
 """
 import json
 import re
 from pathlib import Path
 
-from . import PLUGIN_NAME, __version__
+from . import LEGACY_PLUGIN_NAMES, PLUGIN_NAME, __version__
+
+REPOSITORY = "sesantanajr/hermes-atlas-intelligent-ui"
 
 OK, WARN, FAIL = "ok", "warn", "fail"
 PACKAGE = Path(__file__).resolve().parent
@@ -102,6 +106,9 @@ def check_store():
     path = database_path(create=False)
     if not path.is_file():
         return OK, "library", f"not created yet (first use creates {path})"
+    copied = ""
+    if path.parent.name in LEGACY_PLUGIN_NAMES:
+        copied = f"; it is copied to plugin-data/{PLUGIN_NAME} the first time Atlas {__version__} opens it"
     try:
         with closing(sqlite3.connect(f"{path.as_uri()}?mode=ro", uri=True, timeout=5)) as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
@@ -113,7 +120,62 @@ def check_store():
     except sqlite3.Error as exc:
         return FAIL, "library", f"cannot read {path}: {exc}"[:400]
     note = "" if version >= 2 else " (older format; it is upgraded in place the next time Atlas opens it)"
-    return OK, "library", f"{canvases} canvases in {path}{note}"
+    return OK, "library", f"{canvases} canvases in {path}{note}{copied}"
+
+
+def legacy_findings():
+    """What an install under an earlier plugin name left behind, as plain sentences (read-only)."""
+    from .runtime import profile_home
+    from .storage.migration import read_marker
+    home = profile_home()
+    findings = []
+    here = ROOT.resolve()
+    for name in LEGACY_PLUGIN_NAMES:
+        earlier = home / "plugins" / name
+        if earlier.is_dir() and earlier.resolve() != here:
+            findings.append(f"the {name} install is still in {earlier}: run `hermes plugins remove {name}` "
+                            "(both register the atlas tools, and the earlier one would win)")
+    if (ROOT / "plugin.yaml").is_file() and ROOT.parent.name == "plugins" and ROOT.name != PLUGIN_NAME:
+        findings.append(f"this copy sits in plugins/{ROOT.name}, so Hermes refuses its updates: run "
+                        f"`hermes plugins remove {ROOT.name}` and `hermes plugins install {REPOSITORY}`")
+    config = _config_view()
+    plugins = config.get("plugins") if isinstance(config.get("plugins"), dict) else {}
+    for list_name in ("enabled", "disabled"):
+        names = plugins.get(list_name)
+        stale = sorted(set(names) & set(LEGACY_PLUGIN_NAMES)) if isinstance(names, list) else []
+        if stale and not (home / "plugins" / stale[0]).is_dir():
+            findings.append(f"config.yaml still lists {', '.join(stale)} under plugins.{list_name}")
+    bases = {home}
+    if home.parent.name == "profiles":
+        bases.add(home.parent.parent)
+    for base in sorted(bases):
+        for name in LEGACY_PLUGIN_NAMES:
+            half = base / "desktop-plugins" / name
+            if half.is_dir():
+                findings.append(f"Hermes Desktop still has the {name} extension ({half}); after removing {name}, "
+                                "use Capabilities > Plugins > Rescan in Desktop or restart it")
+    from .runtime import data_dir
+    marker = read_marker(data_dir(create=False))
+    if marker.get("error"):
+        findings.append(f"copying the library from {marker.get('from')} failed ({marker['error']}); "
+                        "the earlier library is untouched there")
+    return findings
+
+
+def _config_view():
+    try:
+        from hermes_cli.config import load_config_readonly
+        config = load_config_readonly() or {}
+    except Exception:
+        return {}
+    return config if isinstance(config, dict) else {}
+
+
+def check_legacy():
+    findings = legacy_findings()
+    if findings:
+        return WARN, "earlier install", "; ".join(findings)
+    return OK, "earlier install", f"nothing left from {', '.join(LEGACY_PLUGIN_NAMES)}"
 
 
 def check_http_stack():
@@ -156,7 +218,8 @@ def check_gateway():
 
 def run(live=False):
     """``[(status, name, detail)]`` for every check; *live* also contacts the Hermes API server."""
-    checks = [check_versions, check_files, check_assets, check_manifest_tools, check_http_stack, check_catalog, check_store]
+    checks = [check_versions, check_files, check_assets, check_manifest_tools, check_http_stack, check_catalog,
+              check_store, check_legacy]
     if live:
         checks.append(check_gateway)
     results = []

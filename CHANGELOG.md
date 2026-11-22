@@ -3,6 +3,85 @@
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem
 [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.1.0] - 2026-11-22
+
+O plugin passa a se chamar **`atlas-intelligent-ui`**: `hermes plugins doctor atlas-intelligent-ui`,
+`hermes plugins update atlas-intelligent-ui`. O Hermes recusa atualizar uma instalação cujo nome
+mudou, então quem tem a 1.0 (`hermes-atlas`) reinstala uma vez; a biblioteca de canvases e as
+opções vêm junto sozinhas. [Como migrar](docs/MIGRATION.md#da-10-para-a-11).
+
+### Novo
+
+- **Um nome só em todo lugar:** pasta do plugin, opções (`plugins.entries.atlas-intelligent-ui`),
+  pasta de dados, rotas `/api/plugins/atlas-intelligent-ui/`, extensão do Desktop, eventos
+  `plugin.atlas-intelligent-ui.*` e skill `atlas-intelligent-ui:canvas`. Ferramentas `atlas_*`,
+  toolset `atlas`, `/atlas` e `hermes atlas` não mudaram.
+- **Migração automática da biblioteca.** Na primeira vez que a 1.1 abre a biblioteca num perfil,
+  ela copia `plugin-data/hermes-atlas/atlas.db` com a cópia nativa do SQLite, sob uma trava entre
+  processos e com troca atômica. A pasta antiga nunca é alterada nem apagada. Até a cópia,
+  gancho e diagnóstico leem a biblioteca antiga.
+- **Opções herdadas.** Uma opção que só existe na entrada `hermes-atlas` vale na 1.1 e é gravada
+  uma vez na entrada nova, para sobreviver a `hermes plugins remove hermes-atlas`.
+- **Restos da instalação anterior** aparecem em `hermes atlas doctor` e no resumo de `/atlas`:
+  `plugins/hermes-atlas` ainda instalado (ele registraria as mesmas ferramentas e venceria),
+  `hermes-atlas` em `plugins.enabled`, a extensão antiga do Desktop, uma cópia instalada com o nome
+  antigo, ou uma cópia da biblioteca que falhou.
+- **`hermes atlas serve` como serviço:** o app independente lê sozinho a chave do servidor de API
+  do Hermes (`API_SERVER_KEY` no `.env` do perfil), então uma unidade systemd não precisa de um
+  lançador próprio. O wheel independente ganhou o comando `atlas-intelligent-ui`; `hermes-atlas`
+  continua como apelido.
+
+### Corrigido
+
+**No agente:**
+
+- **A skill `canvas` ficava invisível para o modelo** em todos os sistemas: o campo `platforms`
+  chegava ao filtro de plataforma do Hermes como texto e não casava com nenhum sistema. O
+  frontmatter agora é lido com o YAML do próprio Hermes, e a skill vale para todos os sistemas.
+- **Avisos de canvas alterado se perdiam com `plugins.isolation: host`.** As ferramentas sempre
+  avisam a sessão (`ctx.emit_to_session`) e só transmitem aos Desktops quando o processo tem a
+  conexão deles, como o próprio núcleo do Hermes faz.
+- **Canvas duplicado depois de uma falha ao gerar a página.** Se o canvas já foi salvo e a página
+  HTML não pôde ser escrita (disco cheio, permissão), a ferramenta respondia erro e o modelo tentava
+  de novo; agora responde sucesso com outra forma de exibição.
+- A limpeza da pasta de exportações não falha mais quando outro processo apaga um arquivo ao mesmo
+  tempo.
+- O gancho chamado a cada turno não pega mais a trava de escrita do SQLite quando nada mudou, e
+  `/status` lê o banco fora do laço de eventos do dashboard.
+- Bibliotecas novas ficam só com o dono (arquivo 0600, pasta 0700) em sistemas POSIX.
+- O comando de terminal não é mais registrado dentro do processo isolado de plugins, onde o Hermes o
+  ignora e registrava um aviso a cada início.
+
+**Nas interfaces (Desktop, Webapp e dashboard):**
+
+- Uma reconexão do Desktop ao gateway não descarta mais as edições abertas na página Atlas, e uma
+  troca de fonte no mesmo perfil atualiza a página em vez de deixar todas as chamadas falhando.
+- "Salvar versão" num canvas da conversa fixado numa versão não volta a mostrar a versão anterior.
+- As gravações de rascunho de cada canvas da conversa entram numa fila: nenhuma edição se perde entre
+  digitar, salvar versão, descartar e fechar o cartão, e uma falha ao descartar aparece.
+- Só a resposta "Canvas não encontrado" é mostrada como canvas apagado. Plugin desligado, backend
+  sem rota ou conexão caída mostram um erro com "Tentar de novo", e no Desktop o cartão volta a ser o
+  cartão de arquivo do próprio Hermes.
+- Hosts em idiomas que não são português usam inglês (antes, qualquer idioma diferente de inglês
+  caía em português).
+- "Enviar para a sessão" na página Atlas funciona sem um campo de mensagem visível, e o botão só
+  aparece onde há como enviar.
+- Erros do Desktop chegam traduzidos, sem o JSON da resposta.
+- Renomear uma conversa funciona no Desktop nativo: um campo na própria lista substitui o
+  `window.prompt`, que o Electron não abre.
+- O idioma escolhido no Hermes não se perde quando o primeiro contato com o servidor falha.
+- `scripts/check-bundles.mjs` confere que `plugin.yaml`, o manifesto do dashboard, o `id` da
+  extensão, a base da API e o registro do dashboard usam o mesmo nome; examina todo
+  `desktop/**/*.js` também sem tirar comentários; e avisa quando o `plugin.js` passa de 512 KB, o
+  limite de versões antigas do Desktop.
+
+### Integração contínua
+
+- O job do Hermes instala o Hermes Agent pelo instalador oficial (o `pip install` do repositório
+  passou a ser recusado pelo próprio Hermes) e roda `validate` e `doctor`; depois instala o checkout
+  com `hermes plugins install`, liga o plugin e roda `hermes atlas migrate`, `doctor` e `status`. Os
+  testes Python rodam no 3.11 e no 3.14.
+
 ## [1.0.0] - 2026-11-21
 
 Reconstrução completa para o contrato atual de plugins do Hermes Agent. A biblioteca, o formato

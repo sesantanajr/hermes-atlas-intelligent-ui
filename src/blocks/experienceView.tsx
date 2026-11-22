@@ -147,7 +147,7 @@ export function ExperienceView({ block: b, state, change, onAction }: Props) {
       return (
         <div className="atlas-media">
           <PhotoFrame photo={b.photos[i]} />
-          <div className="mini-toolbar">
+          <div className="atlas-mini-toolbar">
             <button disabled={!i} onClick={() => set("photo", String(i - 1))}>
               {t("Anterior")}
             </button>
@@ -210,7 +210,7 @@ export function ExperienceView({ block: b, state, change, onAction }: Props) {
               </circle>
             ))}
           </svg>
-          <div className="mini-toolbar">
+          <div className="atlas-mini-toolbar">
             <label>
               {t("Local")}{" "}
               <select
@@ -386,7 +386,7 @@ export function ExperienceView({ block: b, state, change, onAction }: Props) {
         <div className="atlas-decision">
           <small>{t("Etapa {n}", { n: path.length })}</small>
           <p aria-live="polite">{node.label}</p>
-          <div className="mini-toolbar">
+          <div className="atlas-mini-toolbar">
             {node.choices?.map((c, i) => (
               <button
                 key={i}

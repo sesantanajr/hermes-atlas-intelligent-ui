@@ -16,7 +16,7 @@ from datetime import datetime, timedelta, timezone
 from threading import Barrier
 from fastapi import HTTPException
 
-BASE='/api/plugins/hermes-atlas'
+BASE='/api/plugins/atlas-intelligent-ui'
 CAPS={'object':'hermes.api_server.capabilities','platform':'hermes-agent','model':'test-hermes','features':{'run_submission':True,'run_status':True,'run_events_sse':True,'run_stop':True,'runs_idempotency':{'durable':True}}}
 
 def canvas():

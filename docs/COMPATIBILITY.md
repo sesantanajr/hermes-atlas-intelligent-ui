@@ -1,11 +1,22 @@
 # Compatibilidade com o Hermes Agent
 
-O Atlas 1.0 declara `requires_hermes: ">=0.21.0"`. Tudo o que surgiu depois disso é detectado
-em tempo de execução: num Hermes mais antigo, o recurso correspondente simplesmente não aparece,
-e o resto funciona.
+O Atlas Intelligent UI 1.1 (id `atlas-intelligent-ui`) declara `requires_hermes: ">=0.21.0"`.
+Tudo o que surgiu depois disso é detectado em tempo de execução: num Hermes mais antigo, o recurso
+correspondente simplesmente não aparece, e o resto funciona.
 
-O contrato abaixo foi conferido no código-fonte do Hermes Agent (`main`, commit `7c88e98`, de
-20/11/2026) e numa instalação 0.21.1.
+O contrato abaixo foi conferido no código-fonte do Hermes Agent v0.23.3 (commit `caafe538`, a
+versão estável de 20/11/2026), no `main` de 20/11/2026 para o Desktop e o dashboard, e com o
+`hermes plugins doctor` de uma instalação real v0.23.3 (Linux, Python 3.14).
+
+**Nome do plugin.** O Hermes deriva do campo `name` do `plugin.yaml` a pasta de instalação, a
+chave em `plugins.enabled`, as opções em `plugins.entries.<nome>`, o nome do módulo
+(`hermes_plugins.atlas_intelligent_ui`), a skill (`atlas-intelligent-ui:canvas`) e, pelo
+`dashboard/manifest.json`, as rotas `/api/plugins/<nome>/`. A extensão do Desktop usa o `id` do
+`plugin.js` para `ctx.rest`, para a chave Desktop e para o armazenamento local. Os cinco valores
+precisam ser iguais, e `scripts/check-bundles.mjs` e `tests/test_rename.py` conferem isso. O Hermes
+recusa atualizar uma instalação Git cujo `name` mudou, e não há campo de manifesto para declarar um
+nome anterior; por isso a 1.1 migra sozinha a biblioteca e as opções da 1.0
+([Migração](MIGRATION.md#da-10-para-a-11)).
 
 ## Metade do agente
 
@@ -14,10 +25,10 @@ O contrato abaixo foi conferido no código-fonte do Hermes Agent (`main`, commit
 | Manifesto v2 (`manifest_version: 2`, `provides_tools`, `provides_hooks`, `config_schema`) | Declara as 7 ferramentas, o gancho e as opções editáveis em `hermes plugins config` e no formulário do Desktop. | Campos desconhecidos são ignorados por versões antigas. |
 | `ctx.register_tool` | `atlas_components`, `atlas_render`, `atlas_update`, `atlas_get`, `atlas_list`, `atlas_export`, `atlas_resources` no toolset `atlas`. `atlas_resources` tem `check_fn` ligado à opção `resources_tool`. | — |
 | `ctx.register_hook("pre_llm_call")` | Nota única quando o usuário mudou um canvas do agente. | — |
-| `ctx.register_skill` | `hermes-atlas:canvas`. | O registro é ignorado; as ferramentas continuam autoexplicativas. |
+| `ctx.register_skill` | `atlas-intelligent-ui:canvas`. | O registro é ignorado; as ferramentas continuam autoexplicativas. |
 | `ctx.register_command` | `/atlas` em qualquer superfície. | Comando ausente. |
 | `ctx.register_cli_command` | `hermes atlas …`. | Comando ausente. Com `plugins.isolation: host`, o Hermes não registra comandos de terminal de plugins; use `python -m hermes_atlas`. |
-| `ctx.get_config` | Lê as opções a cada chamada, sem reiniciar. | Lê `plugins.entries.hermes-atlas.settings` por `load_config_readonly`. |
+| `ctx.get_config` | Lê as opções a cada chamada, sem reiniciar. | Lê `plugins.entries.atlas-intelligent-ui.settings` por `load_config_readonly`. |
 | `ctx.session_surface()` | Sabe se a conversa é Desktop, terminal ou app de mensagem. | Usa `HERMES_SESSION_PLATFORM`; sem nenhum dos dois, `show: "either"`. |
 | `broadcast_plugin_event` / `ctx.emit_to_session` | Avisa as interfaces quando um canvas muda. | As interfaces consultam o servidor. |
 | Entrega `MEDIA:` | `atlas_export` e o modo `file` anexam a página HTML do canvas. | — |
@@ -40,7 +51,7 @@ o que esse modo exige.
 
 | Recurso | Uso |
 | --- | --- |
-| `dashboard/manifest.json` + `plugin_api.py` com `router` | Aba **Atlas** depois de **Chat**; rotas em `/api/plugins/hermes-atlas/`. O `plugin_api.py` é carregado por caminho, como módulo de nível superior, e reaproveita o pacote já importado pelo agente quando é o mesmo arquivo. |
+| `dashboard/manifest.json` + `plugin_api.py` com `router` | Aba **Atlas** depois de **Chat**; rotas em `/api/plugins/atlas-intelligent-ui/`. O `plugin_api.py` é carregado por caminho, como módulo de nível superior, e reaproveita o pacote já importado pelo agente quando é o mesmo arquivo. |
 | `window.__HERMES_PLUGIN_SDK__` | `React` do dashboard (o bundle não traz React próprio), `authedFetch` (ou `fetchJSON` em versões antigas) e `useI18n()` (SDK 1.1). |
 | Variáveis de tema (`--background-base`, `--color-card`, `--color-primary`…) | Todas as cores do Atlas. |
 
@@ -58,7 +69,7 @@ usar, porque um import nomeado que o Desktop em execução não tenha derrubaria
 | `host.composer.submit` / `host.request("prompt.submit")` | O chat da página Atlas pode enviar para a sessão aberta no Desktop. | Recusa com explicação. |
 | `host.state.profile`, `gateway`, `focusedSessionId`, `useValue`, `gatewayActivationEpoch` | Recarrega a biblioteca ao trocar de perfil ou de gateway e descarta respostas de uma conexão antiga. | Lê uma vez. |
 | `host.navigate`, `host.notify` | “Abrir no Atlas” e avisos. | Botão oculto, sem aviso. |
-| `ctx.rest`, `ctx.onEvent`, `ctx.onDispose` | Chamadas à API do plugin, eventos `plugin.hermes-atlas.*`, limpeza do CSS. | — |
+| `ctx.rest`, `ctx.onEvent`, `ctx.onDispose` | Chamadas à API do plugin, eventos `plugin.atlas-intelligent-ui.*`, limpeza do CSS. | — |
 
 O `plugin.js` obedece à análise de catálogo do Hermes (`hermes plugins validate`): nenhum
 `eval`, `new Function`, `import()` fora do SDK, injeção de `<script>`, observação do `body` ou
@@ -73,8 +84,11 @@ resultado desconhecido, e rotas `/p/<perfil>/v1` para perfis secundários.
 ## Como foi verificado
 
 - **Contrato do host.** `tests/hermes_host.py` reproduz o carregamento do Hermes: importa o
-  plugin como `hermes_plugins.hermes_atlas` por `spec_from_file_location`, sem o diretório no
-  `sys.path`, e repassa às ferramentas e ao gancho só os argumentos que o Hermes repassa.
+  plugin como `hermes_plugins.atlas_intelligent_ui` por `spec_from_file_location`, sem o diretório
+  no `sys.path`, e repassa às ferramentas e ao gancho só os argumentos que o Hermes repassa.
+- **Migração da 1.0.** `tests/test_rename.py` cria uma biblioteca na pasta da 1.0 e confere a
+  cópia na primeira abertura, a leitura somente-leitura antes dela, a trava entre processos, uma
+  biblioteca antiga ilegível, as opções herdadas e os avisos de restos da instalação anterior.
   `tests/test_plugin_contract.py` confere o manifesto, as declarações, os imports permitidos e os
   limites da varredura de instalação (até 400 arquivos, 10 MB no total, 1 MiB por arquivo,
   nenhum binário).
@@ -90,10 +104,11 @@ resultado desconhecido, e rotas `/p/<perfil>/v1` para perfis secundários.
   que os arquivos versionados estão atualizados; roda os testes Python no 3.11 e no 3.14, a
   versão das instalações atuais do Hermes; e instala o Hermes Agent em Linux pelo instalador
   oficial (última versão estável), para rodar `hermes plugins validate` e
-  `hermes plugins doctor --ci` neste repositório.
+  `hermes plugins doctor --ci` neste repositório e, depois, instalar o checkout com
+  `hermes plugins install`, ligá-lo e usar `hermes atlas migrate`, `doctor` e `status`.
 
-**Limites desta verificação.** A 1.0 não foi executada dentro de um Hermes Desktop ou dashboard
-real antes da publicação: o Hermes não roda na máquina de desenvolvimento. O comportamento
-dentro do host foi verificado pelos testes de contrato, pelas páginas de teste e pelo
-`validate`/`doctor` do próprio Hermes no CI. Relate qualquer diferença em
+**Limites desta verificação.** O Atlas não foi aberto dentro de um Hermes Desktop real antes da
+publicação: o Hermes não roda na máquina de desenvolvimento. O comportamento dentro do host foi
+verificado pelos testes de contrato, pelas páginas de teste, pelo `validate`/`doctor`/`install` do
+próprio Hermes no CI e pelo `doctor` de uma instalação real. Relate qualquer diferença em
 [Issues](https://github.com/sesantanajr/hermes-atlas-intelligent-ui/issues).

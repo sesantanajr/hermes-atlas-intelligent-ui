@@ -1,4 +1,4 @@
-"""Hermes Atlas: validated, interactive canvases for Hermes Agent.
+"""Atlas Intelligent UI: validated, interactive canvases for Hermes Agent.
 
 Layers, from the inside out:
 
@@ -12,7 +12,12 @@ Layers, from the inside out:
 Importing this package has no side effects and pulls in nothing beyond the standard library.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
-PLUGIN_NAME = "hermes-atlas"
+# The plugin id Hermes knows Atlas by: plugin directory, config entry, data folder, API route,
+# Desktop extension and skill namespace all use it.
+PLUGIN_NAME = "atlas-intelligent-ui"
+# Ids of earlier releases (1.0 was installed as ``hermes-atlas``). Their library and settings are
+# carried over on first use, and leftovers of their install are reported by the doctor.
+LEGACY_PLUGIN_NAMES = ("hermes-atlas",)
 CANVAS_SCHEMA_VERSION = "1.0"
