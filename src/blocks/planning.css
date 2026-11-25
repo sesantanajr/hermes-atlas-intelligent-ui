@@ -60,8 +60,9 @@
 }
 .atlas-app .gantt-grid {
   display: grid;
-  grid-template-columns: minmax(130px, 210px) var(--gantt-width);
+  grid-template-columns: minmax(140px, 240px) minmax(var(--gantt-width), 1fr);
   min-width: max-content;
+  width: 100%;
   font-size: 12.5px;
 }
 .atlas-app .gantt-corner,
@@ -319,8 +320,12 @@
   place-items: center;
 }
 .atlas-app .matrix-y span {
-  transform: rotate(-90deg);
-  white-space: nowrap;
+  /* Vertical text that takes vertical room in the layout (a rotated box would overlap the cards). */
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  max-height: 100%;
+  overflow: hidden;
+  text-align: center;
   font-size: 12px;
   font-weight: 600;
   color: var(--atlas-muted);

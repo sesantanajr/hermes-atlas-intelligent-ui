@@ -114,6 +114,15 @@ resultado desconhecido, e rotas `/p/<perfil>/v1` para perfis secundários.
   `hermes plugins doctor --ci` neste repositório e, depois, instalar o checkout com
   `hermes plugins install`, ligá-lo e usar `hermes atlas migrate`, `doctor` e `status`.
 
+**1.1.2.** O protocolo do quadro foi verificado de ponta a ponta no Chromium (Playwright): a página
+exportada servida com a CSP `sandbox` do portal Atlas, dentro de uma página com o CSS e o módulo
+reais do portal (`atlas-canvas-1273.js`): altura, tema, estado guardado e restaurado, resumo das
+alterações na caixa de mensagem, as cinco exportações (o PDF conferido com `pdfinfo`), ampliar e
+desfazer. Numa conversa real com um perfil do Hermes 0.23.4 aberta com `source: gui` por um cliente
+que não é o Hermes Desktop, `atlas_render` respondeu `surface: desktop`, `show: directive`, sem
+gravar arquivo, e a resposta trouxe a linha `::atlas`. O caminho por RPC da extensão do Desktop foi
+verificado pelos testes de contrato e pelo código do Hermes 0.23.4, não num Desktop real.
+
 **Limites desta verificação.** O Atlas não foi aberto dentro de um Hermes Desktop real antes da
 publicação: o Hermes não roda na máquina de desenvolvimento. O comportamento dentro do host foi
 verificado pelos testes de contrato, pelas páginas de teste, pelo `validate`/`doctor`/`install` do

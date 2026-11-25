@@ -154,7 +154,9 @@ function GanttView({ block, state, change, onAction }: Props & { block: Extract<
     group = task.group ?? "";
     rows.push({ kind: "task", task });
   }
-  const left = (iso: string) => (dayNumber(iso) - frame.first) * px;
+  // Positions as a share of the span: the chart fills the block and, zoomed in, scrolls sideways.
+  const pct = (days: number) => `${(days / frame.days) * 100}%`;
+  const left = (iso: string) => pct(dayNumber(iso) - frame.first);
   const done = block.tasks.filter((task) => (task.progress ?? 0) >= 100).length;
   return (
     <div className="plan-gantt">
@@ -180,7 +182,7 @@ function GanttView({ block, state, change, onAction }: Props & { block: Extract<
           <div className="gantt-corner">{t("Tarefa")}</div>
           <div className="gantt-axis" aria-hidden="true">
             {ticks(frame.first, frame.last, scale).map((tick) => (
-              <span key={tick.day} style={{ left: (tick.day - frame.first) * px }}>
+              <span key={tick.day} style={{ left: pct(tick.day - frame.first) }}>
                 {tick.label}
               </span>
             ))}
@@ -197,14 +199,14 @@ function GanttView({ block, state, change, onAction }: Props & { block: Extract<
                   {row.task.owner && <small>{row.task.owner}</small>}
                 </div>
                 <div className="gantt-lane">
-                  {showToday && <i className="gantt-today" style={{ left: left(today) + px / 2 }} />}
+                  {showToday && <i className="gantt-today" style={{ left: pct(todayDay - frame.first + 0.5) }} />}
                   <button
                     className={`gantt-bar${row.task.milestone ? " milestone" : ""}${
                       selected?.id === row.task.id ? " active" : ""
                     }${(row.task.progress ?? 0) >= 100 ? " done" : ""}`}
                     style={{
                       left: left(row.task.start),
-                      width: row.task.milestone ? undefined : (dayNumber(row.task.end) - dayNumber(row.task.start) + 1) * px,
+                      width: row.task.milestone ? undefined : pct(dayNumber(row.task.end) - dayNumber(row.task.start) + 1),
                       ["--progress" as string]: `${row.task.progress ?? 0}%`,
                       animationDelay: `${Math.min(index, 12) * 35}ms`,
                     }}
