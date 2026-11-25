@@ -139,6 +139,8 @@ como serviço (veja [Desenvolvimento](docs/DEVELOPMENT.md#app-independente-como-
 
 ![A aba Atlas no dashboard web do Hermes, com o canvas aberto ao lado](docs/screenshots/dashboard.png)
 
+![A página Atlas no Hermes Desktop, no tema escuro: descobrir, biblioteca, catálogo de blocos e o canvas aberto ao lado](docs/screenshots/desktop-atlas-page.png)
+
 ## Configurar
 
 ```sh
