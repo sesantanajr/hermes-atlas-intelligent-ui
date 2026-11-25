@@ -1,12 +1,17 @@
 # Compatibilidade com o Hermes Agent
 
-O Atlas Intelligent UI 1.1 (id `atlas-intelligent-ui`) declara `requires_hermes: ">=0.21.0"`.
+O Atlas Intelligent UI 1.1.2 (id `atlas-intelligent-ui`) declara `requires_hermes: ">=0.21.0"`.
 Tudo o que surgiu depois disso é detectado em tempo de execução: num Hermes mais antigo, o recurso
 correspondente simplesmente não aparece, e o resto funciona.
 
 O contrato abaixo foi conferido no código-fonte do Hermes Agent v0.23.3 (commit `caafe538`, a
 versão estável de 20/11/2026), no `main` de 20/11/2026 para o Desktop e o dashboard, e com o
-`hermes plugins doctor` de uma instalação real v0.23.3 (Linux, Python 3.14).
+`hermes plugins doctor` de uma instalação real v0.23.3 (Linux, Python 3.14). A 1.1.2 foi conferida
+no código do Hermes Agent v0.23.4 (`8fc03744`, 25/11/2026): `gateway/session_policy.py`
+(`source: gui` → superfície `desktop`), `hermes_cli/plugin_session.py` (`turn_client`),
+`hermes_cli/plugin_rpc.py` e `gateway/session_plugin_rpc.py` (RPC de plugins),
+`hermes_cli/web_server_plugin_profiles.py` (PLG-3), e com `hermes plugins validate` e
+`hermes plugins doctor --ci` dessa instalação.
 
 **Nome do plugin.** O Hermes deriva do campo `name` do `plugin.yaml` a pasta de instalação, a
 chave em `plugins.enabled`, as opções em `plugins.entries.<nome>`, o nome do módulo
@@ -30,6 +35,8 @@ nome anterior; por isso a 1.1 migra sozinha a biblioteca e as opções da 1.0
 | `ctx.register_cli_command` | `hermes atlas …`. | Comando ausente. Com `plugins.isolation: host`, o Hermes não registra comandos de terminal de plugins; use `python -m hermes_atlas`. |
 | `ctx.get_config` | Lê as opções a cada chamada, sem reiniciar. | Lê `plugins.entries.atlas-intelligent-ui.settings` por `load_config_readonly`. |
 | `ctx.session_surface()` | Sabe se a conversa é Desktop, terminal ou app de mensagem. | Usa `HERMES_SESSION_PLATFORM`; sem nenhum dos dois, `show: "either"`. |
+| `ctx.turn_client()` (0.23) | Separa o Hermes Desktop e o Webapp (`hermes-desktop`, `hermes-webapp`) de outros apps que abrem sessões `gui` (o portal Atlas): só os primeiros recebem o arquivo `MEDIA:`. | Comportamento da 1.1.1: superfície `desktop` sempre recebe o arquivo. |
+| `ctx.register_rpc` (0.23) | `plugin.atlas-intelligent-ui.http`: a API do Atlas pelo gateway, no perfil dono da sessão. A extensão do Desktop usa isso antes de `ctx.rest`, porque o dashboard do 0.23 só serve rotas de plugins da comunidade no perfil com que foi iniciado (PLG-3). | A extensão usa `ctx.rest` (funciona no perfil de lançamento). |
 | `broadcast_plugin_event` / `ctx.emit_to_session` | Avisa as interfaces quando um canvas muda. | As interfaces consultam o servidor. |
 | Entrega `MEDIA:` | `atlas_export` e o modo `file` anexam a página HTML do canvas. | — |
 

@@ -49,3 +49,26 @@ apenas o que você revisou.
 O Atlas não protege contra um modelo que escreva texto enganoso num canvas, nem contra
 ferramentas de outros plugins. As permissões de ferramentas, aprovações e o que o agente pode
 fazer continuam definidos na configuração do Hermes.
+
+## Canvas enquadrado por outro app (1.1.2)
+
+A página do canvas (`viewer.html`) pode ser enquadrada por um app de chat num `iframe` com
+`sandbox="allow-scripts allow-downloads"`, sem `allow-same-origin`. O protocolo entre os dois lados
+(`postMessage`, [Arquitetura](ARCHITECTURE.md#o-canvas-enquadrado-por-outro-app)) foi feito para que
+nenhum dos lados confie no outro além do necessário:
+
+- a página só lê mensagens da janela que a enquadra e só aceita, de um estado devolvido, o que a
+  pessoa poderia ter feito à mão (estado de blocos conhecidos, ordem dos mesmos blocos, valores de
+  calculadora dentro dos limites); o conteúdo dos blocos vem sempre da própria página;
+- o lado do app (no portal Atlas, `atlas-canvas-1273.js`) só lê mensagens do próprio quadro
+  (`event.source`), limita a altura, guarda o estado como texto JSON com teto de tamanho e escreve
+  o texto das ações como texto puro na caixa de mensagem, sem enviar;
+- exportações são feitas dentro da página, sem rede; o CSV prefixa células que começam com
+  `=`, `+`, `-` ou `@` para que uma planilha não as leia como fórmula.
+
+## RPC de plugins (1.1.2)
+
+`plugin.atlas-intelligent-ui.http` aceita só os caminhos da própria API do Atlas (lista fixa em
+`hermes_atlas/agent/rpc.py`) e os métodos HTTP que ela usa, e reexecuta o pedido no roteador do
+Atlas dentro do processo, sem rede. O gateway do Hermes já exige a capacidade `session:control` e,
+quando o pedido nomeia uma sessão, a autorização dela, como para um comando de barra de plugin.

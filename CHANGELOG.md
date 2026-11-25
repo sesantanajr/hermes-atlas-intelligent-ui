@@ -3,6 +3,66 @@
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem
 [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.1.2] - 2026-11-25
+
+Uma versão grande: o canvas fica vivo dentro de qualquer conversa que o enquadre (o portal Atlas
+entre elas), ganha edição, reorganização, exportação e quatro blocos de planejamento, e volta a
+funcionar no Hermes Desktop e no Webapp em todos os perfis do Hermes 0.23.
+
+### Corrigido
+
+- **Canvas pedido como arquivo em apps de chat que não abrem arquivos.** Desde o Hermes 0.23, toda
+  sessão local aberta com `source: gui` responde `desktop` como superfície, seja o Hermes Desktop,
+  seja outro app (o portal Atlas, por exemplo). O Atlas pedia ao modelo a linha `MEDIA:` com a página
+  (um link morto nesses apps) e gravava 0,8 MB de exportação a cada canvas. Agora ele lê quem enviou
+  o turno (`ctx.turn_client()`): Hermes Desktop e Webapp continuam com o arquivo vivo; os outros
+  apps recebem a linha `::atlas{…}`, que eles desenham.
+- **Hermes Desktop e Webapp sem canvas nos perfis secundários.** No Hermes 0.23 o dashboard só
+  serve as rotas de um plugin da comunidade no perfil com que foi iniciado (PLG-3): em Atlas IA,
+  Atlas Code e qualquer outro perfil, toda chamada da extensão respondia 404 e o canvas não
+  carregava. A extensão agora fala com o plugin pelo RPC de plugins do gateway
+  (`plugin.atlas-intelligent-ui.http`), que roda no perfil certo, e volta a `ctx.rest` num Hermes
+  sem esse recurso.
+- **Botões "perguntar no chat" que não chegavam a lugar nenhum** numa página exportada aberta num
+  quadro isolado (sem área de transferência). Agora o texto vai para a caixa de mensagem do app que
+  enquadra o canvas.
+- Texto de canal de mensagens: a orientação ao modelo diz para não escrever a linha `::atlas` nem
+  `MEDIA:` ali e explica como mandar a página interativa (`atlas_export`).
+
+### Novo
+
+- **Canvas vivo em qualquer conversa que o enquadre** (protocolo do quadro, `postMessage`): a
+  página diz a altura de que precisa (sem barra de rolagem interna), segue o tema claro ou escuro do
+  app, entrega o que a pessoa fez para o app guardar e devolver ao reabrir, manda à caixa de
+  mensagem um resumo das alterações ("Atualizei o canvas…") e aceita pedidos de exportação, de
+  ampliar e de desfazer. Só mensagens da janela que enquadra são lidas; o conteúdo dos blocos sempre
+  vem da própria página. [Detalhes](docs/ARCHITECTURE.md#o-canvas-enquadrado-por-outro-app).
+- **Reorganizar o canvas:** arrastar blocos (ou mover pelo teclado e pelo menu), meia largura ou
+  largura total, recolher um bloco. A ordem e o layout ficam no estado do canvas, e o agente vê.
+- **Tabela editável:** clique duplo numa célula para editar (Enter grava, Esc desiste), restaurar o
+  original, totais automáticos nas colunas numéricas (soma, ou média para porcentagens, nos
+  formatos `R$ 1.234,56` e `1,234.56`), ordenação numérica e contagem de linhas.
+- **Exportar** em todo canvas: PNG, PDF (A4, várias páginas), CSV (cada bloco com dados, com BOM e
+  `;` no português, protegido contra fórmulas), página interativa HTML com as alterações, JSON e
+  Markdown. Tudo no navegador, sem rede, inclusive dentro do quadro isolado.
+- **Quatro blocos de planejamento** (77 tipos no total, nove categorias): `gantt` (tarefas no tempo,
+  progresso, responsáveis, marcos, dependências e zoom de dias, semanas ou meses), `calendar` (mês
+  com eventos, navegação e agenda em telas estreitas), `matrix` (matriz 2x2 com cartões que se
+  arrastam entre quadrantes, também pelas setas do teclado) e `tree` (organograma, mapa mental ou
+  estrutura de trabalho, com ramos que se recolhem).
+- **Tema Atlas** claro e escuro (grafite e o azul Atlas) nas páginas exportadas e no app
+  independente; dentro do Hermes as cores continuam as do tema do host.
+- **Movimento:** blocos entram em sequência, barras crescem, blocos reorganizados deslizam para o
+  lugar. Tudo some com "reduzir movimento" do sistema.
+- `hermes atlas doctor` mostra se este Hermes tem RPC de plugins e o cliente do turno, e em quais
+  plataformas o toolset `atlas` está fora da lista.
+
+### Mudado
+
+- `atlas_get` descreve também o layout (ordem, `width`, `collapsed`) e as células editadas
+  (`cells`); a skill ensina o agente a respeitar o layout da pessoa e a ler o resumo de alterações.
+- Rodapé da página exportada: "Feito com Atlas Intelligent UI".
+
 ## [1.1.1] - 2026-11-22
 
 ### Corrigido

@@ -7,6 +7,9 @@
  *   data-theme="light" | "dark"       which palette (and which chart colours) to use
  *   data-host="dashboard" | "desktop" adopt the host application's own theme variables
  *
+ * Without a host (exported pages, the standalone app, a canvas framed by the Atlas portal) the
+ * Atlas palette applies: graphite greys and the Atlas blue, in light and dark (1.1.2).
+ *
  * Inside a host, surfaces, text, lines and the accent follow the host's variables, so Atlas
  * reskins with every Hermes theme; `data-theme` is then derived from the host's background and
  * only picks chart colours that contrast with it.
@@ -17,52 +20,56 @@
 .atlas-app {
   color-scheme: light;
 
-  /* Surfaces, from the page outwards. */
-  --atlas-bg: #f5f7f3;
+  /* 1.1.2: the Atlas palette (graphite and the Atlas blue), light. Surfaces, from the page outwards. */
+  --atlas-bg: #f6f7f9;
   --atlas-surface: #ffffff;
-  --atlas-surface-2: #eff3ec;
-  --atlas-surface-3: #e1e8dd;
+  --atlas-surface-2: #f2f4f7;
+  --atlas-surface-3: #e6e9ee;
 
   /* Text and lines. */
-  --atlas-text: #1d2b24;
-  --atlas-muted: #57675d;
-  --atlas-faint: #84928a;
-  --atlas-line: #dde4d9;
-  --atlas-line-strong: #bcc8b7;
+  --atlas-text: #111317;
+  --atlas-muted: #4f5660;
+  --atlas-faint: #69707a;
+  --atlas-line: #e2e5ea;
+  --atlas-line-strong: #cfd4db;
 
   /* Accent: actions, selection, focus. */
-  --atlas-accent: #2c6a48;
+  --atlas-accent: #1f6fc0;
   --atlas-on-accent: #ffffff;
-  --atlas-accent-soft: #dcefd4;
-  --atlas-accent-text: #25593c;
-  --atlas-focus: #4f8a3c;
+  --atlas-accent-soft: #e5effa;
+  --atlas-accent-text: #185ea6;
+  --atlas-focus: #1f77c9;
 
   /* Meaning. `-soft` is a tinted background for the same meaning. */
-  --atlas-positive: #1c7c4e;
-  --atlas-positive-soft: #ddf2e5;
-  --atlas-warning: #94590a;
-  --atlas-warning-soft: #faedd3;
-  --atlas-danger: #ad332c;
-  --atlas-danger-soft: #fae2df;
-  --atlas-info: #2a5f9e;
-  --atlas-info-soft: #deeaf8;
+  --atlas-positive: #1a7f52;
+  --atlas-positive-soft: #e2f4eb;
+  --atlas-warning: #8f630c;
+  --atlas-warning-soft: #f8efd8;
+  --atlas-danger: #bf3a31;
+  --atlas-danger-soft: #fae5e3;
+  --atlas-info: #1f6fc0;
+  --atlas-info-soft: #e5effa;
 
   /* Categorical chart colours, distinguishable in order and in greyscale. */
-  --atlas-series-0: #0a6c66;
-  --atlas-series-1: #8a5413;
-  --atlas-series-2: #6747a8;
-  --atlas-series-3: #a83557;
-  --atlas-series-4: #2d65a8;
-  --atlas-series-5: #546e1f;
+  --atlas-series-0: #1f77c9;
+  --atlas-series-1: #0e8a7e;
+  --atlas-series-2: #c0670f;
+  --atlas-series-3: #7552d1;
+  --atlas-series-4: #c23a68;
+  --atlas-series-5: #4c861d;
 
   /* Shape and type. */
-  --atlas-radius: 14px;
-  --atlas-radius-sm: 9px;
-  --atlas-shadow: 0 1px 2px rgb(22 40 30 / 5%), 0 10px 28px rgb(22 40 30 / 7%);
-  --atlas-shadow-sm: 0 1px 2px rgb(22 40 30 / 7%);
-  --atlas-overlay: rgb(16 26 20 / 42%);
-  --atlas-font: Inter, "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
-  --atlas-mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+  --atlas-radius: 12px;
+  --atlas-radius-sm: 8px;
+  --atlas-shadow: 0 1px 2px rgb(17 19 23 / 5%), 0 8px 24px rgb(17 19 23 / 6%);
+  --atlas-shadow-sm: 0 1px 2px rgb(17 19 23 / 7%);
+  --atlas-overlay: rgb(17 19 23 / 40%);
+  --atlas-font: "Inter Atlas", Inter, "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --atlas-mono: "Geist Mono", ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+  /* 1.1.2: motion. Durations collapse to zero for people who ask for reduced motion (motion.css). */
+  --atlas-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --atlas-duration: 0.28s;
 
   /* Names used by block styles written before 1.0. */
   --bg: var(--atlas-bg);
@@ -77,42 +84,43 @@
 .atlas-app[data-theme="dark"] {
   color-scheme: dark;
 
-  --atlas-bg: #141c17;
-  --atlas-surface: #1c2720;
-  --atlas-surface-2: #243228;
-  --atlas-surface-3: #2f4033;
+  /* The Atlas palette, dark: the same greys and blue as the Atlas portal (Mono). */
+  --atlas-bg: #0b0c0e;
+  --atlas-surface: #111316;
+  --atlas-surface-2: #16181c;
+  --atlas-surface-3: #1e2126;
 
-  --atlas-text: #e6eee1;
-  --atlas-muted: #b1c2ab;
-  --atlas-faint: #84957f;
-  --atlas-line: #354638;
-  --atlas-line-strong: #4b604d;
+  --atlas-text: #e7e9ec;
+  --atlas-muted: #a2a8b0;
+  --atlas-faint: #7e858e;
+  --atlas-line: #23262b;
+  --atlas-line-strong: #33373e;
 
-  --atlas-accent: #b2d68a;
-  --atlas-on-accent: #15231a;
-  --atlas-accent-soft: #2f472d;
-  --atlas-accent-text: #b9dc93;
-  --atlas-focus: #c5e59f;
+  --atlas-accent: #3d9ee8;
+  --atlas-on-accent: #061018;
+  --atlas-accent-soft: #10273a;
+  --atlas-accent-text: #6db8f0;
+  --atlas-focus: #5aaef0;
 
-  --atlas-positive: #7fd6a2;
-  --atlas-positive-soft: #1f3a2a;
-  --atlas-warning: #ecbb6c;
-  --atlas-warning-soft: #40311a;
-  --atlas-danger: #f19a92;
-  --atlas-danger-soft: #45221f;
-  --atlas-info: #9cc0f2;
-  --atlas-info-soft: #1e2f47;
+  --atlas-positive: #45b886;
+  --atlas-positive-soft: #11281e;
+  --atlas-warning: #dcae4c;
+  --atlas-warning-soft: #2c2412;
+  --atlas-danger: #ec6a60;
+  --atlas-danger-soft: #331816;
+  --atlas-info: #5aaef0;
+  --atlas-info-soft: #10273a;
 
-  --atlas-series-0: #6ccfc1;
-  --atlas-series-1: #eab273;
-  --atlas-series-2: #bca5ea;
-  --atlas-series-3: #f19cae;
-  --atlas-series-4: #9abff5;
-  --atlas-series-5: #c0d584;
+  --atlas-series-0: #4aa8ee;
+  --atlas-series-1: #34c6b4;
+  --atlas-series-2: #f0a24f;
+  --atlas-series-3: #a78bfa;
+  --atlas-series-4: #f2789f;
+  --atlas-series-5: #9ccc5a;
 
-  --atlas-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 10px 28px rgb(0 0 0 / 28%);
-  --atlas-shadow-sm: 0 1px 2px rgb(0 0 0 / 34%);
-  --atlas-overlay: rgb(0 0 0 / 55%);
+  --atlas-shadow: 0 1px 2px rgb(0 0 0 / 35%), 0 10px 28px rgb(0 0 0 / 30%);
+  --atlas-shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+  --atlas-overlay: rgb(0 0 0 / 58%);
 }
 
 /*

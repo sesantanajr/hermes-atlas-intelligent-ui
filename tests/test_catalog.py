@@ -26,10 +26,10 @@ def client(tmp_path, monkeypatch):
 def test_catalog_matches_every_validated_discriminator_and_example():
     items = entries()
     registry = TypeAdapter(Component).json_schema()["discriminator"]["mapping"]
-    assert len(items) == 73
+    assert len(items) == 77
     assert {item["type"] for item in items} == set(registry)
     assert len(registry) == len(items)
-    assert len({item["category"] for item in items}) == 8
+    assert len({item["category"] for item in items}) == 9
     for item in items:
         details = detail(item["type"])
         example = details["example"]

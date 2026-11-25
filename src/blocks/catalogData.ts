@@ -4,6 +4,7 @@ import { analyticsSamples } from "./analyticsSamples";
 import { editorialSamples } from "./editorialSamples";
 import { controlSamples } from "./controlSamples";
 import { experienceSamples } from "./experienceSamples";
+import { planningSamples } from "./planningSamples";
 
 /** [rótulo em português, English label, one-line "use it for" summary read by the agent]. */
 type Row = [label: string, labelEn: string, summary: string];
@@ -388,6 +389,33 @@ const groups: Group[] = [
       ],
     },
   },
+  {
+    id: "planning",
+    label: "Planejamento",
+    labelEn: "Planning",
+    types: {
+      gantt: [
+        "Cronograma (Gantt)",
+        "Gantt chart",
+        "Tasks on a time axis with progress, owners, milestones and dependencies; the user can zoom and open a task.",
+      ],
+      calendar: [
+        "Calendário",
+        "Calendar",
+        "A month view of dated events (deadlines, classes, meetings) the user can browse month by month.",
+      ],
+      matrix: [
+        "Matriz de prioridades",
+        "Priority matrix",
+        "A 2x2 matrix (urgency x importance, effort x impact, risk) whose cards the user drags between quadrants.",
+      ],
+      tree: [
+        "Árvore",
+        "Tree",
+        "A hierarchy with one root: org chart, mind map or work breakdown, with branches the user folds.",
+      ],
+    },
+  },
 ];
 
 export const categoryList = groups.map(({ id, label, labelEn }) => ({
@@ -403,6 +431,7 @@ const samples = new Map(
     ...editorialSamples,
     ...controlSamples,
     ...experienceSamples,
+    ...planningSamples,
   ].map((b) => [b.type, b] as const),
 );
 export const catalog = groups.flatMap((group) =>

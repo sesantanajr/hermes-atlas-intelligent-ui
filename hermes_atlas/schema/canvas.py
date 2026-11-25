@@ -9,6 +9,7 @@ from .controls import ControlBlocks, Control
 from .analytics import AnalyticsBlocks, validate_analytics_values
 from .editorial import EditorialBlocks, validate_editorial_state
 from .experience import ExperienceBlocks, validate_experience_state
+from .planning import PlanningBlocks, validate_planning_state
 
 
 class TextBlock(Block):
@@ -166,11 +167,19 @@ class Interaction(Strict):
     hidden_series: Annotated[list[Identifier], Field(max_length=6)] = []
     known_ids: Annotated[list[Identifier], Field(max_length=40)] = []
     series_view: Literal["plot", "table"] = "plot"
+    # 1.1.2: how the person laid the block out on the canvas: its width in the two-column grid
+    # ("auto" follows the block type) and whether they folded it away.
+    width: Literal["auto", "half", "full"] = "auto"
+    collapsed: bool = False
+    # 1.1.2: table cells the person edited, keyed "<row>:<column>" over the block's original rows.
+    cells: Annotated[dict[Annotated[str, Field(pattern=r"^\d{1,3}:\d{1,2}$")], Annotated[str, Field(max_length=2000)]],
+                     Field(max_length=400)] = {}
 
 
 Component = Annotated[TextBlock | Metric | Chart | Table | Checklist | Comparison | Calculator | Form |
                       Collection | SeriesChart | Tabs | Timeline | Route | Diagram | Flashcards |
-                      ControlBlocks | AnalyticsBlocks | EditorialBlocks | ExperienceBlocks, Field(discriminator="type")]
+                      ControlBlocks | AnalyticsBlocks | EditorialBlocks | ExperienceBlocks | PlanningBlocks,
+                      Field(discriminator="type")]
 
 
 class Canvas(Strict):
@@ -202,6 +211,8 @@ class Canvas(Strict):
                 validate_editorial_state(block, interaction.values)
             elif isinstance(block, ExperienceBlocks):
                 validate_experience_state(block, interaction.values)
+            elif isinstance(block, PlanningBlocks):
+                validate_planning_state(block, interaction.values)
             elif interaction.values:
                 raise ValueError("Unexpected values for this block")
             if interaction.active_item is not None and (
@@ -227,4 +238,11 @@ class Canvas(Strict):
             if (isinstance(block, Table) and interaction.sort_column is not None
                     and interaction.sort_column >= len(block.columns)):
                 interaction.sort_column = None
+            if interaction.cells:
+                if not isinstance(block, Table):
+                    raise ValueError("Edited cells must belong to a table")
+                for key in interaction.cells:
+                    row, column = (int(part) for part in key.split(":"))
+                    if row >= len(block.rows) or column >= len(block.columns):
+                        raise ValueError("Edited cell outside the table")
         return self

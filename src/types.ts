@@ -6,6 +6,7 @@ import type { EditorialBlock } from "./blocks/editorial";
 import type { AnalyticsBlock } from "./blocks/analytics";
 import type { ControlBlock } from "./blocks/controls";
 import type { ExperienceBlock } from "./blocks/experienceBlocks";
+import type { PlanningBlock } from "./blocks/planning";
 export type Input = {
   label: string;
   value: number;
@@ -31,6 +32,7 @@ export type Block = Base &
     | AnalyticsBlock
     | ControlBlock
     | ExperienceBlock
+    | PlanningBlock
     | ExploreBlock
     | SpatialBlock
     | FlashcardsBlock
@@ -85,6 +87,12 @@ export type Interaction = SeriesState &
     fields?: { [key: string]: string };
     selected_ids?: string[];
     collection_sort?: "original" | "score" | "title";
+    /** 1.1.2: the block's width in the two-column grid ("auto" follows its type). */
+    width?: "auto" | "half" | "full";
+    /** 1.1.2: folded away by the person. */
+    collapsed?: boolean;
+    /** 1.1.2: table cells the person edited, keyed "<row>:<column>" over the original rows. */
+    cells?: { [key: string]: string };
   };
 export type Canvas = {
   schema_version: "1.0";

@@ -232,9 +232,10 @@ def test_agent_layer_never_imports_the_http_stack():
             for module in modules:
                 assert module.split(".")[0] not in {"fastapi", "starlette", "httpx", "uvicorn"}, \
                     f"{relative} imports {module}; only hermes_atlas/server may use the HTTP stack"
-            # The CLI's `serve` command is the one place outside server/ allowed to start it.
+            # The CLI's `serve` command and the RPC bridge (1.1.2, on its first call) are the only
+            # places outside server/ allowed to start it.
             if isinstance(node, ast.ImportFrom) and node.level and (node.module or "").startswith("server"):
-                assert relative == "agent/cli.py", f"{relative} reaches into the server package"
+                assert relative in ("agent/cli.py", "agent/rpc.py"), f"{relative} reaches into the server package"
 
 
 def test_no_core_override_shapes():

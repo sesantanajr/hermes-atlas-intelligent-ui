@@ -1,19 +1,24 @@
-import React from "react";
-import { Check, Search, SlidersHorizontal } from "lucide-react";
+import React, { useContext, useLayoutEffect, useRef, useState } from "react";
+import { Check, SlidersHorizontal } from "lucide-react";
 import { Block, Canvas as CanvasData, Interaction } from "../types";
 import { CollectionView } from "./collection";
 import { SeriesView } from "./series";
 import { ExploreView } from "./explore";
 import { SpatialView } from "./spatial";
 import { CanvasForm } from "./CanvasForm";
-import { CanvasLink } from "./CanvasLink";
+import { CanvasLink, PreviewContext } from "./CanvasLink";
 import { StudyView } from "./study";
 import { isEditorialBlock, EditorialView } from "./editorial";
 import { isAnalyticsBlock, AnalyticsView } from "./analytics";
 import { isControlBlock, ControlView } from "./controls";
 import { isExperienceBlock } from "./experienceBlocks";
 import { ExperienceView } from "./experienceView";
-import { formatNumber, intlLocale, t } from "../i18n";
+import { isPlanningBlock, PlanningView } from "./planning";
+import { TableView } from "./table";
+import { BlockTools } from "./BlockChrome";
+import { blockTable, toCsv } from "./tabular";
+import { downloadTextFile, safeName } from "./exporters";
+import { formatNumber, getLocale, t } from "../i18n";
 
 export function calculate(operation: string, values: number[]): number | null {
   let result: number;
@@ -54,21 +59,52 @@ type Props = {
   change: (block: Block, state: Interaction) => void;
   onAction?: (text: string) => void;
 };
-function Component({ block, state, change, onAction }: Props) {
+type Frame = {
+  index: number;
+  chrome?: React.ReactNode;
+  sectionProps?: React.HTMLAttributes<HTMLElement> & { draggable?: boolean };
+  extraClass?: string;
+};
+/** Classes for the person's layout choices: width and folding (1.1.2). */
+function layoutClass(state: Interaction, editable: boolean) {
+  return [
+    state.width === "half" ? "w-half" : state.width === "full" ? "w-full" : "",
+    state.collapsed ? "collapsed" : "",
+    editable ? "editable" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+function Component({ block, state, change, onAction, index, chrome, sectionProps, extraClass }: Props & Frame) {
   const set = (patch: Partial<Interaction>) =>
     change(block, { ...state, ...patch });
-  const checked = state.checked || [],
-    query = state.query || "";
+  const checked = state.checked || [];
+  const classes = `atlas-block ${block.type} ${layoutClass(state, !!chrome)} ${extraClass ?? ""}`.trim();
+  const style = { ["--atlas-i" as string]: index } as React.CSSProperties;
   if (block.type === "metric")
     return (
-      <section className="atlas-block metric">
+      <section className={classes} style={style} data-block-id={block.id} {...sectionProps}>
+        {chrome}
         <p>{block.title}</p>
-        <strong>{block.value}</strong>
-        <span>{block.detail}</span>
+        {!state.collapsed && (
+          <>
+            <strong>{block.value}</strong>
+            <span>{block.detail}</span>
+          </>
+        )}
+      </section>
+    );
+  if (state.collapsed)
+    return (
+      <section className={classes} style={style} data-block-id={block.id} {...sectionProps}>
+        {chrome}
+        <h3>{block.title}</h3>
+        <p className="block-folded">{t("Bloco recolhido. Expanda para ver o conteúdo.")}</p>
       </section>
     );
   return (
-    <section className={`atlas-block ${block.type}`}>
+    <section className={classes} style={style} data-block-id={block.id} {...sectionProps}>
+      {chrome}
       {block.type !== "heading" && <h3>{block.title}</h3>}
       {isEditorialBlock(block) && (
         <EditorialView
@@ -96,6 +132,14 @@ function Component({ block, state, change, onAction }: Props) {
       )}
       {isExperienceBlock(block) && (
         <ExperienceView
+          block={block}
+          state={state}
+          change={set}
+          onAction={onAction}
+        />
+      )}
+      {isPlanningBlock(block) && (
+        <PlanningView
           block={block}
           state={state}
           change={set}
@@ -221,84 +265,7 @@ function Component({ block, state, change, onAction }: Props) {
           ))}
         </div>
       )}
-      {block.type === "table" && (
-        <>
-          <label className="table-search">
-            <Search size={16} />
-            <input
-              aria-label={t("Filtrar {title}", { title: block.title })}
-              placeholder={t("Filtrar linhas...")}
-              value={query}
-              onChange={(e) => set({ query: e.target.value })}
-            />
-          </label>
-          <div className="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  {block.columns.map((c, i) => (
-                    <th
-                      key={i}
-                      aria-sort={
-                        state.sort_column === i
-                          ? state.sort_reverse
-                            ? "descending"
-                            : "ascending"
-                          : "none"
-                      }
-                    >
-                      <button
-                        onClick={() =>
-                          set({
-                            sort_column: i,
-                            sort_reverse:
-                              state.sort_column === i
-                                ? !state.sort_reverse
-                                : false,
-                          })
-                        }
-                      >
-                        {c}{" "}
-                        {state.sort_column === i
-                          ? state.sort_reverse
-                            ? "↓"
-                            : "↑"
-                          : ""}
-                      </button>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {block.rows
-                  .filter((r) =>
-                    r.some((c) =>
-                      c.toLowerCase().includes(query.toLowerCase()),
-                    ),
-                  )
-                  .sort((a, b) =>
-                    state.sort_column != null &&
-                    state.sort_column < block.columns.length
-                      ? (state.sort_reverse ? -1 : 1) *
-                        a[state.sort_column].localeCompare(
-                          b[state.sort_column],
-                          intlLocale(),
-                          { numeric: true },
-                        )
-                      : 0,
-                  )
-                  .map((row, i) => (
-                    <tr key={i}>
-                      {row.map((c, j) => (
-                        <td key={j}>{c}</td>
-                      ))}
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
+      {block.type === "table" && <TableView block={block} state={state} set={set} />}
       {block.type === "calculator" && (
         <div className="calculator-body">
           <div>
@@ -365,6 +332,19 @@ function Component({ block, state, change, onAction }: Props) {
     </section>
   );
 }
+/** `blocks` with the block at `from` moved to `to` (indexes in the original order). */
+export function moveBlock<T>(blocks: T[], from: number, to: number): T[] {
+  if (from === to || from < 0 || from >= blocks.length) return blocks;
+  const next = [...blocks];
+  const [moved] = next.splice(from, 1);
+  next.splice(Math.max(0, Math.min(to, next.length)), 0, moved);
+  return next;
+}
+
+/**
+ * The blocks of a canvas. With `onChange` the canvas is editable: every block gets its controls
+ * (1.1.2) and what the person does is handed back as a new canvas (state, edits, order).
+ */
 export function Canvas({
   canvas,
   onChange,
@@ -374,27 +354,167 @@ export function Canvas({
   onChange?: (canvas: CanvasData) => void;
   onAction?: (text: string) => void;
 }) {
+  const preview = useContext(PreviewContext);
+  const editable = !!onChange && !preview;
+  const grid = useRef<HTMLDivElement>(null);
+  const [grabbed, setGrabbed] = useState<string | null>(null);
+  const [dragging, setDragging] = useState<string | null>(null);
+  const [drop, setDrop] = useState<{ id: string; after: boolean } | null>(null);
+  const [said, setSaid] = useState("");
+  const [landed, setLanded] = useState<string | null>(null);
+  // Positions before a reorder, so blocks glide to their new place (FLIP) instead of jumping.
+  const before = useRef<Map<string, DOMRect> | null>(null);
+  const order = canvas.blocks.map((b) => b.id).join("|");
+  useLayoutEffect(() => {
+    const previous = before.current;
+    before.current = null;
+    if (!previous || !grid.current || typeof grid.current.animate !== "function") return;
+    if (matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    for (const node of Array.from(grid.current.children) as HTMLElement[]) {
+      const id = node.dataset.blockId;
+      const old = id ? previous.get(id) : undefined;
+      if (!old || typeof node.animate !== "function") continue;
+      const now = node.getBoundingClientRect();
+      const dx = old.left - now.left,
+        dy = old.top - now.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
+      node.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }], {
+        duration: 240,
+        easing: "cubic-bezier(0.2, 0.7, 0.2, 1)",
+      });
+    }
+  }, [order]);
+  const snapshot = () => {
+    if (!grid.current) return;
+    before.current = new Map(
+      (Array.from(grid.current.children) as HTMLElement[])
+        .filter((node) => node.dataset.blockId)
+        .map((node) => [node.dataset.blockId!, node.getBoundingClientRect()]),
+    );
+  };
+  const reorder = (from: number, to: number) => {
+    if (!onChange || to < 0 || to >= canvas.blocks.length || from === to) return;
+    snapshot();
+    const moved = canvas.blocks[from];
+    onChange({ ...canvas, blocks: moveBlock(canvas.blocks, from, to) });
+    setSaid(t("Bloco “{title}” movido para a posição {n} de {total}.", {
+      title: moved.title,
+      n: to + 1,
+      total: canvas.blocks.length,
+    }));
+    setLanded(moved.id);
+    setTimeout(() => setLanded((current) => (current === moved.id ? null : current)), 800);
+  };
+  const setState = (block: Block, patch: Partial<Interaction>) =>
+    onChange?.({
+      ...canvas,
+      state: { ...canvas.state, [block.id]: { ...(canvas.state?.[block.id] || {}), ...patch } },
+    });
   return (
     <>
-      <div className="canvas-grid">
-        {canvas.blocks.map((block) => (
-          <Component
-            key={block.id}
-            block={block}
-            state={canvas.state?.[block.id] || {}}
-            onAction={onAction}
-            change={(next, state) =>
-              onChange?.({
-                ...canvas,
-                blocks: canvas.blocks.map((b) =>
-                  b.id === block.id ? next : b,
-                ),
-                state: { ...canvas.state, [block.id]: state },
-              })
-            }
-          />
-        ))}
+      <div className="canvas-grid" ref={grid}>
+        {canvas.blocks.map((block, index) => {
+          const state = canvas.state?.[block.id] || {};
+          const half = state.width === "half" || (state.width !== "full" && block.type === "metric");
+          const table = editable ? blockTable(block, state) : null;
+          const chrome = editable ? (
+            <BlockTools
+              title={block.title}
+              index={index}
+              count={canvas.blocks.length}
+              half={half}
+              collapsed={!!state.collapsed}
+              onMove={(delta) => reorder(index, index + delta)}
+              onWidth={() => setState(block, { width: half ? "full" : "half" })}
+              onCollapse={() => setState(block, { collapsed: !state.collapsed })}
+              onCsv={
+                table && table.rows.length
+                  ? () =>
+                      downloadTextFile(
+                        `${safeName(block.title, "dados")}.csv`,
+                        toCsv(table, getLocale() === "en" ? "," : ";"),
+                        "text/csv;charset=utf-8",
+                      )
+                  : undefined
+              }
+              onAsk={
+                onAction
+                  ? () => onAction(t("Sobre o bloco “{block}” do canvas “{title}”: ", { block: block.title, title: canvas.title }))
+                  : undefined
+              }
+              onDragHandle={(active) => setGrabbed(active ? block.id : null)}
+            />
+          ) : undefined;
+          const sectionProps = editable
+            ? {
+                draggable: grabbed === block.id,
+                onDragStart: (event: React.DragEvent) => {
+                  event.dataTransfer.setData("application/x-atlas-block", block.id);
+                  event.dataTransfer.effectAllowed = "move";
+                  setDragging(block.id);
+                },
+                onDragEnd: () => {
+                  setDragging(null);
+                  setGrabbed(null);
+                  setDrop(null);
+                },
+                onDragOver: (event: React.DragEvent) => {
+                  if (!dragging || dragging === block.id) return;
+                  event.preventDefault();
+                  const box = (event.currentTarget as HTMLElement).getBoundingClientRect();
+                  const after =
+                    box.width > box.height * 2.2
+                      ? event.clientY > box.top + box.height / 2
+                      : event.clientX > box.left + box.width / 2 || event.clientY > box.bottom - 12;
+                  if (drop?.id !== block.id || drop.after !== after) setDrop({ id: block.id, after });
+                },
+                onDrop: (event: React.DragEvent) => {
+                  event.preventDefault();
+                  const id = event.dataTransfer.getData("application/x-atlas-block") || dragging;
+                  const from = canvas.blocks.findIndex((b) => b.id === id);
+                  setDrop(null);
+                  setDragging(null);
+                  setGrabbed(null);
+                  if (from < 0 || id === block.id) return;
+                  let to = index + (drop?.after ? 1 : 0);
+                  if (from < to) to -= 1;
+                  reorder(from, to);
+                },
+              }
+            : undefined;
+          const extraClass = [
+            dragging === block.id ? "dragging" : "",
+            drop?.id === block.id ? (drop.after ? "drop-after" : "drop-before") : "",
+            landed === block.id ? "dropping" : "",
+          ]
+            .filter(Boolean)
+            .join(" ");
+          return (
+            <Component
+              key={block.id}
+              block={block}
+              state={state}
+              index={index}
+              chrome={chrome}
+              sectionProps={sectionProps}
+              extraClass={extraClass}
+              onAction={onAction}
+              change={(next, nextState) =>
+                onChange?.({
+                  ...canvas,
+                  blocks: canvas.blocks.map((b) => (b.id === block.id ? next : b)),
+                  state: { ...canvas.state, [block.id]: nextState },
+                })
+              }
+            />
+          );
+        })}
       </div>
+      {editable && (
+        <p className="canvas-live" aria-live="polite" aria-atomic="true">
+          {said}
+        </p>
+      )}
       {!!canvas.sources?.length && (
         <section className="canvas-sources">
           <h3>{t("Fontes")}</h3>

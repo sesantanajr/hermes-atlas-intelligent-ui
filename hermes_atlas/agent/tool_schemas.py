@@ -24,7 +24,7 @@ _SOURCES = {
 COMPONENTS = {
     "name": "atlas_components",
     "description": (
-        "Look up the UI blocks an Atlas canvas can contain. With no arguments: the 73 block types "
+        "Look up the UI blocks an Atlas canvas can contain. With no arguments: the 77 block types "
         "grouped by category with a one-line purpose each. With `type` (or `types`): the exact JSON "
         "schema and a working example of that block. Call this before atlas_render for any block "
         "type you have not used in this conversation."
@@ -37,7 +37,7 @@ COMPONENTS = {
                       "description": "Up to six block types to describe in one call."},
             "q": {"type": "string", "maxLength": 160, "description": "Search text (English or Portuguese), e.g. 'timeline'."},
             "category": {"type": "string", "maxLength": 80,
-                         "description": "text, layout, forms, controls, data, media, info or apps."},
+                         "description": "text, layout, forms, controls, data, media, info, apps or planning."},
         },
     },
 }
@@ -46,7 +46,7 @@ RENDER = {
     "name": "atlas_render",
     "description": (
         "Create an interactive canvas for the user: charts, tables, forms, checklists, maps, "
-        "calculators, kanban boards and 60+ other blocks, saved in their Atlas library. Use it when "
+        "Gantt charts, calendars, kanban boards and 70+ other blocks, saved in their Atlas library. Use it when "
         "the answer is easier to explore than to read: comparisons, data, plans, study material, "
         "anything the user will tick, filter, adjust or fill in. Blocks are declarative JSON only; "
         "label sample data as such and add `sources` for facts. The result tells you how to show "
@@ -111,7 +111,8 @@ GET = {
     "name": "atlas_get",
     "description": (
         "Read a saved canvas with the user's current interaction state (ticked items, form answers, "
-        "selections, edited text). `view`: 'full' JSON (default), 'outline' (block ids, types and "
+        "selections, edited text and table cells, cards they moved, blocks they reordered, resized or "
+        "folded). `view`: 'full' JSON (default), 'outline' (block ids, types and "
         "titles) or 'text' (a Markdown rendering). Use before atlas_update, and whenever the user "
         "refers to something they did on a canvas."
     ),

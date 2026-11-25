@@ -9,7 +9,7 @@
 # the tools; FastAPI and httpx for the dashboard API), so enabling it never changes the shared
 # Python environment and needs no restart.
 name: atlas-intelligent-ui
-version: "1.1.1"
+version: "1.1.2"
 description: "Interactive canvases for Hermes Agent: answers become charts, tables, forms, maps, boards and 70+ other validated UI blocks, inline in Hermes Desktop, in the dashboard, and as text or files everywhere else."
 author: sesantanajr
 license: MIT

@@ -1,4 +1,4 @@
-# Arquitetura do Atlas Intelligent UI 1.1
+# Arquitetura do Atlas Intelligent UI 1.1.2
 
 O Atlas é um **pacote unificado** do Hermes Agent: uma pasta com a metade do agente
 (`plugin.yaml` + `__init__.py`), uma skill, a aba do dashboard (`dashboard/`) e a extensão do
@@ -42,12 +42,12 @@ flowchart LR
 
 | Módulo | Responsabilidade |
 | --- | --- |
-| `schema/` | Os 73 tipos de bloco e o `Canvas`, em pydantic. Só é importado quando um canvas é validado. |
+| `schema/` | Os 77 tipos de bloco e o `Canvas`, em pydantic (os de planejamento em `schema/planning.py`). Só é importado quando um canvas é validado. |
 | `catalog.py`, `catalog.json` | O catálogo (rótulos pt/en, categoria, resumo, exemplo) gerado de `src/blocks/catalogData.ts`. |
 | `storage/` | `Store`: revisões imutáveis, rascunhos, vínculos canvas–sessão, conversas do chat do Atlas. Só biblioteca padrão (`sqlite3`). |
-| `render/` | Canvas → Markdown (73 tipos, com e sem tabelas) e canvas → página HTML autossuficiente. |
-| `agent/` | A integração com o agente: `plugin.py` (registro), `tool_schemas.py`, `tools.py`, `surfaces.py`, `hooks.py`, `commands.py` (`/atlas`), `cli.py` (`hermes atlas`), `settings.py`. |
-| `server/` | A API HTTP (`api.py`), o chat do Atlas pela Runs API (`runs.py`, `gateway.py`, `protocol.py`) e o app independente (`app.py`). |
+| `render/` | Canvas → Markdown (77 tipos, com e sem tabelas) e canvas → página HTML autossuficiente. |
+| `agent/` | A integração com o agente: `plugin.py` (registro), `tool_schemas.py`, `tools.py`, `surfaces.py`, `hooks.py`, `rpc.py` (a API pelo RPC de plugins, 1.1.2), `commands.py` (`/atlas`), `cli.py` (`hermes atlas`), `settings.py`. |
+| `server/` | A API HTTP (`api.py`), a reexecução dela para o RPC (`rpc.py`), o chat do Atlas pela Runs API (`runs.py`, `gateway.py`, `protocol.py`) e o app independente (`app.py`). |
 | `runtime.py` | Onde ficam os dados, qual perfil e qual gateway, lidos do jeito do Hermes (`get_hermes_home`, secret scope, `plugin_data_dir`). |
 | `doctor.py` | O diagnóstico de `hermes atlas doctor`, só leitura. |
 
@@ -69,12 +69,15 @@ httpx e pydantic em todo processo, inclusive nos que nunca usariam o Atlas.
 | `show` | Quando | O que o modelo escreve |
 | --- | --- | --- |
 | `file` | Desktop/Webapp com a extensão num Desktop que tem *tool media renderers*, ou Desktop sem a extensão. | A linha `MEDIA:<caminho>.html` no fim da resposta. A extensão troca o cartão do arquivo pelo canvas vivo; sem a extensão, o Desktop mostra o cartão com pré-visualização da página. |
-| `directive` | Extensão num Desktop que tem diretivas de transcrição, mas não *tool media renderers*; e sempre no chat do próprio Atlas. | A linha `::atlas{id="…" rev="…"}` como parágrafo próprio. |
+| `directive` | Extensão num Desktop que tem diretivas de transcrição, mas não *tool media renderers*; sempre no chat do próprio Atlas; e, desde a 1.1.2, numa sessão `desktop` cujo turno veio de outro app que não o Hermes Desktop ou o Webapp (o portal Atlas). | A linha `::atlas{id="…" rev="…"}` como parágrafo próprio. |
 | `text` | Terminal, apps de mensagem, outros clientes da API. | Um resumo em texto; `atlas_export` envia a página se o usuário pedir. |
 | `either` | Superfície desconhecida (Hermes antigo). | `present` explica as duas opções. |
 
 A superfície vem de `ctx.session_surface()` (ou de `HERMES_SESSION_PLATFORM` em versões
-anteriores). O que o Desktop consegue desenhar vem de um aperto de mão: ao carregar, a extensão
+anteriores). No Hermes 0.23 toda sessão local aberta com `source: gui` responde `desktop`, seja o
+Hermes Desktop, seja outro app; por isso a 1.1.2 lê também `ctx.turn_client()`, o cliente que
+enviou o turno: `hermes-desktop` e `hermes-webapp` recebem o arquivo; um turno sem cliente
+anunciado, ou de outro app, recebe a diretiva. O que o Desktop consegue desenhar vem de um aperto de mão: ao carregar, a extensão
 chama `POST /clients/desktop` com `features: ["directive", "tool_media"]`, conforme o que o SDK
 daquele Desktop exporta. A opção `reply_style` força um dos modos.
 
@@ -106,9 +109,9 @@ Um único código React, quatro compilações (`scripts/build.mjs` e Vite):
 | Alvo | Arquivo | Particularidades |
 | --- | --- | --- |
 | Aba do dashboard | `dashboard/dist/index.js` + `index.css` | Script clássico registrado em `window.__HERMES_PLUGINS__`. Usa o React do dashboard (via `__HERMES_PLUGIN_SDK__`) e `authedFetch`. Segue `useI18n()`. |
-| Extensão do Desktop | `desktop/plugin.js` | Módulo ES que importa só `react`, `react/jsx-runtime` e `@hermes/plugin-sdk` (por namespace, com detecção de recursos). CSS embutido, removido ao descarregar. Registra a página `/atlas`, o item da barra lateral, o renderizador de mídia e a diretiva. |
+| Extensão do Desktop | `desktop/plugin.js` | Módulo ES que importa só `react`, `react/jsx-runtime` e `@hermes/plugin-sdk` (por namespace, com detecção de recursos). CSS embutido, removido ao descarregar. Registra a página `/atlas`, o item da barra lateral, o renderizador de mídia e a diretiva. Desde a 1.1.2 fala com o plugin primeiro pelo RPC `plugin.atlas-intelligent-ui.http` (`host.request`), que o gateway executa no perfil dono, e só depois por `ctx.rest`. |
 | App independente | `hermes_atlas/static/` | Vite. Servido por `hermes atlas serve` em `127.0.0.1:7331`. |
-| Página exportada | `hermes_atlas/assets/viewer.html` | Um arquivo com o canvas embutido; CSP fixa o script por hash e proíbe rede. |
+| Página exportada | `hermes_atlas/assets/viewer.html` | Um arquivo com o canvas embutido; CSP fixa o script por hash e proíbe rede. É também a página que um app de chat enquadra (protocolo do quadro, abaixo). |
 
 `scripts/check-bundles.mjs` aplica, a cada compilação, as regras que o Hermes impõe: imports
 permitidos e ausência de `eval`, `import()` dinâmico, injeção de `<script>` e acesso ao DOM do
@@ -148,3 +151,43 @@ ao lado. Na extensão do Desktop, a conversa é a do próprio Desktop.
   compartilham bibliotecas, mesmo com `ATLAS_DATA_DIR` em comum.
 
 As exportações ficam em `exports/` (as 60 mais recentes, cerca de 0,8 MB cada página HTML).
+
+## O canvas enquadrado por outro app
+
+Um app de chat que não é o Hermes Desktop (o portal Atlas, por exemplo) mostra um canvas trocando a
+linha `::atlas{id rev}` por um `<iframe sandbox="allow-scripts allow-downloads">` com a página
+exportada (`viewer.html` com a revisão embutida). Sem `allow-same-origin`, a página não alcança
+cookies, armazenamento nem o DOM do app. Desde a 1.1.2 os dois lados conversam por `postMessage`
+(`src/host/embed.ts`):
+
+| Direção | Mensagem | Para quê |
+| --- | --- | --- |
+| canvas → app | `ready {id, revision, title, atlas}` | A página está desenhada e escutando. |
+| canvas → app | `height {height}` | A altura de que precisa: o app ajusta o quadro e não sobra barra de rolagem. |
+| canvas → app | `state {canvas, changes, changed}` | O que a pessoa fez (estado, células, ordem, largura) e um resumo legível; o app guarda e oferece "Enviar alterações". |
+| canvas → app | `action {text}` | Texto de um botão "perguntar no chat" para a caixa de mensagem; nunca enviado sozinho. |
+| canvas → app | `fullscreen {}` | A pessoa pediu para ampliar. |
+| app → canvas | `hello {theme, state, locale}` | Tema claro ou escuro do app e o estado guardado da última vez. |
+| app → canvas | `theme {theme}` | O app trocou de tema. |
+| app → canvas | `export {format}` | `png`, `pdf`, `csv`, `html` ou `json`, feitos dentro da página. |
+| app → canvas | `reset {}` | Volta ao canvas como o agente escreveu. |
+
+Toda mensagem leva `source` (`atlas-canvas` ou `atlas-host`) e `version: 1`. A página só lê
+mensagens da janela que a enquadra (`event.source === window.parent`); um estado devolvido pelo app
+só muda o que a pessoa poderia mudar à mão (estado de interação dos blocos conhecidos, a ordem
+quando ela tem exatamente os mesmos blocos e os valores de calculadoras dentro dos limites): o
+conteúdo dos blocos vem sempre da própria página. Uma página de uma versão anterior simplesmente não
+fala o protocolo, e o app a mostra como antes. O lado do app no portal Atlas é
+`atlas-canvas-1273.js` (repositório do portal).
+
+## Reorganizar, editar e exportar (1.1.2)
+
+- **Layout**: cada bloco de um canvas editável ganha controles (`src/blocks/BlockChrome.tsx`):
+  alça de arrastar (as setas movem pelo teclado), meia largura ou largura total, recolher e um menu.
+  A ordem fica na lista `blocks`; `width` e `collapsed` no estado do bloco.
+- **Tabela**: células editadas ficam em `state.cells` (`"<linha>:<coluna>"` sobre as linhas
+  originais), então ordenar e filtrar continuam valendo e o agente vê o que mudou. Totais saem de
+  `src/blocks/tabular.ts`, que também dá a leitura em tabela de cada bloco para o CSV.
+- **Exportação** (`src/blocks/exporters.ts`): PNG é o canvas desenhado por um `foreignObject` SVG
+  num `<canvas>`; PDF embrulha fatias JPEG desse desenho em páginas A4, sem biblioteca. As duas
+  funcionam no quadro isolado, onde imprimir não é permitido.

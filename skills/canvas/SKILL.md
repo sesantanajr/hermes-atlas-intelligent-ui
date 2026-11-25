@@ -1,7 +1,7 @@
 ---
 name: canvas
-description: "Answer with an interactive Atlas canvas (charts, tables, forms, checklists, maps, boards, calculators) when a reply is easier to explore than to read. Covers when to use one, how to build, show and update it."
-version: 1.1.1
+description: "Answer with an interactive Atlas canvas (charts, tables, forms, checklists, Gantt charts, calendars, priority matrices, trees, maps, boards, calculators) when a reply is easier to explore than to read. Covers when to use one, how to build, show and update it."
+version: 1.1.2
 author: sesantanajr
 license: MIT
 metadata:
@@ -22,6 +22,8 @@ Use one when the user will *do* something with the answer, or when the shape of 
 - comparing options, products, plans or prices
 - numbers over time or by category, dashboards, rankings
 - plans, itineraries, checklists, kanban boards, step-by-step guides
+- schedules and projects (`gantt`), dates and deadlines (`calendar`), priorities and risks
+  (`matrix`), org charts and breakdowns (`tree`)
 - study material: flashcards, quizzes, timelines, glossaries
 - anything to fill in or adjust: forms, budgets, calculators, polls
 - places and routes on a map
@@ -31,7 +33,7 @@ A canvas complements your reply; it does not replace a direct answer to a direct
 
 ## Workflow
 
-1. **Choose blocks.** `atlas_components()` lists the 73 block types by category with a one-line
+1. **Choose blocks.** `atlas_components()` lists the 77 block types by category with a one-line
    purpose each. Skip this when you already know the types you need.
 2. **Read their schemas.** `atlas_components(types=["series", "table"])` returns the exact JSON
    schema and a working example for up to six types. Do this once per type in a conversation;
@@ -44,9 +46,13 @@ A canvas complements your reply; it does not replace a direct answer to a direct
      Desktop draws the live canvas there; other apps receive the page as a file. Copy the line
      exactly. Add a sentence or two of guidance and stop; do not restate the canvas in prose.
    - `show: "directive"`: write the `directive` line by itself in your reply, for example
-     `::atlas{id="canvas-1f0c" rev="1"}`. The user's app replaces it with the live canvas.
-   - `show: "text"`: this chat cannot draw canvases. Give the essential content in plain text
-     and mention it is saved in the Atlas library. `atlas_export` writes a file you can attach.
+     `::atlas{id="canvas-1f0c" rev="1"}`. The user's app replaces it with the live canvas
+     (Hermes Desktop with the Atlas extension, the Atlas chat, and chat apps such as the Atlas
+     portal). Never wrap it in code formatting or put text on the same line.
+   - `show: "text"`: this chat cannot draw canvases (terminal, WhatsApp, Telegram). Do not write
+     the `::atlas` line. Give the essential content in plain text and mention it is saved in the
+     Atlas library. If the user wants the interactive page, call `atlas_export` (format `html`)
+     and send its `media` line: it arrives as a page that opens in the phone's browser.
    - `show: "either"`: the surface is unknown; `present` says what to write in each case.
 5. **If validation fails**, the error names the block and field. Fix that and call again;
    do not fall back to a plain-text table unless the user asks.
@@ -66,6 +72,12 @@ A stale `expected_revision` is refused. That means the user changed the canvas: 
 
 - `atlas_get` returns `state` per block: ticked items, form answers, chosen options, edited
   text, moved cards. `unsaved_user_changes` means they are still working on it.
+- The user can rearrange a canvas: block order (the `blocks` list), `width` (`half` or `full`)
+  and `collapsed` in a block's state, and table cells they edited in `cells`
+  (`"<row>:<column>"` over the original rows). Respect that layout when you update the canvas.
+- In chat apps without a server-side draft (the Atlas portal), the user sends their changes as a
+  message that starts with "Atualizei o canvas" / "I updated the canvas" and lists them. Treat
+  that list as the current state, and update the canvas with `atlas_update` if they ask.
 - A line starting with `[Atlas]` in a user message tells you they changed a canvas you made.
   Read it with `atlas_get` before you talk about it.
 - When the user submits a form or picks cards, their choice arrives as a normal message.
@@ -89,7 +101,8 @@ A stale `expected_revision` is refused. That means the user changed the canvas: 
 | Trends and comparisons | `series`, `chart`, `ranking`, `waterfall`, `radar` |
 | Parts of a whole | `donut`, `pie`, `treemap`, `funnel` |
 | Tabular detail | `table`, `collection`, `comparison`, `facts` |
-| Plans and tracking | `checklist`, `checklist_group`, `steps_list`, `timeline`, `kanban` |
+| Plans and tracking | `checklist`, `checklist_group`, `steps_list`, `timeline`, `kanban`, `gantt`, `calendar` |
+| Priorities and structure | `matrix` (2x2: urgency x importance, effort x impact, risk), `tree` (org chart, mind map, breakdown) |
 | Input from the user | `form`, `single_choice`, `multi_choice`, `slider`, `date_range`, `budget_planner`, `calculator` |
 | Learning | `flashcards`, `quiz`, `glossary`, `tabs`, `accordion` |
 | Places | `map`, `route`, `places` |

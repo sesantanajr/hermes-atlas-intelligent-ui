@@ -149,13 +149,37 @@ class LegacyHostContext:
 
 
 class HostContext(LegacyHostContext):
-    """``PluginContext`` on current Hermes: adds the session surface and session events."""
+    """``PluginContext`` on current Hermes: adds the session surface, the turn's client (0.23),
+    session events and plugin RPC methods."""
 
-    def __init__(self, *args, surface="", **kwargs):
+    def __init__(self, *args, surface="", client=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.surface = surface
+        # The client Hermes reports for a turn: Hermes Desktop by default on the desktop surface,
+        # as on a real install; pass ``client=False`` for a turn whose client announced nothing.
+        if client is None and surface == "desktop":
+            client = {"name": "hermes-desktop", "kind": "desktop"}
+        self.client = client or None
         self.session_events = []
         self.config_writes = []
+        self.rpc_methods = {}
+
+    def turn_client(self):
+        return dict(self.client) if self.client else None
+
+    def register_rpc(self, name, handler):
+        """``plugin.<plugin_id>.<name>`` (hermes_cli/plugin_rpc.py, Hermes 0.23)."""
+        method = f"plugin.{self.plugin_id}.{name}"
+        if method in self.rpc_methods:
+            raise ValueError(f"{method} registered twice")
+        self.rpc_methods[method] = handler
+
+    def rpc(self, name, params, session_id=None):
+        """Call a registered method the way the gateway's session authority does."""
+        import json as _json
+        handler = self.rpc_methods[f"plugin.{self.plugin_id}.{name}"]
+        result = handler(dict(params), session_id=session_id)
+        return _json.loads(_json.dumps(result, allow_nan=False))
 
     def register_hook(self, hook_name: str, callback, *, hold_stream: bool = False):
         self.hooks.setdefault(hook_name, []).append(callback)

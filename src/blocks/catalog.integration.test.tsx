@@ -9,14 +9,14 @@ import packagedCatalog from "../../hermes_atlas/catalog.json";
 
 afterEach(cleanup);
 
-it("exposes 73 distinct renderable block types in eight nonempty categories", () => {
-  expect(new Set(catalog.map((entry) => entry.type)).size).toBe(73);
-  expect(catalog).toHaveLength(73);
+it("exposes 77 distinct renderable block types in nine nonempty categories", () => {
+  expect(new Set(catalog.map((entry) => entry.type)).size).toBe(77);
+  expect(catalog).toHaveLength(77);
   expect(catalog).toEqual(packagedCatalog);
   expect(new Set(catalog.map((entry) => entry.category))).toEqual(
     new Set(categories),
   );
-  expect(categories).toHaveLength(8);
+  expect(categories).toHaveLength(9);
   for (const entry of catalog) {
     const block = entry.example;
     expect(block.type).toBe(entry.type);

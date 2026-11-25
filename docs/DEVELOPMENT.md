@@ -55,7 +55,14 @@ Use um `HERMES_HOME` (ou `ATLAS_DATA_DIR`) de teste para não mexer na sua bibli
 | `/harness/dashboard.html` | O `dashboard/dist/index.js` compilado com o SDK e as variáveis de tema do dashboard. Parâmetros: `theme`, `lang`, `canvas`. |
 
 As páginas de `harness/` carregam os bundles compilados: rode `node scripts/build.mjs` depois de
-mudar o código para vê-lo ali.
+mudar o código para vê-lo ali. O duplo do SDK do Desktop (`harness/desktop-sdk.ts`) responde ao RPC
+`plugin.atlas-intelligent-ui.http` repassando o pedido à API REST do backend, como o Hermes 0.23 faz
+no gateway, então a página mostra o caminho que a extensão usa num Hermes atual.
+
+Para ver o canvas enquadrado por outro app (o protocolo do quadro), gere uma página com
+`hermes atlas export <id> html` (ou `render/html.py:export_html`) e sirva-a com a CSP
+`sandbox allow-scripts allow-downloads` num `iframe` da sua página de teste; a página responde
+`ready` e `height` assim que carrega e espera um `hello` do app.
 
 ## App independente como serviço
 

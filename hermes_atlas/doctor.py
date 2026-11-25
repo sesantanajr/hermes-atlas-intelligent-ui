@@ -195,6 +195,47 @@ def check_http_stack():
     return OK, "python libraries", f"pydantic {pydantic.VERSION}, fastapi, httpx and uvicorn importable"
 
 
+def check_reach():
+    """1.1.2: what this Hermes offers that decides where canvases appear."""
+    import importlib.util
+
+    def has(module, attribute):
+        try:
+            spec = importlib.util.find_spec(module)
+        except (ImportError, ValueError):
+            return False
+        if spec is None:
+            return False
+        try:
+            return hasattr(importlib.import_module(module), attribute)
+        except Exception:
+            return False
+
+    missing = []
+    if not has("hermes_cli.plugin_rpc", "register_rpc"):
+        missing.append("plugin RPC (Hermes Desktop and the Webapp reach Atlas only on the launch profile)")
+    if not has("hermes_cli.plugin_session", "turn_client"):
+        missing.append("turn client (chat apps on local sessions get a MEDIA file instead of the ::atlas line)")
+    if missing:
+        return WARN, "hermes reach", "this Hermes lacks " + "; ".join(missing)
+    return OK, "hermes reach", "plugin RPC and turn client available: every profile, every chat app"
+
+
+def check_toolset():
+    """1.1.2: platforms whose explicit toolset list leaves out `atlas` (no canvas tools there)."""
+    config = _config_view()
+    agent = config.get("agent") if isinstance(config.get("agent"), dict) else {}
+    disabled = agent.get("disabled_toolsets") if isinstance(agent.get("disabled_toolsets"), list) else []
+    if "atlas" in disabled:
+        return WARN, "toolset", "agent.disabled_toolsets turns the atlas toolset off everywhere"
+    platforms = config.get("platform_toolsets") if isinstance(config.get("platform_toolsets"), dict) else {}
+    without = sorted(name for name, tools in platforms.items() if isinstance(tools, list) and "atlas" not in tools)
+    if without:
+        return WARN, "toolset", ("atlas is missing from platform_toolsets." + ", platform_toolsets.".join(without) +
+                                 ": run hermes tools enable atlas --platform <name> where you want canvases")
+    return OK, "toolset", "atlas is offered on every platform with an explicit list" if platforms else "default toolsets"
+
+
 def check_gateway():
     try:
         import asyncio
@@ -219,7 +260,7 @@ def check_gateway():
 def run(live=False):
     """``[(status, name, detail)]`` for every check; *live* also contacts the Hermes API server."""
     checks = [check_versions, check_files, check_assets, check_manifest_tools, check_http_stack, check_catalog,
-              check_store, check_legacy]
+              check_store, check_legacy, check_reach, check_toolset]
     if live:
         checks.append(check_gateway)
     results = []

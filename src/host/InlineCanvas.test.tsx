@@ -359,6 +359,8 @@ describe("InlineCanvas", () => {
     expect(screen.getByRole("region", { name: "Atlas canvas" })).toBeTruthy();
     fireEvent.click(screen.getByRole("checkbox", { name: "Passaporte" }));
     expect(screen.getByRole("button", { name: /Save version/ })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Download as an HTML page" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Export" }));
+    expect(screen.getByRole("menuitem", { name: /Interactive page \(HTML\)/ })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: /Image \(PNG\)/ })).toBeTruthy();
   });
 });

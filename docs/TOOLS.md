@@ -15,12 +15,12 @@ Consulta o catálogo de blocos.
 | --- | --- | --- |
 | `type` / `types` | texto / lista (até 6) | Devolve o schema JSON exato e um exemplo válido de cada tipo. |
 | `q` | texto | Busca por nome ou finalidade, em português ou inglês (“linha do tempo”, “timeline”). |
-| `category` | texto | `text`, `layout`, `forms`, `controls`, `data`, `media`, `info` ou `apps`. |
+| `category` | texto | `text`, `layout`, `forms`, `controls`, `data`, `media`, `info`, `apps` ou `planning`. |
 
-Sem parâmetros, lista os 73 tipos agrupados por categoria, com uma frase de finalidade cada:
+Sem parâmetros, lista os 77 tipos agrupados por categoria, com uma frase de finalidade cada:
 
 ```json
-{ "success": true, "count": 73, "categories": [ … ],
+{ "success": true, "count": 77, "categories": [ … ],
   "next": "Call atlas_components(type=...) or types=[...] for the exact schema and a working example." }
 ```
 
@@ -99,7 +99,10 @@ Lê um canvas com o estado atual do usuário.
 | `blocks` | lista | Só estes blocos. |
 
 Se o usuário mexeu no canvas e ainda não salvou uma versão, a resposta traz o estado do rascunho
-e `unsaved_user_changes`. Um canvas grande demais para a resposta volta como esboço, com
+e `unsaved_user_changes`. Desde a 1.1.2 o estado de cada bloco também diz como a pessoa arrumou o
+canvas: `width` (`auto`, `half` ou `full`), `collapsed`, e `cells` numa tabela
+(`{"1:2": "R$ 4.900,00"}`: linha e coluna das linhas originais); a ordem dos blocos é a da lista
+`blocks`. Um canvas grande demais para a resposta volta como esboço, com
 `too_large: true`; peça blocos específicos.
 
 ```json

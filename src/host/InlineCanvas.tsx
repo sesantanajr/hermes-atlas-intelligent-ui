@@ -15,7 +15,6 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
-  Download,
   ExternalLink,
   LayoutGrid,
   LoaderCircle,
@@ -23,7 +22,10 @@ import {
 } from "lucide-react";
 import "../theme";
 import { Canvas } from "../blocks/Canvas";
-import { t, useLocale } from "../i18n";
+import { getLocale, t, useLocale } from "../i18n";
+import { canvasCsv } from "../blocks/tabular";
+import { downloadTextFile, exportPdf, exportPng, safeName } from "../blocks/exporters";
+import { ExportMenu, type ExportHandlers } from "./ExportMenu";
 import type {
   Canvas as CanvasData,
   Draft,
@@ -290,16 +292,31 @@ export function InlineCanvas({
     void load();
   };
 
-  const exportHtml = async () => {
+  const exportFile = async (format: "html" | "markdown") => {
     if (!record) return;
     try {
       const file = await api<ExportedFile>(
-        `${path}/export?format=html&revision=${record.revision}`,
+        `${path}/export?format=${format}&revision=${record.revision}`,
       );
       downloadText(file.filename, file.content, file.media_type);
     } catch {
       downloadText(`${canvasId}.json`, JSON.stringify(canvas, null, 2));
     }
+  };
+  const sheet = useRef<HTMLDivElement>(null);
+  const fileName = safeName(canvas?.title ?? canvasId);
+  // 1.1.2: every format in one menu. PNG and PDF are drawn from what is on screen, edits included.
+  const exports: ExportHandlers = {
+    png: () => (sheet.current ? exportPng(sheet.current, fileName) : undefined),
+    pdf: () => (sheet.current ? exportPdf(sheet.current, fileName, canvas?.title ?? "Atlas") : undefined),
+    csv: () => {
+      const text = canvas ? canvasCsv(canvas, getLocale() === "en" ? "," : ";") : null;
+      if (!text) throw new Error(t("este canvas não tem dados em tabela"));
+      downloadTextFile(`${fileName}.csv`, text, "text/csv;charset=utf-8");
+    },
+    html: () => exportFile("html"),
+    markdown: () => exportFile("markdown"),
+    json: () => downloadText(`${fileName}.json`, JSON.stringify(canvas, null, 2)),
   };
 
   const action = async (text: string) => {
@@ -386,14 +403,7 @@ export function InlineCanvas({
               </button>
             </>
           )}
-          <button
-            className="icon-button"
-            aria-label={t("Baixar como página HTML")}
-            title={t("Baixar como página HTML")}
-            onClick={() => void exportHtml()}
-          >
-            <Download size={16} />
-          </button>
+          <ExportMenu handlers={exports} onError={setNotice} compact />
           {host.openWorkspace && (
             <button
               className="icon-button"
@@ -407,7 +417,7 @@ export function InlineCanvas({
         </div>
       </header>
       {open && (
-        <div className="inline-body">
+        <div className="inline-body" ref={sheet}>
           {canvas.description && (
             <p className="inline-description">{canvas.description}</p>
           )}

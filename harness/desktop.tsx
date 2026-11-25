@@ -72,15 +72,15 @@ function Transcript({ canvas, directive, media }: { canvas: Target; directive?: 
     <div className="transcript">
       <div className="bubble user">
         {english
-          ? "Plan six days in Lisbon for two, with a budget I can adjust."
-          : "Planeje 6 dias em Lisboa para duas pessoas, com um orçamento que eu possa ajustar."}
+          ? "Build a dashboard for the Microsoft 365 migration with the schedule, costs and risks."
+          : "Monte um painel da migração para o Microsoft 365 com cronograma, custos e riscos."}
       </div>
       {only !== "directive" && (
         <div className="bubble assistant">
           <p>
             {english
-              ? "Here is the plan. Tick what is done and change the budget; I will see it on your next message."
-              : "Montei o plano. Marque o que já resolveu e ajuste o orçamento; eu vejo suas mudanças na próxima mensagem."}
+              ? "Here it is. Tick what is done, edit the numbers and drag the risks; I will see your changes on your next message."
+              : "Montei o painel. Marque o que já está pronto, edite os números e arraste os riscos; eu vejo suas mudanças na próxima mensagem."}
           </p>
           {drawFile
             ? drawFile({

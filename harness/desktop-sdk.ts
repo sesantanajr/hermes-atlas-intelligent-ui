@@ -55,7 +55,17 @@ export const host = {
   },
   navigate: (path: string) => route.set(path),
   notify: ({ message }: { message: string }) => toasts.set([...toasts.get(), message].slice(-3)),
-  request: async (method: string, params?: { text?: string }) => {
+  request: async (method: string, params?: { text?: string; method?: string; path?: string; query?: string; body?: unknown; scope?: string }) => {
+    // Hermes 0.23 serves the plugin's own RPC methods; here the bridge is replayed over the backend's REST API.
+    if (method === "plugin.atlas-intelligent-ui.http" && params?.path) {
+      const query = params.query ? `?${params.query}` : "";
+      const response = await fetch(`/api/plugins/atlas-intelligent-ui${params.path}${query}`, {
+        method: params.method ?? "GET",
+        headers: { "Content-Type": "application/json", ...(params.scope ? { "X-Atlas-Workspace": params.scope } : {}) },
+        body: params.body === undefined ? undefined : JSON.stringify(params.body),
+      });
+      return { status: response.status, body: response.status === 204 ? null : await response.json().catch(() => null) };
+    }
     toasts.set([...toasts.get(), `${method}: ${(params?.text ?? "").slice(0, 60)}`]);
     return { ok: true };
   },

@@ -1,0 +1,485 @@
+/* Planning blocks (1.1.2): Gantt, calendar, matrix and tree. Tokens only. */
+
+.atlas-app .plan-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.atlas-app .atlas-segmented {
+  display: inline-flex;
+  margin-inline-start: auto;
+  padding: 2px;
+  border: 1px solid var(--atlas-line);
+  border-radius: 9px;
+  background: var(--atlas-surface-2);
+}
+.atlas-app .atlas-segmented button {
+  padding: 4px 10px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  color: var(--atlas-muted);
+}
+.atlas-app .atlas-segmented button.active {
+  background: var(--atlas-surface);
+  color: var(--atlas-text);
+  box-shadow: var(--atlas-shadow-sm);
+}
+.atlas-app .plan-detail {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--atlas-line);
+  border-left: 3px solid var(--atlas-accent);
+  border-radius: var(--atlas-radius-sm);
+  background: var(--atlas-surface-2);
+  font-size: 13px;
+  color: var(--atlas-muted);
+}
+.atlas-app .plan-detail strong {
+  color: var(--atlas-text);
+  font-size: 14px;
+}
+.atlas-app .plan-detail p {
+  color: var(--atlas-text);
+  white-space: pre-wrap;
+}
+.atlas-app .plan-ask {
+  justify-self: start;
+  margin-top: 4px;
+}
+
+/* Gantt ----------------------------------------------------------------------------------- */
+.atlas-app .gantt-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius-sm);
+  background: var(--atlas-surface);
+}
+.atlas-app .gantt-grid {
+  display: grid;
+  grid-template-columns: minmax(130px, 210px) var(--gantt-width);
+  min-width: max-content;
+  font-size: 12.5px;
+}
+.atlas-app .gantt-corner,
+.atlas-app .gantt-label,
+.atlas-app .gantt-group {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--atlas-surface);
+  border-right: 1px solid var(--atlas-line);
+}
+.atlas-app .gantt-corner {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--atlas-faint);
+  border-bottom: 1px solid var(--atlas-line);
+}
+.atlas-app .gantt-axis {
+  position: relative;
+  height: 33px;
+  border-bottom: 1px solid var(--atlas-line);
+  background: var(--atlas-surface-2);
+}
+.atlas-app .gantt-axis span {
+  position: absolute;
+  top: 9px;
+  padding-left: 4px;
+  border-left: 1px solid var(--atlas-line-strong);
+  color: var(--atlas-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.atlas-app .gantt-group {
+  grid-column: 1 / -1;
+  padding: 7px 12px 5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--atlas-accent-text);
+  background: var(--atlas-surface-2);
+  border-bottom: 1px solid var(--atlas-line);
+}
+.atlas-app .gantt-label {
+  display: grid;
+  align-content: center;
+  min-height: 38px;
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--atlas-line);
+}
+.atlas-app .gantt-label span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.atlas-app .gantt-label small {
+  color: var(--atlas-faint);
+  font-size: 11px;
+}
+.atlas-app .gantt-label.active span {
+  color: var(--atlas-accent-text);
+  font-weight: 600;
+}
+.atlas-app .gantt-lane {
+  position: relative;
+  min-height: 38px;
+  border-bottom: 1px solid var(--atlas-line);
+  background-image: linear-gradient(to right, transparent calc(100% - 1px), var(--atlas-line) 0);
+}
+.atlas-app .gantt-today {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--atlas-danger);
+  opacity: 0.55;
+}
+.atlas-app .gantt-bar {
+  position: absolute;
+  top: 9px;
+  height: 20px;
+  min-width: 8px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--atlas-series-0) 28%, var(--atlas-surface));
+  border: 1px solid color-mix(in srgb, var(--atlas-series-0) 55%, transparent);
+}
+.atlas-app .gantt-bar .gantt-fill {
+  display: block;
+  width: var(--progress);
+  height: 100%;
+  background: var(--atlas-series-0);
+}
+.atlas-app .gantt-bar.done {
+  background: var(--atlas-positive-soft);
+  border-color: var(--atlas-positive);
+}
+.atlas-app .gantt-bar.done .gantt-fill {
+  background: var(--atlas-positive);
+}
+.atlas-app .gantt-bar.active,
+.atlas-app .gantt-bar:hover {
+  box-shadow: 0 0 0 2px var(--atlas-focus);
+}
+.atlas-app .gantt-bar.milestone {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  margin-left: -4px;
+  overflow: visible;
+  border: 0;
+  background: none;
+  color: var(--atlas-warning);
+}
+.atlas-app .gantt-bar.milestone svg {
+  fill: currentColor;
+}
+
+/* Calendar -------------------------------------------------------------------------------- */
+.atlas-app .cal-title {
+  min-width: 10rem;
+  text-align: center;
+  font-size: 15px;
+}
+.atlas-app .plan-calendar .chip {
+  margin-inline-start: auto;
+}
+.atlas-app .cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius-sm);
+  overflow: hidden;
+  background: var(--atlas-line);
+  gap: 1px;
+}
+.atlas-app .cal-weekday {
+  padding: 6px 8px;
+  background: var(--atlas-surface-2);
+  color: var(--atlas-faint);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.atlas-app .cal-day {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 78px;
+  min-width: 0;
+  padding: 5px;
+  background: var(--atlas-surface);
+}
+.atlas-app .cal-day.blank {
+  background: var(--atlas-surface-2);
+}
+.atlas-app .cal-number {
+  font-size: 12px;
+  color: var(--atlas-muted);
+  font-variant-numeric: tabular-nums;
+}
+.atlas-app .cal-day.today .cal-number {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--atlas-accent);
+  color: var(--atlas-on-accent);
+  font-weight: 600;
+}
+.atlas-app .cal-day small {
+  font-size: 11px;
+  color: var(--atlas-faint);
+}
+.atlas-app .cal-event {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: var(--atlas-surface-3);
+  color: var(--atlas-text);
+  border-left: 3px solid var(--atlas-line-strong);
+}
+.atlas-app .cal-event b {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.atlas-app .cal-event.tone-info {
+  background: var(--atlas-info-soft);
+  border-left-color: var(--atlas-info);
+}
+.atlas-app .cal-event.tone-success {
+  background: var(--atlas-positive-soft);
+  border-left-color: var(--atlas-positive);
+}
+.atlas-app .cal-event.tone-warning {
+  background: var(--atlas-warning-soft);
+  border-left-color: var(--atlas-warning);
+}
+.atlas-app .cal-event.tone-danger {
+  background: var(--atlas-danger-soft);
+  border-left-color: var(--atlas-danger);
+}
+.atlas-app .cal-event.active {
+  outline: 2px solid var(--atlas-focus);
+  outline-offset: 1px;
+}
+.atlas-app .cal-agenda {
+  display: none;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.atlas-app .cal-agenda li {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--atlas-line);
+  font-size: 13px;
+}
+.atlas-app .cal-when {
+  color: var(--atlas-muted);
+}
+@container (max-width: 560px) {
+  .atlas-app .cal-grid {
+    display: none;
+  }
+  .atlas-app .cal-agenda {
+    display: block;
+  }
+}
+
+/* Matrix ---------------------------------------------------------------------------------- */
+.atlas-app .matrix-frame {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  grid-template-rows: auto 24px;
+  gap: 4px;
+}
+.atlas-app .matrix-y {
+  display: grid;
+  place-items: center;
+}
+.atlas-app .matrix-y span {
+  transform: rotate(-90deg);
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--atlas-muted);
+}
+.atlas-app .matrix-x {
+  grid-column: 2;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--atlas-muted);
+}
+.atlas-app .matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.atlas-app .matrix-cell {
+  min-height: 140px;
+  padding: 10px;
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius-sm);
+  background: var(--atlas-surface-2);
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
+}
+.atlas-app .matrix-cell.q0 {
+  background: color-mix(in srgb, var(--atlas-danger) 8%, var(--atlas-surface));
+}
+.atlas-app .matrix-cell.q1 {
+  background: color-mix(in srgb, var(--atlas-accent) 9%, var(--atlas-surface));
+}
+.atlas-app .matrix-cell.q2 {
+  background: color-mix(in srgb, var(--atlas-warning) 9%, var(--atlas-surface));
+}
+.atlas-app .matrix-cell.q3 {
+  background: var(--atlas-surface-2);
+}
+.atlas-app .matrix-cell.over {
+  border-color: var(--atlas-accent);
+  border-style: dashed;
+}
+.atlas-app .matrix-cell header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.atlas-app .matrix-cell header small {
+  color: var(--atlas-faint);
+  font-variant-numeric: tabular-nums;
+}
+.atlas-app .matrix-hint {
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--atlas-muted);
+}
+.atlas-app .matrix-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.atlas-app .matrix-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 5px 9px 5px 5px;
+  border: 1px solid var(--atlas-line-strong);
+  border-radius: 8px;
+  background: var(--atlas-surface);
+  box-shadow: var(--atlas-shadow-sm);
+  font-size: 12.5px;
+  cursor: grab;
+  user-select: none;
+}
+.atlas-app .matrix-card svg {
+  color: var(--atlas-faint);
+}
+.atlas-app .matrix-card:active {
+  cursor: grabbing;
+}
+.atlas-app .plan-matrix .plan-ask {
+  margin-top: 10px;
+}
+
+/* Tree ------------------------------------------------------------------------------------ */
+.atlas-app .tree-root,
+.atlas-app .tree-children {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.atlas-app .tree-children {
+  position: relative;
+  margin-left: 15px;
+  padding-left: 16px;
+  border-left: 1px solid var(--atlas-line-strong);
+}
+.atlas-app .tree-node {
+  position: relative;
+  padding: 3px 0;
+}
+.atlas-app .tree-children > .tree-node::before {
+  content: "";
+  position: absolute;
+  left: -16px;
+  top: 22px;
+  width: 14px;
+  border-top: 1px solid var(--atlas-line-strong);
+}
+.atlas-app .tree-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  width: fit-content;
+  padding: 5px 10px 5px 4px;
+  border: 1px solid var(--atlas-line);
+  border-left: 3px solid var(--atlas-line-strong);
+  border-radius: 8px;
+  background: var(--atlas-surface);
+}
+.atlas-app .tree-node.depth-0 > .tree-card {
+  border-left-color: var(--atlas-accent);
+  background: var(--atlas-accent-soft);
+}
+.atlas-app .tree-card div {
+  display: grid;
+  min-width: 0;
+}
+.atlas-app .tree-card small {
+  color: var(--atlas-muted);
+  font-size: 12px;
+}
+.atlas-app .tree-card.tone-info {
+  border-left-color: var(--atlas-info);
+}
+.atlas-app .tree-card.tone-success {
+  border-left-color: var(--atlas-positive);
+}
+.atlas-app .tree-card.tone-warning {
+  border-left-color: var(--atlas-warning);
+}
+.atlas-app .tree-card.tone-danger {
+  border-left-color: var(--atlas-danger);
+}
+.atlas-app .tree-toggle {
+  width: 26px;
+  height: 26px;
+}
+.atlas-app .tree-leaf {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin: 0 9px;
+  border-radius: 50%;
+  background: var(--atlas-line-strong);
+}
+.atlas-app .plan-tree .plan-ask {
+  margin-top: 10px;
+}

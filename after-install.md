@@ -1,7 +1,7 @@
-# Atlas Intelligent UI 1.1
+# Atlas Intelligent UI 1.1.2
 
-Canvases interativos (gráficos, tabelas, formulários, checklists, mapas, orçamentos) nas
-respostas do Hermes. / Interactive canvases in Hermes replies.
+Canvases interativos (gráficos, tabelas editáveis, formulários, cronogramas, calendários, mapas,
+orçamentos) nas respostas do Hermes. / Interactive canvases in Hermes replies.
 
 1. Ligue o plugin, se ainda não ligou / Enable it if you have not yet:
    `hermes plugins enable atlas-intelligent-ui`
@@ -13,7 +13,7 @@ respostas do Hermes. / Interactive canvases in Hermes replies.
 Tinha a 1.0 (`hermes-atlas`)? / Had 1.0 (`hermes-atlas`)? `hermes plugins remove hermes-atlas`,
 depois / then `hermes atlas migrate`: seus canvases vêm junto / your canvases come along.
 
-Experimente / Try: “Monte um orçamento de viagem para Lisboa que eu possa ajustar.”
+Experimente / Try: “Monte um painel do projeto com cronograma, custos e riscos.”
 
 Opções / Settings: `hermes plugins config atlas-intelligent-ui` ·
 Documentação / Docs: https://github.com/sesantanajr/hermes-atlas-intelligent-ui

@@ -20,6 +20,8 @@ _WORDS = {
         "period": "Período", "truncated": "… (conteúdo resumido; abra o canvas no Atlas para ver tudo)",
         "blocks": "blocos", "image": "Imagem", "video": "Vídeo", "audio": "Áudio", "stops": "paradas",
         "from": "de", "to": "até", "seconds": "s", "by": "por", "draft": "rascunho",
+        "task": "Tarefa", "progress": "Progresso", "owner": "Responsável", "milestone": "marco",
+        "depends": "depende de", "folded": "recolhido", "edited": "editado", "no_items": "nenhum item",
     },
     "en": {
         "sources": "Sources", "result": "Result", "undefined": "undefined", "done": "done",
@@ -31,6 +33,8 @@ _WORDS = {
         "period": "Period", "truncated": "… (shortened; open the canvas in Atlas to see everything)",
         "blocks": "blocks", "image": "Image", "video": "Video", "audio": "Audio", "stops": "stops",
         "from": "from", "to": "to", "seconds": "s", "by": "by", "draft": "draft",
+        "task": "Task", "progress": "Progress", "owner": "Owner", "milestone": "milestone",
+        "depends": "depends on", "folded": "folded", "edited": "edited", "no_items": "no items",
     },
 }
 _CURRENCY = {"BRL": "R$", "EUR": "€", "USD": "$", "GBP": "£"}
@@ -175,7 +179,15 @@ def _block(w, block, state):
     elif kind in ("chart", "sparkline"):
         w.pairs([(p.get("label", ""), p.get("value")) for p in _items(block, "points")], unit)
     elif kind == "table":
-        w.table(_strings(block, "columns"), [row for row in block.get("rows", []) if isinstance(row, list)])
+        rows = [list(row) for row in block.get("rows", []) if isinstance(row, list)]
+        cells = state.get("cells") if isinstance(state.get("cells"), dict) else {}
+        for key, text in cells.items():  # 1.1.2: cells the person edited replace the original text
+            try:
+                row, column = (int(part) for part in str(key).split(":"))
+                rows[row][column] = f"{text} ({w.t('edited')})"
+            except (ValueError, IndexError):
+                continue
+        w.table(_strings(block, "columns"), rows)
     elif kind == "checklist":
         checked = set(state.get("checked") or [])
         items = _strings(block, "items")
@@ -414,6 +426,48 @@ def _block(w, block, state):
         limit = block.get("limit_cents") or 0
         w.add(f"- **{w.t('total')}: {w.money(total, currency)}** · {w.t('limit')}: {w.money(limit, currency)} · "
               f"{w.t('balance')}: {w.money(limit - total, currency)}")
+
+    elif kind == "gantt":
+        tasks = _items(block, "tasks")
+        labels = {task.get("id"): task.get("label", "") for task in tasks}
+        rows = []
+        for task in tasks:
+            period = task.get("start", "") if task.get("milestone") else f"{task.get('start', '')} → {task.get('end', '')}"
+            note = [w.t("milestone")] if task.get("milestone") else []
+            if task.get("depends_on"):
+                note.append(f"{w.t('depends')} " + ", ".join(labels.get(d, d) for d in task["depends_on"]))
+            rows.append([task.get("label", ""), task.get("group", ""), period, f"{task.get('progress', 0)}%",
+                         task.get("owner", ""), "; ".join(note)])
+        w.table([w.t("task"), "", w.t("period"), w.t("progress"), w.t("owner"), ""], rows)
+    elif kind == "calendar":
+        events = sorted(_items(block, "events"), key=lambda e: (str(e.get("date", "")), str(e.get("time") or "")))
+        for event in events:
+            when = event.get("date", "") + (f" → {event['end']}" if event.get("end") else "")
+            when += f" {event['time']}" if event.get("time") else ""
+            detail = f" — {event['detail']}" if event.get("detail") else ""
+            w.add(f"- {when}: **{event.get('label', '')}**{detail}")
+    elif kind == "matrix":
+        w.add(f"*{block.get('y_axis', '')} × {block.get('x_axis', '')}*")
+        items = _items(block, "items")
+        for quadrant in _items(block, "quadrants"):
+            w.add(f"**{quadrant.get('label', '')}**" + (f" — {quadrant['hint']}" if quadrant.get("hint") else ""))
+            mine = [i for i in items if values.get(i.get("id"), i.get("quadrant")) == quadrant.get("id")]
+            w.add(*(f"- {item.get('label', '')}" for item in mine) if mine else (f"- ({w.t('no_items')})",))
+    elif kind == "tree":
+        nodes = _items(block, "nodes")
+        children = {}
+        for node in nodes:
+            children.setdefault(node.get("parent"), []).append(node)
+
+        def walk(parent, depth):
+            for node in children.get(parent, []):
+                folded = values.get(node.get("id")) == "closed" and children.get(node.get("id"))
+                detail = f" — {node['detail']}" if node.get("detail") else ""
+                w.add("  " * depth + f"- {node.get('label', '')}{detail}" + (f" ({w.t('folded')})" if folded else ""))
+                if depth < 12:
+                    walk(node.get("id"), depth + 1)
+
+        walk(None, 0)
 
 
 def render_block(block, state=None, *, locale="pt", tables=True, level=2):

@@ -17,9 +17,9 @@ import * as sdk from "@hermes/plugin-sdk";
 import React, { useMemo, useReducer } from "react";
 import "../theme";
 import { App } from "../app/App";
-import { detectLocale, setLocale, t } from "../i18n";
+import { detectLocale, serverText, setLocale, t } from "../i18n";
 import type { Transport } from "../types";
-import { type Api, createClient, hostError } from "./client";
+import { ApiError, type Api, createClient, hostError } from "./client";
 import { requestCanvas, type Host } from "./context";
 import { declareFeatures, sayHello } from "./hello";
 import { InlineCanvas, announceCanvasChange } from "./InlineCanvas";
@@ -51,9 +51,70 @@ function useActivation() {
   sdk.useGatewayActivationEpoch?.();
 }
 
+/** The Atlas API over plugin RPC (1.1.2, `hermes_atlas/agent/rpc.py`). */
+export const RPC_METHOD = `plugin.${PLUGIN_ID}.http`;
 /**
- * `ctx.rest` as an Atlas transport, refusing answers that belong to a connection since replaced.
- * `onStale` hears of the replacement, for a page that can rebuild itself on the new connection.
+ * Whether this Hermes serves the Atlas RPC method: unknown until the first call answers. Hermes
+ * 0.23 refuses `ctx.rest` for a plugin that is not bundled on any profile but the one it was
+ * launched with, so on Atlas IA, Atlas Code and every other secondary profile the RPC door is the
+ * only one that works. Older Hermes releases (no plugin RPC) answer -32601 and keep `ctx.rest`.
+ */
+let rpcAvailable: boolean | null = null;
+export function resetRpcProbe() {
+  rpcAvailable = null;
+}
+const unknownMethod = (error: unknown) =>
+  /-32601|unknown[_ ]method|method not found|not supported/i.test(error instanceof Error ? error.message : String(error));
+
+async function viaRpc(
+  path: string,
+  init: RequestInit | undefined,
+  scope: string | null,
+): Promise<{ answered: true; value: unknown } | { answered: false }> {
+  const request = sdk.host?.request;
+  if (!request || rpcAvailable === false) return { answered: false };
+  const [bare, query = ""] = path.split("?");
+  let answer: unknown;
+  try {
+    answer = await request(RPC_METHOD, {
+      method: init?.method ?? "GET",
+      path: bare,
+      query,
+      body: typeof init?.body === "string" ? JSON.parse(init.body) : undefined,
+      ...(scope ? { scope } : {}),
+    });
+  } catch (error) {
+    if (rpcAvailable !== true && unknownMethod(error)) {
+      rpcAvailable = false;
+      return { answered: false };
+    }
+    throw hostError(error);
+  }
+  const reply = answer as { status?: unknown; body?: unknown } | null;
+  if (!reply || typeof reply.status !== "number") {
+    // Not our bridge answering (a host double, a gateway that ignores the method): keep REST.
+    rpcAvailable = false;
+    return { answered: false };
+  }
+  rpcAvailable = true;
+  if (reply.status >= 400) {
+    const detail =
+      reply.body && typeof (reply.body as { detail?: unknown }).detail === "string"
+        ? ((reply.body as { detail: string }).detail)
+        : "";
+    throw new ApiError(
+      detail ? serverText(detail) : t("Não foi possível concluir ({status}).", { status: reply.status }),
+      reply.status,
+      detail,
+    );
+  }
+  return { answered: true, value: reply.body };
+}
+
+/**
+ * The Atlas API as a transport: plugin RPC where Hermes serves it, else `ctx.rest`, refusing
+ * answers that belong to a connection since replaced. `onStale` hears of the replacement, for a
+ * page that can rebuild itself on the new connection.
  */
 function restTransport(ctx: Context, startedAt: number, onStale?: () => void): Transport {
   const replaced = () => {
@@ -63,8 +124,13 @@ function restTransport(ctx: Context, startedAt: number, onStale?: () => void): T
   };
   return async (path, init) => {
     if (replaced()) throw new Error(t("A conexão do Desktop mudou. Reabra o Atlas."));
-    // ctx.rest sets no headers: the workspace check travels as a query parameter instead.
     const scope = new Headers(init?.headers).get("X-Atlas-Workspace");
+    const rpc = await viaRpc(path, init, scope);
+    if (rpc.answered) {
+      if (replaced()) throw new Error(t("Resposta descartada porque a conexão mudou."));
+      return rpc.value;
+    }
+    // ctx.rest sets no headers: the workspace check travels as a query parameter instead.
     const query = scope
       ? `${path.includes("?") ? "&" : "?"}atlas_scope=${encodeURIComponent(scope)}`
       : "";

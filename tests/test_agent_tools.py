@@ -24,9 +24,9 @@ def host(surface="", **kwargs):
 def test_components_overview_then_schema_then_search():
     ctx = host()
     overview = ctx.call("atlas_components")
-    assert overview["success"] and overview["count"] == 73 and len(overview["categories"]) == 8
+    assert overview["success"] and overview["count"] == 77 and len(overview["categories"]) == 9
     types = {name for group in overview["categories"] for name in group["types"]}
-    assert len(types) == 73 and overview["categories"][4]["category"] == "data"
+    assert len(types) == 77 and overview["categories"][4]["category"] == "data"
     assert overview["categories"][0]["types"]["text"].startswith("A plain paragraph")
     detail = ctx.call("atlas_components", {"types": ["series", "budget_planner", "nope"]})
     assert [b["type"] for b in detail["blocks"]] == ["series", "budget_planner"] and detail["unknown"] == ["nope"]

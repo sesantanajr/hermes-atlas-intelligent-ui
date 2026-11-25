@@ -5,8 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Contribution, GatewayEvent, PluginContext, TranscriptDirectiveProps } from "@hermes/plugin-sdk";
 import { setLocale } from "../i18n";
 import type { Canvas } from "../types";
-import plugin from "./desktop";
-import { composerCalls, resetHost, setHost, state } from "./testing/plugin-sdk";
+import plugin, { RPC_METHOD, resetRpcProbe } from "./desktop";
+import { composerCalls, host, resetHost, setHost, state } from "./testing/plugin-sdk";
 
 const form: Canvas = {
   id: "canvas-plan",
@@ -92,6 +92,7 @@ async function openPage(rest: Parameters<typeof desktop>[0] = workspace) {
 
 beforeEach(() => {
   resetHost();
+  resetRpcProbe();
   document.documentElement.lang = "pt-BR";
   window.matchMedia = vi.fn().mockReturnValue({ matches: false }) as unknown as typeof window.matchMedia;
 });
@@ -315,7 +316,7 @@ describe("Hermes Desktop extension", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enviar à sessão ativa do Desktop" }));
     await screen.findByText(/Mensagem enviada à sessão ativa do Desktop/);
     expect(composerCalls.find((call) => call.method === "submit")?.args[0]).toBe("session-1");
-    expect(composerCalls.find((call) => call.method === "request")?.args).toEqual([
+    expect(composerCalls.find((call) => call.method === "request" && call.args[0] === "prompt.submit")?.args).toEqual([
       "prompt.submit",
       { session_id: "session-1", text: "Resuma o plano" },
     ]);
@@ -351,5 +352,58 @@ describe("Hermes Desktop extension", () => {
     expect(i18n.getLocale()).toBe("pt-BR"); // the page's language, until the backend answers
     await waitFor(() => expect(i18n.getLocale()).toBe("en"));
     i18n.setLocale("pt-BR");
+  });
+
+  it("reaches the Atlas API through plugin RPC where Hermes serves it (every profile, Hermes 0.23)", async () => {
+    const rpcCalls: { method: string; params: Record<string, unknown> }[] = [];
+    host.request = async (method: string, params?: unknown) => {
+      const p = params as Record<string, unknown>;
+      rpcCalls.push({ method, params: p });
+      if (method !== RPC_METHOD) return { ok: true };
+      const path = String(p.path) + (p.query ? `?${p.query}` : "");
+      const answer = library(path);
+      return answer instanceof Error ? { status: 404, body: { detail: "Canvas não encontrado." } } : { status: 200, body: answer };
+    };
+    const { ctx, contributions, requests } = desktop(() => httpError(404, "Plugin not found"));
+    plugin.register(ctx);
+    const media = contributions.find((c) => c.area === "transcript.toolMedia")!.data as {
+      render: (props: unknown) => React.ReactNode;
+    };
+    render(
+      <>
+        {media.render({
+          file: { path: "/x/plano-v2.html", name: "plano-v2.html", kind: "file", mime: "text/html", resolveUrl: async () => "" },
+          toolName: "atlas_render", toolCallId: "c1", args: {}, sessionId: "session-1",
+          result: { success: true, id: "canvas-plan", revision: 2 }, fallback: <p>card</p>,
+        })}
+      </>,
+    );
+    await screen.findByRole("heading", { name: "Plano da semana" });
+    expect(requests).toEqual([]); // ctx.rest, refused by Hermes on secondary profiles, was never needed
+    const reads = rpcCalls.filter((call) => call.method === RPC_METHOD).map((call) => call.params);
+    expect(reads).toContainEqual({ method: "GET", path: "/canvases/canvas-plan", query: "revision=2", body: undefined });
+  });
+
+  it("keeps ctx.rest on a Hermes without plugin RPC", async () => {
+    host.request = async (method: string) => {
+      if (method === RPC_METHOD) throw new Error("-32601: unknown method plugin.atlas-intelligent-ui.http");
+      return { ok: true };
+    };
+    const { ctx, contributions, requests } = desktop(library);
+    plugin.register(ctx);
+    const media = contributions.find((c) => c.area === "transcript.toolMedia")!.data as {
+      render: (props: unknown) => React.ReactNode;
+    };
+    render(
+      <>
+        {media.render({
+          file: { path: "/x/plano-v2.html", name: "plano-v2.html", kind: "file", mime: "text/html", resolveUrl: async () => "" },
+          toolName: "atlas_render", toolCallId: "c1", args: {}, sessionId: "session-1",
+          result: { success: true, id: "canvas-plan", revision: 2 }, fallback: <p>card</p>,
+        })}
+      </>,
+    );
+    await screen.findByRole("heading", { name: "Plano da semana" });
+    expect(requests.map((r) => r.path)).toContain("/canvases/canvas-plan?revision=2");
   });
 });

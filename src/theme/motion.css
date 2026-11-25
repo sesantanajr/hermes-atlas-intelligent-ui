@@ -1,0 +1,87 @@
+/*
+ * Motion (1.1.2): calm, short and functional. Blocks rise into place one after another, data
+ * grows from its baseline, menus and notices fade. Everything here stops for people who ask the
+ * system for reduced motion.
+ */
+
+@keyframes atlas-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes atlas-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes atlas-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes atlas-grow-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes atlas-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--atlas-accent) 40%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--atlas-accent) 0%, transparent);
+  }
+}
+
+.atlas-app .canvas-grid > .atlas-block {
+  animation: atlas-rise var(--atlas-duration) var(--atlas-ease) both;
+  animation-delay: calc(min(var(--atlas-i, 0), 10) * 45ms);
+}
+.atlas-app .bar-track > div {
+  transform-origin: left center;
+  animation: atlas-grow-x 0.6s var(--atlas-ease) both;
+}
+.atlas-app .gantt-bar {
+  transform-origin: left center;
+  animation: atlas-grow-x 0.55s var(--atlas-ease) both;
+}
+.atlas-app .atlas-menu,
+.atlas-app .viewer-notice,
+.atlas-app .block-notice {
+  animation: atlas-fade 0.16s ease-out both;
+}
+.atlas-app .atlas-block.dropping {
+  animation: atlas-pulse 0.7s ease-out 1;
+}
+.atlas-app .atlas-block {
+  transition:
+    border-color 0.15s,
+    box-shadow 0.2s,
+    opacity 0.2s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atlas-app,
+  .atlas-app * {
+    --atlas-duration: 0s;
+    animation-duration: 0.001ms !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

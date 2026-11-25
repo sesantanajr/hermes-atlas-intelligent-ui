@@ -4,7 +4,9 @@
 * the ``atlas-intelligent-ui:canvas`` skill, which teaches the model the workflow;
 * the ``/atlas`` slash command, on every surface;
 * the ``hermes atlas`` terminal command;
-* a ``pre_llm_call`` hook that tells the agent when the user changed one of its canvases.
+* a ``pre_llm_call`` hook that tells the agent when the user changed one of its canvases;
+* the ``plugin.atlas-intelligent-ui.http`` RPC method, the Atlas API for Hermes Desktop and the
+  Webapp on every profile (Hermes 0.23+).
 
 Registration is cheap by design: it imports no pydantic model and opens no database, so it
 costs a few milliseconds of Hermes's start-up. Surfaces that only some Hermes releases offer are
@@ -15,7 +17,7 @@ import os
 from pathlib import Path
 
 from .. import LEGACY_PLUGIN_NAMES, PLUGIN_NAME
-from . import cli, commands, hooks, tool_schemas, tools
+from . import cli, commands, hooks, rpc, tool_schemas, tools
 from .settings import Settings
 
 logger = logging.getLogger(__name__)
@@ -129,6 +131,7 @@ def register(ctx):
         ctx.register_tool(name=name, toolset=tool_schemas.TOOLSET, schema=schema, handler=handlers[name],
                           description=schema["description"].split(". ")[0] + ".", emoji=EMOJI, **extra)
     ctx.register_hook("pre_llm_call", hooks.make_pre_llm_call(settings))
+    rpc.register(ctx)
     _optional(ctx, "register_command", commands.NAME, commands.make_handler(settings),
               description=commands.DESCRIPTION, args_hint=commands.ARGS_HINT)
     # Under plugins.isolation: host, Hermes runs terminal commands of plugins only from its own

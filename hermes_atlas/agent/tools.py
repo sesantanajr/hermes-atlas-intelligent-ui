@@ -99,12 +99,14 @@ class Toolbox:
     # -- how to show a canvas where the user is ------------------------------------------------
     def _presentation(self, store, record, session_id):
         surface = surfaces.current_surface(self.ctx)
+        client_known, client = surfaces.current_client(self.ctx)
         desktop = store.client("desktop") or {}
         mode = surfaces.presentation(
             surface, style=self.settings.reply_style,
             desktop_extension=bool(desktop),
             desktop_media="tool_media" in (desktop.get("features") or []),
-            atlas_chat=bool(session_id) and session_id.startswith("atlas-" + store.scope))
+            atlas_chat=bool(session_id) and session_id.startswith("atlas-" + store.scope),
+            client_known=client_known, client=client)
         line = inline.directive(record["id"], record["revision"])
         library = "It is saved in the user's Atlas library (Hermes Desktop or dashboard, Atlas page)."
         extra = {}
@@ -126,8 +128,10 @@ class Toolbox:
                    "The user's app replaces that line with the interactive canvas, so do not repeat its content; "
                    "add one or two sentences of guidance at most.")
         elif mode == "text":
-            how = ("This chat cannot draw canvases. Give the essential content as plain text. " + library +
-                   " To send it as a file, call atlas_export.")
+            how = ("This chat cannot draw canvases: do not write the ::atlas line or a MEDIA line for it. Give the "
+                   "essential content as plain text (a short list or a small table). " + library +
+                   " If the user wants the interactive version, call atlas_export with format 'html' and send the "
+                   "media line it returns: messaging apps deliver it as a page that opens in the browser.")
         else:
             how = (f"If the user is in Hermes Desktop or the Atlas chat, write this line by itself in your reply "
                    f"to show the canvas inline: {line} Otherwise summarise it in plain text. " + library)
