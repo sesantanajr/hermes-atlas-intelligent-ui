@@ -111,9 +111,9 @@ def http(params, *, session_id=None, **kwargs):
         method, path, query, body, scope = parse(params)
     except RpcRefused as refusal:
         return {"status": 400, "body": {"detail": str(refusal)}}
-    from ..server.rpc import dispatch  # the HTTP stack, on the first call only
-
     try:
+        from ..server.rpc import dispatch  # the HTTP stack, on the first call only
+
         return _run(dispatch(method, path, query, body, scope))
     except Exception as exc:  # the caller gets an answer it can show, never a gateway error
         logger.warning("Atlas RPC %s %s failed: %s", method, path, exc)
